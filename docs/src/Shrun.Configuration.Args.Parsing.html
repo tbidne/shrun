@@ -1,0 +1,1162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedLists #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">{- HLINT ignore &quot;Unused LANGUAGE pragma&quot; -}</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- For TH, for some reason</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">-- | Provides functionality for parsing command line arguments.</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing</span></a></span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier">Args</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#parserInfoArgs"><span class="hs-identifier">parserInfoArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#parserPrefs"><span class="hs-identifier">parserPrefs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">L</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Version</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">showVersion</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-optparse-0.1-1874f3f58535d51356e9548b81f6e2198653fa8dbf7f40e423fb7c128b82ab60/share/doc/html/src/Effects.Optparse.html"><span class="hs-identifier">Effects.Optparse</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-optparse-0.1-1874f3f58535d51356e9548b81f6e2198653fa8dbf7f40e423fb7c128b82ab60/share/doc/html/src/Effects.Optparse.html#validOsPath"><span class="hs-identifier">validOsPath</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-optparse-0.1-1874f3f58535d51356e9548b81f6e2198653fa8dbf7f40e423fb7c128b82ab60/share/doc/html/src/Effects.Optparse.Completer.html"><span class="hs-identifier">Effects.Optparse.Completer</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">EOC</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html"><span class="hs-identifier">FileSystem.OsString</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html"><span class="hs-identifier">FileSystem.OsString</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OsString</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier">ParserInfo</span></a></span><span>
+</span><span id="line-26"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier">ParserInfo</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoFailureCode"><span class="hs-identifier">infoFailureCode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoFooter"><span class="hs-identifier">infoFooter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoFullDesc"><span class="hs-identifier">infoFullDesc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoHeader"><span class="hs-identifier">infoHeader</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoParser"><span class="hs-identifier">infoParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoPolicy"><span class="hs-identifier">infoPolicy</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoProgDesc"><span class="hs-identifier">infoProgDesc</span></a></span><span>
+</span><span id="line-34"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html"><span class="hs-identifier">Options.Applicative.Help.Chunk</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier">Chunk</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier">Chunk</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html"><span class="hs-identifier">Options.Applicative.Help.Chunk</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Chunk</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Pretty.html"><span class="hs-identifier">Options.Applicative.Help.Pretty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Pretty</span></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html"><span class="hs-identifier">Options.Applicative.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ArgPolicy"><span class="hs-identifier">ArgPolicy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Intersperse"><span class="hs-identifier">Intersperse</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ParserPrefs"><span class="hs-identifier">ParserPrefs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Paths_shrun.html"><span class="hs-identifier">Paths_shrun</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Paths</span></span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Core</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Core</span></span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Graph</span></span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.TH</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TH</span></span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier">CoreConfigArgs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier">EdgeArgs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Info</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Info</span></span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="annot"><span class="hs-comment">-- | CLI args.</span></span><span>
+</span><span id="line-53"></span><span class="hs-keyword">data</span><span> </span><span id="Args"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-var">Args</span></a></span></span><span> </span><span id="local-6989586621679703470"><span class="annot"><a href="#local-6989586621679703470"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkArgs"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span></span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Optional config file.</span></span><span>
+</span><span id="line-55"></span><span>    </span><span id="configPaths"><span class="annot"><span class="annottext">forall m. Args m -&gt; Seq (WithDisabled OsPath)
+</span><a href="Shrun.Configuration.Args.Parsing.html#configPaths"><span class="hs-identifier hs-var hs-var">configPaths</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Core config.</span></span><span>
+</span><span id="line-57"></span><span>    </span><span id="coreConfig"><span class="annot"><span class="annottext">forall m. Args m -&gt; CoreConfigArgs m
+</span><a href="Shrun.Configuration.Args.Parsing.html#coreConfig"><span class="hs-identifier hs-var hs-var">coreConfig</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier hs-type">CoreConfigArgs</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703470"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="hs-comment">-- | List of commands.</span></span><span>
+</span><span id="line-59"></span><span>    </span><span id="commands"><span class="annot"><span class="annottext">forall m. Args m -&gt; NESeq Text
+</span><a href="Shrun.Configuration.Args.Parsing.html#commands"><span class="hs-identifier hs-var hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Whether to print the config.</span></span><span>
+</span><span id="line-61"></span><span>    </span><span id="dryRun"><span class="annot"><span class="annottext">forall m. Args m -&gt; Bool
+</span><a href="Shrun.Configuration.Args.Parsing.html#dryRun"><span class="hs-identifier hs-var hs-var">dryRun</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Command dependencies.</span></span><span>
+</span><span id="line-63"></span><span>    </span><span id="edges"><span class="annot"><span class="annottext">forall m. Args m -&gt; Maybe (WithDisabled EdgeArgs)
+</span><a href="Shrun.Configuration.Args.Parsing.html#edges"><span class="hs-identifier hs-var hs-var">edges</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679703737"><span id="local-6989586621679703752"><span class="annot"><span class="annottext">Args m -&gt; Args m -&gt; Bool
+(Args m -&gt; Args m -&gt; Bool)
+-&gt; (Args m -&gt; Args m -&gt; Bool) -&gt; Eq (Args m)
+forall m. Args m -&gt; Args m -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: forall m. Args m -&gt; Args m -&gt; Bool
+== :: Args m -&gt; Args m -&gt; Bool
+$c/= :: forall m. Args m -&gt; Args m -&gt; Bool
+/= :: Args m -&gt; Args m -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679703763"><span id="local-6989586621679703780"><span id="local-6989586621679703784"><span class="annot"><span class="annottext">Int -&gt; Args m -&gt; ShowS
+[Args m] -&gt; ShowS
+Args m -&gt; String
+(Int -&gt; Args m -&gt; ShowS)
+-&gt; (Args m -&gt; String) -&gt; ([Args m] -&gt; ShowS) -&gt; Show (Args m)
+forall m. Int -&gt; Args m -&gt; ShowS
+forall m. [Args m] -&gt; ShowS
+forall m. Args m -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: forall m. Int -&gt; Args m -&gt; ShowS
+showsPrec :: Int -&gt; Args m -&gt; ShowS
+$cshow :: forall m. Args m -&gt; String
+show :: Args m -&gt; String
+$cshowList :: forall m. [Args m] -&gt; ShowS
+showList :: [Args m] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-68"></span><span>  </span><span id="local-6989586621679703514"><span id="local-6989586621679703515"><span id="local-6989586621679703516"><span id="local-6989586621679703517"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679703514"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703515"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703516"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;configPaths&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679703514"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703517"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703517"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679703515"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703516"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-71"></span><span>  </span><span id="local-6989586621679703803"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Args m) (Args m) a b
+</span><a href="#local-6989586621679703803"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b)
+-&gt; LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679703808"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703808"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span> </span><span id="local-6989586621679703809"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703809"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679703810"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703810"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679703811"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703811"><span class="hs-identifier hs-var">a3</span></a></span></span><span> </span><span id="local-6989586621679703812"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703812"><span class="hs-identifier hs-var">a4</span></a></span></span><span> </span><span id="local-6989586621679703813"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703813"><span class="hs-identifier hs-var">a5</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">(Seq (WithDisabled OsPath) -&gt; Args m)
+-&gt; f (Seq (WithDisabled OsPath)) -&gt; f (Args m)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679703814"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703814"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+forall m.
+Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+</span><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703814"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703810"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703811"><span class="hs-identifier hs-var">a3</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703812"><span class="hs-identifier hs-var">a4</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703813"><span class="hs-identifier hs-var">a5</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703808"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703809"><span class="hs-identifier hs-var">a1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-76"></span><span>  </span><span id="local-6989586621679703536"><span id="local-6989586621679703537"><span id="local-6989586621679703538"><span id="local-6989586621679703539"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679703536"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703537"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier hs-type">CoreConfigArgs</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703538"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703539"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier hs-type">CoreConfigArgs</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703538"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-77"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;coreConfig&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679703536"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703538"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703538"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679703537"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703539"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-79"></span><span>  </span><span id="local-6989586621679703823"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Args m) (Args m) a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b)
+-&gt; LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679703826"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703826"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span> </span><span id="local-6989586621679703827"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703827"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679703828"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703828"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679703829"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703829"><span class="hs-identifier hs-var">a3</span></a></span></span><span> </span><span id="local-6989586621679703830"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703830"><span class="hs-identifier hs-var">a4</span></a></span></span><span> </span><span id="local-6989586621679703831"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703831"><span class="hs-identifier hs-var">a5</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><span class="annottext">(CoreConfigArgs m -&gt; Args m) -&gt; f (CoreConfigArgs m) -&gt; f (Args m)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679703832"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703832"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+forall m.
+Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+</span><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703827"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703832"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703829"><span class="hs-identifier hs-var">a3</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703830"><span class="hs-identifier hs-var">a4</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703831"><span class="hs-identifier hs-var">a5</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703826"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+CoreConfigArgs m
+</span><a href="#local-6989586621679703828"><span class="hs-identifier hs-var">a2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-84"></span><span>  </span><span id="local-6989586621679703545"><span id="local-6989586621679703546"><span id="local-6989586621679703547"><span id="local-6989586621679703548"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679703545"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703546"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703547"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-85"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;commands&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679703545"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703548"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703548"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679703546"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703547"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-86"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-87"></span><span>  </span><span id="local-6989586621679703841"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Args m) (Args m) a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b)
+-&gt; LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679703844"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703844"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span> </span><span id="local-6989586621679703845"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703845"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679703846"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703846"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679703847"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703847"><span class="hs-identifier hs-var">a3</span></a></span></span><span> </span><span id="local-6989586621679703848"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703848"><span class="hs-identifier hs-var">a4</span></a></span></span><span> </span><span id="local-6989586621679703849"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703849"><span class="hs-identifier hs-var">a5</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-88"></span><span>    </span><span class="annot"><span class="annottext">(NESeq Text -&gt; Args m) -&gt; f (NESeq Text) -&gt; f (Args m)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679703850"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703850"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+forall m.
+Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+</span><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703845"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703846"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703850"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703848"><span class="hs-identifier hs-var">a4</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703849"><span class="hs-identifier hs-var">a5</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703844"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+NESeq Text
+</span><a href="#local-6989586621679703847"><span class="hs-identifier hs-var">a3</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-92"></span><span>  </span><span id="local-6989586621679703554"><span id="local-6989586621679703555"><span id="local-6989586621679703556"><span id="local-6989586621679703557"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679703554"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703555"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703556"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-93"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;dryRun&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679703554"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703557"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703557"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679703555"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703556"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-95"></span><span>  </span><span id="local-6989586621679703859"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Args m) (Args m) a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b)
+-&gt; LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679703862"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703862"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span> </span><span id="local-6989586621679703863"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703863"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679703864"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703864"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679703865"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703865"><span class="hs-identifier hs-var">a3</span></a></span></span><span> </span><span id="local-6989586621679703866"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703866"><span class="hs-identifier hs-var">a4</span></a></span></span><span> </span><span id="local-6989586621679703867"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703867"><span class="hs-identifier hs-var">a5</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-96"></span><span>    </span><span class="annot"><span class="annottext">(Bool -&gt; Args m) -&gt; f Bool -&gt; f (Args m)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679703868"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703868"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+forall m.
+Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+</span><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703863"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703864"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703865"><span class="hs-identifier hs-var">a3</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703868"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703867"><span class="hs-identifier hs-var">a5</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703862"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Bool
+</span><a href="#local-6989586621679703866"><span class="hs-identifier hs-var">a4</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-100"></span><span>  </span><span id="local-6989586621679703563"><span id="local-6989586621679703564"><span id="local-6989586621679703565"><span id="local-6989586621679703566"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679703563"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703564"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679703565"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-101"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;edges&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679703563"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703566"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703566"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679703564"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703565"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-103"></span><span>  </span><span id="local-6989586621679703877"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Args m) (Args m) a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b)
+-&gt; LensVL (Args m) (Args m) a b -&gt; Lens (Args m) (Args m) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679703880"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703880"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span> </span><span id="local-6989586621679703881"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703881"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679703882"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703882"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679703883"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703883"><span class="hs-identifier hs-var">a3</span></a></span></span><span> </span><span id="local-6989586621679703884"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703884"><span class="hs-identifier hs-var">a4</span></a></span></span><span> </span><span id="local-6989586621679703885"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703885"><span class="hs-identifier hs-var">a5</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">(Maybe (WithDisabled EdgeArgs) -&gt; Args m)
+-&gt; f (Maybe (WithDisabled EdgeArgs)) -&gt; f (Args m)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679703886"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703886"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+forall m.
+Seq (WithDisabled OsPath)
+-&gt; CoreConfigArgs m
+-&gt; NESeq Text
+-&gt; Bool
+-&gt; Maybe (WithDisabled EdgeArgs)
+-&gt; Args m
+</span><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-var">MkArgs</span></a></span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679703881"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679703882"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679703883"><span class="hs-identifier hs-var">a3</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679703884"><span class="hs-identifier hs-var">a4</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703886"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679703880"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679703885"><span class="hs-identifier hs-var">a5</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-106"></span><span>
+</span><span id="line-107"></span><span class="annot"><span class="hs-comment">-- | 'ParserInfo' type for parsing 'Args'.</span></span><span>
+</span><span id="line-108"></span><span id="local-6989586621679703568"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#parserInfoArgs"><span class="hs-identifier hs-type">parserInfoArgs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier hs-type">ParserInfo</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703568"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-109"></span><span id="parserInfoArgs"><span class="annot"><span class="annottext">parserInfoArgs :: forall m. [String] -&gt; ParserInfo (Args m)
+</span><a href="Shrun.Configuration.Args.Parsing.html#parserInfoArgs"><span class="hs-identifier hs-var hs-var">parserInfoArgs</span></a></span></span><span> </span><span id="local-6989586621679703891"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679703891"><span class="hs-identifier hs-var">prevKeys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-110"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ParserInfo"><span class="hs-identifier hs-type">ParserInfo</span></a></span><span>
+</span><span id="line-111"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">infoParser :: Parser (Args m)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoParser"><span class="hs-identifier hs-var">infoParser</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; Parser (Args m)
+forall m. [String] -&gt; Parser (Args m)
+</span><a href="Shrun.Configuration.Args.Parsing.html#argsParser"><span class="hs-identifier hs-var">argsParser</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679703891"><span class="hs-identifier hs-var">prevKeys</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-112"></span><span>      </span><span class="annot"><span class="annottext">infoFullDesc :: Bool
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoFullDesc"><span class="hs-identifier hs-var">infoFullDesc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span>
+</span><span id="line-113"></span><span>      </span><span class="annot"><span class="annottext">infoProgDesc :: Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoProgDesc"><span class="hs-identifier hs-var">infoProgDesc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Chunk Doc
+</span><a href="#local-6989586621679703893"><span class="hs-identifier hs-var">desc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-114"></span><span>      </span><span class="annot"><span class="annottext">infoHeader :: Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoHeader"><span class="hs-identifier hs-var">infoHeader</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Chunk Doc
+forall a. Maybe a -&gt; Chunk a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-var">Chunk</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Doc
+</span><a href="#local-6989586621679703894"><span class="hs-identifier hs-var">headerTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-115"></span><span>      </span><span class="annot"><span class="annottext">infoFooter :: Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoFooter"><span class="hs-identifier hs-var">infoFooter</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Chunk Doc
+forall a. Maybe a -&gt; Chunk a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-var">Chunk</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Doc
+</span><a href="#local-6989586621679703895"><span class="hs-identifier hs-var">footerTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-116"></span><span>      </span><span class="annot"><span class="annottext">infoFailureCode :: Int
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoFailureCode"><span class="hs-identifier hs-var">infoFailureCode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span>
+</span><span id="line-117"></span><span>      </span><span class="annot"><span class="annottext">infoPolicy :: ArgPolicy
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#infoPolicy"><span class="hs-identifier hs-var">infoPolicy</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ArgPolicy
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Intersperse"><span class="hs-identifier hs-var">Intersperse</span></a></span><span>
+</span><span id="line-118"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-120"></span><span>    </span><span id="local-6989586621679703894"><span class="annot"><span class="annottext">headerTxt :: Maybe Doc
+</span><a href="#local-6989586621679703894"><span class="hs-identifier hs-var hs-var">headerTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Doc -&gt; Maybe Doc
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Doc
+</span><span class="hs-string">&quot;Shrun: A tool for running shell commands concurrently.&quot;</span></span><span>
+</span><span id="line-121"></span><span>    </span><span id="local-6989586621679703895"><span class="annot"><span class="annottext">footerTxt :: Maybe Doc
+</span><a href="#local-6989586621679703895"><span class="hs-identifier hs-var hs-var">footerTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Doc -&gt; Maybe Doc
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Doc -&gt; Maybe Doc) -&gt; Doc -&gt; Maybe Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Doc
+forall a. IsString a =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">fromString</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="Shrun.Configuration.Args.Parsing.html#versShort"><span class="hs-identifier hs-var">versShort</span></a></span><span>
+</span><span id="line-122"></span><span>    </span><span id="local-6989586621679703893"><span class="annot"><span class="annottext">desc :: Chunk Doc
+</span><a href="#local-6989586621679703893"><span class="hs-identifier hs-var hs-var">desc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-123"></span><span>      </span><span class="annot"><span class="annottext">[Chunk Doc] -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#vsepChunks"><span class="hs-identifier hs-var">Chunk.vsepChunks</span></a></span><span>
+</span><span id="line-124"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-125"></span><span>            </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-126"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Shrun runs shell commands concurrently. In addition to providing &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-127"></span><span>                </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;basic timing and logging functionality, we also provide the &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-128"></span><span>                </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;ability to pass in a config file that can be used to define &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-129"></span><span>                </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;aliases for commands.&quot;</span></span><span>
+</span><span id="line-130"></span><span>              </span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-131"></span><span>          </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-132"></span><span>            </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-133"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;CLI options override toml config so e.g. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-134"></span><span>                </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;'--console-log-command off' will disable &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-135"></span><span>                </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;command logging, regardless of the toml's console-log.command.&quot;</span></span><span>
+</span><span id="line-136"></span><span>              </span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-137"></span><span>          </span><span class="annot"><span class="annottext">Item [Chunk Doc]
+Chunk Doc
+</span><a href="#local-6989586621679703955"><span class="hs-identifier hs-var">completions</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-138"></span><span>          </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;See github.com/tbidne/shrun#README for full documentation.&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-139"></span><span>          </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Examples:&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-140"></span><span>          </span><span class="annot"><span class="annottext">NonEmpty String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703956"><span class="hs-identifier hs-var">mkExample</span></a></span><span>
+</span><span id="line-141"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;1. Runs cmd1, cmd2, cmd3 concurrently:&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-142"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;$ shrun cmd1 cmd2 cmd3&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-144"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][cmd1] cmd1 output...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-145"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][cmd2] cmd2 output...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-146"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][cmd3] cmd3 output...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-147"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Status][0|3|0|0] 5 seconds&quot;</span></span><span>
+</span><span id="line-148"></span><span>            </span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-149"></span><span>          </span><span class="annot"><span class="annottext">NonEmpty String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703956"><span class="hs-identifier hs-var">mkExample</span></a></span><span>
+</span><span id="line-150"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;2. Uses --edges to specify command dependencies. Commands cmd1 and&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-151"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-152"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;successfully.&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-153"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-154"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;$ shrun --edges \&quot;1 &amp; 3, 2 &amp; 3\&quot; cmd1 cmd2 cmd3&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-155"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][cmd1] cmd1 output...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-156"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][cmd2] cmd2 output...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-157"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Status][1|2|0|0] 5 seconds&quot;</span></span><span>
+</span><span id="line-158"></span><span>            </span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-159"></span><span>          </span><span class="annot"><span class="annottext">NonEmpty String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703956"><span class="hs-identifier hs-var">mkExample</span></a></span><span>
+</span><span id="line-160"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;3. Uses config file aliases i.e. builds frontend, backend, and db&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-161"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;concurrently, then runs deploy if those tasks completed successfully.&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-162"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-163"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;# config.toml&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-164"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;legend = [&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-165"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  # Aliases for multiple commands&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-166"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 &amp; 2' },&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-167"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  { key = 'build', val = [ 'frontend', 'backend', 'db' ] },&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-168"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-169"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  # Aliases to actual commands&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-170"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  { key = 'frontend', val = 'npm run build' },&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-171"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  { key = 'backend', val = 'javac ...' },&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-172"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  { key = 'db', val = 'db.sh' },&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-173"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;  { key = 'ds', val = 'deploy.sh' },&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-174"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;]&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-175"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-176"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;$ shrun --config config.toml deploy&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-177"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][frontend] Running npm...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-178"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][backend] Running javac...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-179"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Command][db] Running db.sh...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-180"></span><span>              </span><span class="annot"><span class="annottext">String
+Item (NonEmpty String)
+</span><span class="hs-string">&quot;[Status][1|3|0|0] 5 seconds&quot;</span></span><span>
+</span><span id="line-181"></span><span>            </span><span class="hs-special">]</span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span>    </span><span id="local-6989586621679703955"><span class="annot"><span class="annottext">completions :: Chunk Doc
+</span><a href="#local-6989586621679703955"><span class="hs-identifier hs-var hs-var">completions</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-185"></span><span>      </span><span class="annot"><span class="annottext">[Chunk Doc] -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#vcatChunks"><span class="hs-identifier hs-var">Chunk.vcatChunks</span></a></span><span>
+</span><span id="line-186"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-187"></span><span>            </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-188"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Shrun also supports tab-completions for bash, fish, and zsh. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-189"></span><span>                </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;To load them, run the appropriate script:&quot;</span></span><span>
+</span><span id="line-190"></span><span>              </span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-191"></span><span>          </span><span class="annot"><span class="annottext">Int -&gt; Doc -&gt; Doc
+forall ann. Int -&gt; Doc ann -&gt; Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#nest"><span class="hs-identifier hs-var">Pretty.nest</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-192"></span><span>            </span><span class="annot"><span class="annottext">(Doc -&gt; Doc) -&gt; Chunk Doc -&gt; Chunk Doc
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">[Chunk Doc] -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#vcatChunks"><span class="hs-identifier hs-var">Chunk.vcatChunks</span></a></span><span>
+</span><span id="line-193"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703969"><span class="hs-identifier hs-var">toChunk</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-194"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#stringChunk"><span class="hs-identifier hs-var">Chunk.stringChunk</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;$ source &lt;(shrun --bash-completion-script `which shrun`)&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-195"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#stringChunk"><span class="hs-identifier hs-var">Chunk.stringChunk</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;$ source &lt;(shrun --fish-completion-script `which shrun`)&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-196"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#stringChunk"><span class="hs-identifier hs-var">Chunk.stringChunk</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;$ source &lt;(shrun --zsh-completion-script `which shrun`)&quot;</span></span><span>
+</span><span id="line-197"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-198"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span>    </span><span class="annot"><a href="#local-6989586621679703956"><span class="hs-identifier hs-type">mkExample</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">NonEmpty</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-type">Chunk</span></a></span><span> </span><span class="annot"><a href="Shrun.Prelude.html#DocOA"><span class="hs-identifier hs-type">DocOA</span></a></span><span>
+</span><span id="line-201"></span><span>    </span><span id="local-6989586621679703956"><span class="annot"><span class="annottext">mkExample :: NonEmpty String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703956"><span class="hs-identifier hs-var hs-var">mkExample</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; NonEmpty String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703972"><span class="hs-identifier hs-var">identPara</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span>
+</span><span id="line-202"></span><span>
+</span><span id="line-203"></span><span>    </span><span class="annot"><a href="#local-6989586621679703972"><span class="hs-identifier hs-type">identPara</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">NonEmpty</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-type">Chunk</span></a></span><span> </span><span class="annot"><a href="Shrun.Prelude.html#DocOA"><span class="hs-identifier hs-type">DocOA</span></a></span><span>
+</span><span id="line-204"></span><span>    </span><span id="local-6989586621679703972"><span class="annot"><span class="annottext">identPara :: Int -&gt; Int -&gt; NonEmpty String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703972"><span class="hs-identifier hs-var hs-var">identPara</span></a></span></span><span> </span><span id="local-6989586621679703973"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679703973"><span class="hs-identifier hs-var">hIndent</span></a></span></span><span> </span><span id="local-6989586621679703974"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679703974"><span class="hs-identifier hs-var">lIndent</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679703975"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703975"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:|</span></span><span> </span><span id="local-6989586621679703977"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679703977"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-205"></span><span>      </span><span class="annot"><span class="annottext">[Chunk Doc] -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#vcatChunks"><span class="hs-identifier hs-var">Chunk.vcatChunks</span></a></span><span>
+</span><span id="line-206"></span><span>        </span><span class="annot"><span class="annottext">([Chunk Doc] -&gt; Chunk Doc)
+-&gt; ([String] -&gt; [Chunk Doc]) -&gt; [String] -&gt; Chunk Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679703979"><span class="annot"><span class="annottext">[Chunk Doc]
+</span><a href="#local-6989586621679703979"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703969"><span class="hs-identifier hs-var">toChunk</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679703973"><span class="hs-identifier hs-var">hIndent</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703975"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Chunk Doc -&gt; [Chunk Doc] -&gt; [Chunk Doc]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[Chunk Doc]
+</span><a href="#local-6989586621679703979"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-207"></span><span>        </span><span class="annot"><span class="annottext">([Chunk Doc] -&gt; [Chunk Doc])
+-&gt; ([String] -&gt; [Chunk Doc]) -&gt; [String] -&gt; [Chunk Doc]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; [String] -&gt; [Chunk Doc]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703969"><span class="hs-identifier hs-var">toChunk</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679703974"><span class="hs-identifier hs-var">lIndent</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-208"></span><span>        </span><span class="annot"><span class="annottext">([String] -&gt; Chunk Doc) -&gt; [String] -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679703977"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-209"></span><span>
+</span><span id="line-210"></span><span>    </span><span id="local-6989586621679703969"><span class="annot"><span class="annottext">toChunk :: Int -&gt; String -&gt; Chunk Doc
+</span><a href="#local-6989586621679703969"><span class="hs-identifier hs-var hs-var">toChunk</span></a></span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Chunk Doc
+forall {ann}. Chunk (Doc ann)
+</span><a href="#local-6989586621679703988"><span class="hs-identifier hs-var">line</span></a></span><span>
+</span><span id="line-211"></span><span>    </span><span class="annot"><a href="#local-6989586621679703969"><span class="hs-identifier hs-var">toChunk</span></a></span><span> </span><span id="local-6989586621679703989"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679703989"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span id="local-6989586621679703990"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703990"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Doc -&gt; Doc) -&gt; Chunk Doc -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; Chunk a -&gt; Chunk b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Doc -&gt; Doc
+forall ann. Int -&gt; Doc ann -&gt; Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#indent"><span class="hs-identifier hs-var">Pretty.indent</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679703989"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Chunk Doc -&gt; Chunk Doc)
+-&gt; (String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#stringChunk"><span class="hs-identifier hs-var">Chunk.stringChunk</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703990"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-212"></span><span>
+</span><span id="line-213"></span><span>    </span><span id="local-6989586621679703988"><span class="annot"><span class="annottext">line :: Chunk (Doc ann)
+</span><a href="#local-6989586621679703988"><span class="hs-identifier hs-var hs-var">line</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Doc ann) -&gt; Chunk (Doc ann)
+forall a. Maybe a -&gt; Chunk a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#Chunk"><span class="hs-identifier hs-var">Chunk</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Doc ann -&gt; Maybe (Doc ann)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Doc ann
+forall ann. Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#softline"><span class="hs-identifier hs-var">Pretty.softline</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-214"></span><span>
+</span><span id="line-215"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#parserPrefs"><span class="hs-identifier hs-type">parserPrefs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ParserPrefs"><span class="hs-identifier hs-type">ParserPrefs</span></a></span><span>
+</span><span id="line-216"></span><span id="parserPrefs"><span class="annot"><span class="annottext">parserPrefs :: ParserPrefs
+</span><a href="Shrun.Configuration.Args.Parsing.html#parserPrefs"><span class="hs-identifier hs-var hs-var">parserPrefs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-217"></span><span>  </span><span class="annot"><span class="annottext">PrefsMod -&gt; ParserPrefs
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#prefs"><span class="hs-identifier hs-var">OA.prefs</span></a></span><span>
+</span><span id="line-218"></span><span>    </span><span class="annot"><span class="annottext">(PrefsMod -&gt; ParserPrefs) -&gt; PrefsMod -&gt; ParserPrefs
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[PrefsMod] -&gt; PrefsMod
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-219"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Int -&gt; PrefsMod
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#helpIndent"><span class="hs-identifier hs-var">OA.helpIndent</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">6</span></span><span>
+</span><span id="line-220"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-221"></span><span>
+</span><span id="line-222"></span><span id="local-6989586621679703572"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#argsParser"><span class="hs-identifier hs-type">argsParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703572"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-223"></span><span id="argsParser"><span class="annot"><span class="annottext">argsParser :: forall m. [String] -&gt; Parser (Args m)
+</span><a href="Shrun.Configuration.Args.Parsing.html#argsParser"><span class="hs-identifier hs-var hs-var">argsParser</span></a></span></span><span> </span><span id="local-6989586621679704003"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679704003"><span class="hs-identifier hs-var">prevKeys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-224"></span><span>  </span><span id="local-6989586621679704004"><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+</span><a href="#local-6989586621679704004"><span class="hs-identifier hs-var">configPaths</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Seq (WithDisabled OsPath))
+</span><a href="Shrun.Configuration.Args.Parsing.html#configParser"><span class="hs-identifier hs-var">configParser</span></a></span><span>
+</span><span id="line-225"></span><span>  </span><span id="local-6989586621679704006"><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679704006"><span class="hs-identifier hs-var">edges</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe (WithDisabled EdgeArgs))
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#edgesParser"><span class="hs-identifier hs-var">Graph.edgesParser</span></a></span><span>
+</span><span id="line-226"></span><span>  </span><span id="local-6989586621679704008"><span class="annot"><span class="annottext">CoreConfigArgs m
+</span><a href="#local-6989586621679704008"><span class="hs-identifier hs-var">coreConfig</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-227"></span><span>    </span><span class="annot"><span class="annottext">Parser (CoreConfigArgs m)
+forall m. Parser (CoreConfigArgs m)
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#coreParser"><span class="hs-identifier hs-var">Core.coreParser</span></a></span><span>
+</span><span id="line-228"></span><span>      </span><span class="annot"><span class="annottext">Parser (CoreConfigArgs m)
+-&gt; Parser (CoreConfigArgs m -&gt; CoreConfigArgs m)
+-&gt; Parser (CoreConfigArgs m)
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f a -&gt; f (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;**&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (CoreConfigArgs m -&gt; CoreConfigArgs m)
+forall a. Parser (a -&gt; a)
+</span><a href="Shrun.Configuration.Args.Parsing.html#version"><span class="hs-identifier hs-var">version</span></a></span><span>
+</span><span id="line-229"></span><span>      </span><span class="annot"><span class="annottext">Parser (CoreConfigArgs m)
+-&gt; Parser (CoreConfigArgs m -&gt; CoreConfigArgs m)
+-&gt; Parser (CoreConfigArgs m)
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f a -&gt; f (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;**&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (CoreConfigArgs m -&gt; CoreConfigArgs m)
+forall a. Parser (a -&gt; a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Extra.html#helper"><span class="hs-identifier hs-var">OA.helper</span></a></span><span>
+</span><span id="line-230"></span><span>
+</span><span id="line-231"></span><span>  </span><span id="local-6989586621679704013"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679704013"><span class="hs-identifier hs-var">dryRun</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="#local-6989586621679704014"><span class="hs-identifier hs-var">miscParser</span></a></span><span>
+</span><span id="line-232"></span><span>
+</span><span id="line-233"></span><span>  </span><span id="local-6989586621679704015"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679704015"><span class="hs-identifier hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; Parser (NESeq Text)
+</span><a href="Shrun.Configuration.Args.Parsing.html#commandsParser"><span class="hs-identifier hs-var">commandsParser</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679704003"><span class="hs-identifier hs-var">prevKeys</span></a></span><span>
+</span><span id="line-234"></span><span>
+</span><span id="line-235"></span><span>  </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-236"></span><span>    </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span>
+</span><span id="line-237"></span><span>      </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+configPaths :: Seq (WithDisabled OsPath)
+configPaths :: Seq (WithDisabled OsPath)
+</span><a href="Shrun.Configuration.Args.Parsing.html#configPaths"><span class="hs-identifier hs-var hs-var">configPaths</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-238"></span><span>        </span><span class="annot"><span class="annottext">CoreConfigArgs m
+coreConfig :: CoreConfigArgs m
+coreConfig :: CoreConfigArgs m
+</span><a href="Shrun.Configuration.Args.Parsing.html#coreConfig"><span class="hs-identifier hs-var hs-var">coreConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-239"></span><span>        </span><span class="annot"><span class="annottext">NESeq Text
+commands :: NESeq Text
+commands :: NESeq Text
+</span><a href="Shrun.Configuration.Args.Parsing.html#commands"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-240"></span><span>        </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+edges :: Maybe (WithDisabled EdgeArgs)
+edges :: Maybe (WithDisabled EdgeArgs)
+</span><a href="Shrun.Configuration.Args.Parsing.html#edges"><span class="hs-identifier hs-var hs-var">edges</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-241"></span><span>        </span><span class="annot"><span class="annottext">Bool
+dryRun :: Bool
+dryRun :: Bool
+</span><a href="Shrun.Configuration.Args.Parsing.html#dryRun"><span class="hs-identifier hs-var hs-var">dryRun</span></a></span><span>
+</span><span id="line-242"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-243"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-244"></span><span>    </span><span class="hs-comment">-- Want to put this in its own group. We put defaultConfig first for</span><span>
+</span><span id="line-245"></span><span>    </span><span class="hs-comment">-- alphabetical order.</span><span>
+</span><span id="line-246"></span><span>    </span><span id="local-6989586621679704014"><span class="annot"><span class="annottext">miscParser :: Parser Bool
+</span><a href="#local-6989586621679704014"><span class="hs-identifier hs-var hs-var">miscParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-247"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; Parser Bool -&gt; Parser Bool
+forall a. String -&gt; Parser a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#parserOptionGroup"><span class="hs-identifier hs-var">OA.parserOptionGroup</span></a></span><span>
+</span><span id="line-248"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Miscellaneous options:&quot;</span></span><span>
+</span><span id="line-249"></span><span>        </span><span class="annot"><span class="annottext">(Parser Bool -&gt; Parser Bool) -&gt; Parser Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Parser (Bool -&gt; Bool)
+forall a. Parser (a -&gt; a)
+</span><a href="Shrun.Configuration.Args.Parsing.html#defaultConfig"><span class="hs-identifier hs-var">defaultConfig</span></a></span><span>
+</span><span id="line-250"></span><span>        </span><span class="annot"><span class="annottext">Parser (Bool -&gt; Bool) -&gt; Parser Bool -&gt; Parser Bool
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Shrun.Configuration.Args.Parsing.html#dryRunParser"><span class="hs-identifier hs-var">dryRunParser</span></a></span><span>
+</span><span id="line-251"></span><span>
+</span><span id="line-252"></span><span id="local-6989586621679703602"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#version"><span class="hs-identifier hs-type">version</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679703602"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679703602"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-253"></span><span id="version"><span class="annot"><span class="annottext">version :: forall a. Parser (a -&gt; a)
+</span><a href="Shrun.Configuration.Args.Parsing.html#version"><span class="hs-identifier hs-var hs-var">version</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (a -&gt; a) -&gt; Parser (a -&gt; a)
+forall a. String -&gt; Mod OptionFields (a -&gt; a) -&gt; Parser (a -&gt; a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#infoOption"><span class="hs-identifier hs-var">OA.infoOption</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="Shrun.Configuration.Args.Parsing.html#versLong"><span class="hs-identifier hs-var">versLong</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (a -&gt; a)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;version&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields (a -&gt; a)
+-&gt; Mod OptionFields (a -&gt; a) -&gt; Mod OptionFields (a -&gt; a)
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields (a -&gt; a)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'v'</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields (a -&gt; a)
+-&gt; Mod OptionFields (a -&gt; a) -&gt; Mod OptionFields (a -&gt; a)
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields (a -&gt; a)
+forall (f :: Type -&gt; Type) a. Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#hidden"><span class="hs-identifier hs-var">OA.hidden</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-254"></span><span>
+</span><span id="line-255"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#versShort"><span class="hs-identifier hs-type">versShort</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-256"></span><span id="versShort"><span class="annot"><span class="annottext">versShort :: String
+</span><a href="Shrun.Configuration.Args.Parsing.html#versShort"><span class="hs-identifier hs-var hs-var">versShort</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-257"></span><span>  </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-258"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Shrun: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-259"></span><span>      </span><span class="annot"><span class="annottext">Version -&gt; String
+</span><span class="hs-identifier hs-var">showVersion</span></span><span> </span><span class="annot"><span class="annottext">Version
+</span><a href="Paths_shrun.html#version"><span class="hs-identifier hs-var">Paths.version</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-260"></span><span>      </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot; (&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-261"></span><span>      </span><span class="annot"><span class="annottext">OsPath -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#decodeLenient"><span class="hs-identifier hs-var">OsString.decodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">VersionInfo
+</span><a href="Shrun.Configuration.Args.Parsing.html#versionInfo"><span class="hs-identifier hs-var">versionInfo</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">gitShortHash</span><span class="hs-special">,</span><span>
+</span><span id="line-262"></span><span>      </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-263"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-264"></span><span>
+</span><span id="line-265"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#versLong"><span class="hs-identifier hs-type">versLong</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-266"></span><span id="versLong"><span class="annot"><span class="annottext">versLong :: String
+</span><a href="Shrun.Configuration.Args.Parsing.html#versLong"><span class="hs-identifier hs-var hs-var">versLong</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-267"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; String
+forall a. [a] -&gt; [[a]] -&gt; [a]
+</span><span class="hs-identifier hs-var">L.intercalate</span></span><span>
+</span><span id="line-268"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-269"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Shrun: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Version -&gt; String
+</span><span class="hs-identifier hs-var">showVersion</span></span><span> </span><span class="annot"><span class="annottext">Version
+</span><a href="Paths_shrun.html#version"><span class="hs-identifier hs-var">Paths.version</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-270"></span><span>      </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; - Git revision: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#decodeLenient"><span class="hs-identifier hs-var">OsString.decodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">VersionInfo
+</span><a href="Shrun.Configuration.Args.Parsing.html#versionInfo"><span class="hs-identifier hs-var">versionInfo</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">gitHash</span><span class="hs-special">,</span><span>
+</span><span id="line-271"></span><span>      </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; - Commit date:  &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#decodeLenient"><span class="hs-identifier hs-var">OsString.decodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">VersionInfo
+</span><a href="Shrun.Configuration.Args.Parsing.html#versionInfo"><span class="hs-identifier hs-var">versionInfo</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">gitCommitDate</span><span class="hs-special">,</span><span>
+</span><span id="line-272"></span><span>      </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; - GHC version:  &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">VersionInfo
+</span><a href="Shrun.Configuration.Args.Parsing.html#versionInfo"><span class="hs-identifier hs-var">versionInfo</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">ghc</span><span>
+</span><span id="line-273"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-274"></span><span>
+</span><span id="line-275"></span><span class="hs-keyword">data</span><span> </span><span id="VersionInfo"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#VersionInfo"><span class="hs-identifier hs-var">VersionInfo</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkVersionInfo"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkVersionInfo"><span class="hs-identifier hs-var">MkVersionInfo</span></a></span></span><span>
+</span><span id="line-276"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="gitCommitDate"><span class="annot"><span class="annottext">VersionInfo -&gt; OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#gitCommitDate"><span class="hs-identifier hs-var hs-var">gitCommitDate</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span>
+</span><span id="line-277"></span><span>    </span><span id="ghc"><span class="annot"><span class="annottext">VersionInfo -&gt; String
+</span><a href="Shrun.Configuration.Args.Parsing.html#ghc"><span class="hs-identifier hs-var hs-var">ghc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-278"></span><span>    </span><span id="gitHash"><span class="annot"><span class="annottext">VersionInfo -&gt; OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#gitHash"><span class="hs-identifier hs-var hs-var">gitHash</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span>
+</span><span id="line-279"></span><span>    </span><span id="gitShortHash"><span class="annot"><span class="annottext">VersionInfo -&gt; OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#gitShortHash"><span class="hs-identifier hs-var hs-var">gitShortHash</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span>
+</span><span id="line-280"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-281"></span><span>
+</span><span id="line-282"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#versionInfo"><span class="hs-identifier hs-type">versionInfo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#VersionInfo"><span class="hs-identifier hs-type">VersionInfo</span></a></span><span>
+</span><span id="line-283"></span><span id="versionInfo"><span class="annot"><span class="annottext">versionInfo :: VersionInfo
+</span><a href="Shrun.Configuration.Args.Parsing.html#versionInfo"><span class="hs-identifier hs-var hs-var">versionInfo</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-284"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkVersionInfo"><span class="hs-identifier hs-type">MkVersionInfo</span></a></span><span>
+</span><span id="line-285"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">gitCommitDate :: OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#gitCommitDate"><span class="hs-identifier hs-var">gitCommitDate</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679704040"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-286"></span><span>      </span><span class="annot"><span class="annottext">ghc :: String
+</span><a href="Shrun.Configuration.Args.Parsing.html#ghc"><span class="hs-identifier hs-var">ghc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Version -&gt; String
+</span><span class="hs-identifier hs-var">showVersion</span></span><span> </span><span class="annot"><span class="annottext">Version
+</span><span class="hs-identifier hs-var">Info.fullCompilerVersion</span></span><span class="hs-special">,</span><span>
+</span><span id="line-287"></span><span>      </span><span class="annot"><span class="annottext">gitHash :: OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#gitHash"><span class="hs-identifier hs-var">gitHash</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679704042"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-288"></span><span>      </span><span class="annot"><span class="annottext">gitShortHash :: OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#gitShortHash"><span class="hs-identifier hs-var">gitShortHash</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679704043"><span class="hs-identifier hs-var">sh</span></a></span><span>
+</span><span id="line-289"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-290"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-291"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679704040"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679704040"><span class="hs-identifier hs-var">d</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679704042"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679704042"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679704043"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679704043"><span class="hs-identifier hs-var">sh</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">$$</span><span class="annot"><span class="annottext">Addr#
+Int
+Int -&gt; Addr# -&gt; ByteArray
+ByteArray -&gt; ShortByteString
+ShortByteString -&gt; PosixString
+OsPath -&gt; OsPath -&gt; OsPath -&gt; (OsPath, OsPath, OsPath)
+PosixString -&gt; OsPath
+forall a b c. a -&gt; b -&gt; c -&gt; (a, b, c)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">TH.gitData</span></span><span>
+</span><span id="line-292"></span><span>
+</span><span id="line-293"></span><span id="local-6989586621679704049"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#defaultConfig"><span class="hs-identifier hs-type">defaultConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679704049"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679704049"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-294"></span><span id="defaultConfig"><span class="annot"><span class="annottext">defaultConfig :: forall a. Parser (a -&gt; a)
+</span><a href="Shrun.Configuration.Args.Parsing.html#defaultConfig"><span class="hs-identifier hs-var hs-var">defaultConfig</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-295"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (a -&gt; a) -&gt; Parser (a -&gt; a)
+forall a. String -&gt; Mod OptionFields (a -&gt; a) -&gt; Parser (a -&gt; a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#infoOption"><span class="hs-identifier hs-var">OA.infoOption</span></a></span><span>
+</span><span id="line-296"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="hs-special">$$</span><span class="annot"><span class="annottext">Addr#
+Int#
+Addr# -&gt; Int -&gt; Text
+Int# -&gt; Int
+</span><span class="hs-identifier hs-var hs-var hs-var">TH.defaultToml</span></span><span class="hs-special">)</span><span>
+</span><span id="line-297"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (a -&gt; a)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;default-config&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields (a -&gt; a)
+-&gt; Mod OptionFields (a -&gt; a) -&gt; Mod OptionFields (a -&gt; a)
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (a -&gt; a)
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679704056"><span class="hs-identifier hs-var">help</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-298"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-299"></span><span>    </span><span id="local-6989586621679704056"><span class="annot"><span class="annottext">help :: String
+</span><a href="#local-6989586621679704056"><span class="hs-identifier hs-var hs-var">help</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Writes a default toml config file to stdout.&quot;</span></span><span>
+</span><span id="line-300"></span><span>
+</span><span id="line-301"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#configParser"><span class="hs-identifier hs-type">configParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-302"></span><span id="configParser"><span class="annot"><span class="annottext">configParser :: Parser (Seq (WithDisabled OsPath))
+</span><a href="Shrun.Configuration.Args.Parsing.html#configParser"><span class="hs-identifier hs-var hs-var">configParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-303"></span><span>  </span><span class="annot"><span class="annottext">([WithDisabled OsPath] -&gt; Seq (WithDisabled OsPath))
+-&gt; Parser [WithDisabled OsPath]
+-&gt; Parser (Seq (WithDisabled OsPath))
+forall a b. (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">[WithDisabled OsPath] -&gt; Seq (WithDisabled OsPath)
+forall a. [a] -&gt; Seq a
+</span><a href="Shrun.Prelude.html#listToSeq"><span class="hs-identifier hs-var">listToSeq</span></a></span><span>
+</span><span id="line-304"></span><span>    </span><span class="annot"><span class="annottext">(Parser [WithDisabled OsPath]
+ -&gt; Parser (Seq (WithDisabled OsPath)))
+-&gt; (Parser (WithDisabled OsPath) -&gt; Parser [WithDisabled OsPath])
+-&gt; Parser (WithDisabled OsPath)
+-&gt; Parser (Seq (WithDisabled OsPath))
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled OsPath) -&gt; Parser [WithDisabled OsPath]
+forall a. Parser a -&gt; Parser [a]
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f [a]
+</span><span class="hs-identifier hs-var">many</span></span><span>
+</span><span id="line-305"></span><span>    </span><span class="annot"><span class="annottext">(Parser (WithDisabled OsPath)
+ -&gt; Parser (Seq (WithDisabled OsPath)))
+-&gt; Parser (WithDisabled OsPath)
+-&gt; Parser (Seq (WithDisabled OsPath))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM OsPath
+-&gt; [Mod OptionFields (WithDisabled OsPath)]
+-&gt; Parser (WithDisabled OsPath)
+forall a.
+ReadM a
+-&gt; [Mod OptionFields (WithDisabled a)] -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParserNoOpts"><span class="hs-identifier hs-var">Utils.withDisabledParserNoOpts</span></a></span><span>
+</span><span id="line-306"></span><span>      </span><span class="annot"><span class="annottext">ReadM OsPath
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-optparse-0.1-1874f3f58535d51356e9548b81f6e2198653fa8dbf7f40e423fb7c128b82ab60/share/doc/html/src/Effects.Optparse.html#validOsPath"><span class="hs-identifier hs-var">validOsPath</span></a></span><span>
+</span><span id="line-307"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields (WithDisabled OsPath)]
+</span><a href="#local-6989586621679704061"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-308"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-309"></span><span>    </span><span id="local-6989586621679704061"><span class="annot"><span class="annottext">opts :: [Mod OptionFields (WithDisabled OsPath)]
+</span><a href="#local-6989586621679704061"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-310"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled OsPath)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;config&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-311"></span><span>        </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields (WithDisabled OsPath)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'c'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-312"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled OsPath)
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(PATH | off)...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-313"></span><span>        </span><span class="annot"><span class="annottext">Completer -&gt; Mod OptionFields (WithDisabled OsPath)
+forall (f :: Type -&gt; Type) a.
+HasCompleter f =&gt;
+Completer -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completer"><span class="hs-identifier hs-var">OA.completer</span></a></span><span> </span><span class="annot"><span class="annottext">Completer
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-optparse-0.1-1874f3f58535d51356e9548b81f6e2198653fa8dbf7f40e423fb7c128b82ab60/share/doc/html/src/Effects.Optparse.Completer.html#compgenCwdPathsCompleter"><span class="hs-identifier hs-var">EOC.compgenCwdPathsCompleter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-314"></span><span>        </span><span class="annot"><span class="annottext">[String] -&gt; Mod OptionFields (WithDisabled OsPath)
+forall (f :: Type -&gt; Type) a. HasCompleter f =&gt; [String] -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completeWith"><span class="hs-identifier hs-var">OA.completeWith</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;off&quot;</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-315"></span><span>        </span><span class="annot"><span class="annottext">Item [Mod OptionFields (WithDisabled OsPath)]
+Mod OptionFields (WithDisabled OsPath)
+</span><a href="#local-6989586621679704066"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-316"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-317"></span><span>
+</span><span id="line-318"></span><span>    </span><span id="local-6989586621679704066"><span class="annot"><span class="annottext">helpTxt :: Mod OptionFields (WithDisabled OsPath)
+</span><a href="#local-6989586621679704066"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-319"></span><span>      </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Mod OptionFields (WithDisabled OsPath)
+forall (f :: Type -&gt; Type) a. Maybe Doc -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#helpDoc"><span class="hs-identifier hs-var">OA.helpDoc</span></a></span><span>
+</span><span id="line-320"></span><span>        </span><span class="annot"><span class="annottext">(Maybe Doc -&gt; Mod OptionFields (WithDisabled OsPath))
+-&gt; (Chunk Doc -&gt; Maybe Doc)
+-&gt; Chunk Doc
+-&gt; Mod OptionFields (WithDisabled OsPath)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Chunk Doc -&gt; Maybe Doc
+forall a. Chunk a -&gt; Maybe a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#unChunk"><span class="hs-identifier hs-var">Chunk.unChunk</span></a></span><span>
+</span><span id="line-321"></span><span>        </span><span class="annot"><span class="annottext">(Chunk Doc -&gt; Mod OptionFields (WithDisabled OsPath))
+-&gt; Chunk Doc -&gt; Mod OptionFields (WithDisabled OsPath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Chunk Doc] -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#vcatChunks"><span class="hs-identifier hs-var">Chunk.vcatChunks</span></a></span><span>
+</span><span id="line-322"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Item [Chunk Doc]
+Chunk Doc
+</span><a href="#local-6989586621679704069"><span class="hs-identifier hs-var">helpList</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-323"></span><span>            </span><span class="annot"><span class="annottext">Doc -&gt; Chunk Doc
+forall a. a -&gt; Chunk a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#toChunk"><span class="hs-identifier hs-var">Utils.toChunk</span></a></span><span> </span><span class="annot"><span class="annottext">Doc
+forall ann. Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#softline"><span class="hs-identifier hs-var">Pretty.softline</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-324"></span><span>            </span><span class="annot"><span class="annottext">Item [Chunk Doc]
+Chunk Doc
+</span><a href="#local-6989586621679704071"><span class="hs-identifier hs-var">outtro</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-325"></span><span>            </span><span class="annot"><span class="annottext">Doc -&gt; Chunk Doc
+forall a. a -&gt; Chunk a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#toChunk"><span class="hs-identifier hs-var">Utils.toChunk</span></a></span><span> </span><span class="annot"><span class="annottext">Doc
+forall ann. Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#softline"><span class="hs-identifier hs-var">Pretty.softline</span></a></span><span>
+</span><span id="line-326"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-327"></span><span>
+</span><span id="line-328"></span><span>    </span><span id="local-6989586621679704069"><span class="annot"><span class="annottext">helpList :: Chunk Doc
+</span><a href="#local-6989586621679704069"><span class="hs-identifier hs-var hs-var">helpList</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-329"></span><span>      </span><span class="annot"><span class="annottext">NESeq String -&gt; Chunk Doc
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#itemizeHelper"><span class="hs-identifier hs-var">Utils.itemizeHelper</span></a></span><span>
+</span><span id="line-330"></span><span>        </span><span class="annot"><span class="annottext">(NESeq String -&gt; Chunk Doc) -&gt; NESeq String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679704073"><span class="hs-identifier hs-var">intro</span></a></span><span>
+</span><span id="line-331"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Seq String -&gt; NESeq String
+forall a. a -&gt; Seq a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-var">:&lt;||</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><span class="hs-string">&quot;&lt;XDG_config&gt;/shrun/config.toml&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-332"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><span class="hs-string">&quot;&lt;XDG_config&gt;/shrun/.shrun.toml&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-333"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><span class="hs-string">&quot;&lt;XDG_config&gt;/shrun/shrun.toml&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-334"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><span class="hs-string">&quot;./.shrun.toml&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-335"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><span class="hs-string">&quot;./shrun.toml&quot;</span></span><span>
+</span><span id="line-336"></span><span>             </span><span class="hs-special">]</span><span>
+</span><span id="line-337"></span><span>
+</span><span id="line-338"></span><span>    </span><span id="local-6989586621679704073"><span class="annot"><span class="annottext">intro :: String
+</span><a href="#local-6989586621679704073"><span class="hs-identifier hs-var hs-var">intro</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-339"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-340"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Path(s) to TOML config file(s). This argument can be given multiple &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-341"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;times, in which case all keys are merged. When there is a conflict, &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-342"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;the right-most config wins. The legends are also merged, with the &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-343"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;same right-bias for conflicting keys. The string 'off' disables &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-344"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;all config files to its left. Finally, we also search in specific &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-345"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;locations automatically. These are:&quot;</span></span><span>
+</span><span id="line-346"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-347"></span><span>
+</span><span id="line-348"></span><span>    </span><span id="local-6989586621679704071"><span class="annot"><span class="annottext">outtro :: Chunk Doc
+</span><a href="#local-6989586621679704071"><span class="hs-identifier hs-var hs-var">outtro</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-349"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-350"></span><span>        </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-351"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;These files are considered 'left' of any configs explicitly given &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-352"></span><span>            </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;with --config, hence disabled with 'off'.&quot;</span></span><span>
+</span><span id="line-353"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-354"></span><span>
+</span><span id="line-355"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#commandsParser"><span class="hs-identifier hs-type">commandsParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-356"></span><span id="commandsParser"><span class="annot"><span class="annottext">commandsParser :: [String] -&gt; Parser (NESeq Text)
+</span><a href="Shrun.Configuration.Args.Parsing.html#commandsParser"><span class="hs-identifier hs-var hs-var">commandsParser</span></a></span></span><span> </span><span id="local-6989586621679704089"><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679704089"><span class="hs-identifier hs-var">prevKeys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-357"></span><span>  </span><span class="annot"><span class="annottext">[Text] -&gt; NESeq Text
+forall a. HasCallStack =&gt; [a] -&gt; NESeq a
+</span><a href="Shrun.Prelude.html#unsafeListToNESeq"><span class="hs-identifier hs-var">unsafeListToNESeq</span></a></span><span>
+</span><span id="line-358"></span><span>    </span><span class="annot"><span class="annottext">([Text] -&gt; NESeq Text) -&gt; Parser [Text] -&gt; Parser (NESeq Text)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Text -&gt; Parser [Text]
+forall a. Parser a -&gt; Parser [a]
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f [a]
+</span><span class="hs-identifier hs-var">OA.some</span></span><span>
+</span><span id="line-359"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span>
+</span><span id="line-360"></span><span>          </span><span class="annot"><span class="annottext">(String -&gt; Text) -&gt; Parser String -&gt; Parser Text
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">ReadM String -&gt; Mod ArgumentFields String -&gt; Parser String
+forall a. ReadM a -&gt; Mod ArgumentFields a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#argument"><span class="hs-identifier hs-var">OA.argument</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM String
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="annot"><span class="annottext">Mod ArgumentFields String
+</span><a href="#local-6989586621679704095"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-361"></span><span>      </span><span class="hs-special">)</span><span>
+</span><span id="line-362"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-363"></span><span>    </span><span id="local-6989586621679704095"><span class="annot"><span class="annottext">opts :: Mod ArgumentFields String
+</span><a href="#local-6989586621679704095"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-364"></span><span>      </span><span class="annot"><span class="annottext">[Mod ArgumentFields String] -&gt; Mod ArgumentFields String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-365"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod ArgumentFields String
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Commands...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-366"></span><span>          </span><span class="annot"><span class="annottext">[String] -&gt; Mod ArgumentFields String
+forall (f :: Type -&gt; Type) a. HasCompleter f =&gt; [String] -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completeWith"><span class="hs-identifier hs-var">OA.completeWith</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679704089"><span class="hs-identifier hs-var">prevKeys</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-367"></span><span>          </span><span class="annot"><span class="annottext">Completer -&gt; Mod ArgumentFields String
+forall (f :: Type -&gt; Type) a.
+HasCompleter f =&gt;
+Completer -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completer"><span class="hs-identifier hs-var">OA.completer</span></a></span><span> </span><span class="annot"><span class="annottext">Completer
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-optparse-0.1-1874f3f58535d51356e9548b81f6e2198653fa8dbf7f40e423fb7c128b82ab60/share/doc/html/src/Effects.Optparse.Completer.html#compgenCwdPathsCompleter"><span class="hs-identifier hs-var">EOC.compgenCwdPathsCompleter</span></a></span><span>
+</span><span id="line-368"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-369"></span><span>
+</span><span id="line-370"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#dryRunParser"><span class="hs-identifier hs-type">dryRunParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-371"></span><span id="dryRunParser"><span class="annot"><span class="annottext">dryRunParser :: Parser Bool
+</span><a href="Shrun.Configuration.Args.Parsing.html#dryRunParser"><span class="hs-identifier hs-var hs-var">dryRunParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-372"></span><span>  </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#switch"><span class="hs-identifier hs-var">OA.switch</span></a></span><span>
+</span><span id="line-373"></span><span>    </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Mod FlagFields Bool] -&gt; Mod FlagFields Bool
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-374"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod FlagFields Bool
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;dry-run&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-375"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Mod FlagFields Bool
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelpNoLine"><span class="hs-identifier hs-var">Utils.mkHelpNoLine</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Prints the configuration and commands that would be run to stdout, then exits.&quot;</span></span><span>
+</span><span id="line-376"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-377"></span></pre></body></html>

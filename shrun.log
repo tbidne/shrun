@@ -1,0 +1,1811 @@
+[2026-08-07 14:29:30][Command][haddock_push] Starting...
+[2026-08-07 14:29:30][Command][haddock_push] Your branch is ahead of 'origin/main' by 1 commit.
+[2026-08-07 14:29:30][Command][haddock_push]   (use "git push" to publish your local commits)
+[2026-08-07 14:29:30][Command][haddock_push] Deleted branch gh-pages (was 73a95ad8).
+[2026-08-07 14:29:30][Command][haddock_push] Already on 'main'
+[2026-08-07 14:29:30][Command][haddock_push] Switched to a new branch 'gh-pages'
+[2026-08-07 14:29:32][Command][haddock_push] Resolving dependencies...
+[2026-08-07 14:29:34][Command][haddock_push] Build profile: -w ghc-9.12.3 -O0
+[2026-08-07 14:29:34][Command][haddock_push] In order, the following will be built (use -v for more details):
+[2026-08-07 14:29:34][Command][haddock_push]  - shrun-0.10 (lib) (configuration changed)
+[2026-08-07 14:29:34][Command][haddock_push]  - shrun-0.10 (lib:test-utils) (configuration changed)
+[2026-08-07 14:29:35][Command][haddock_push] Configuring library for shrun-0.10...
+[2026-08-07 14:29:35][Command][haddock_push] Configuring library 'test-utils' for shrun-0.10...
+[2026-08-07 14:29:38][Command][haddock_push] Preprocessing library 'test-utils' for shrun-0.10...
+[2026-08-07 14:29:38][Command][haddock_push] Running Haddock on library 'test-utils' for shrun-0.10...
+[2026-08-07 14:29:38][Command][haddock_push] Warning: The following packages have no Haddock documentation installed. No
+[2026-08-07 14:29:38][Command][haddock_push] links will be generated to these packages: path-0.9.6
+[2026-08-07 14:29:39][Command][haddock_push] Preprocessing library for shrun-0.10...
+[2026-08-07 14:29:39][Command][haddock_push] Running Haddock on library for shrun-0.10...
+[2026-08-07 14:29:39][Command][haddock_push] [1 of 4] Compiling Test.Shrun.Logger ( test/utils/Test/Shrun/Logger.hs, /tmp/nix-shell-3210585-1784310710/ghc3215773_tmp_0/ghc_tmp_4.o, /tmp/nix-shell-3210585-1784310710/ghc3215773_tmp_0/ghc_tmp_4.dyn_o )
+[2026-08-07 14:29:39][Command][haddock_push] Warning: The following packages have no Haddock documentation installed. No
+[2026-08-07 14:29:39][Command][haddock_push] links will be generated to these packages: attoparsec-0.14.4, path-0.9.6
+[2026-08-07 14:29:40][Command][haddock_push] [2 of 4] Compiling Test.Shrun.Process ( test/utils/Test/Shrun/Process.hs, /tmp/nix-shell-3210585-1784310710/ghc3215773_tmp_0/ghc_tmp_6.o, /tmp/nix-shell-3210585-1784310710/ghc3215773_tmp_0/ghc_tmp_6.dyn_o )
+[2026-08-07 14:29:40][Command][haddock_push] [3 of 4] Compiling Test.Shrun.Installer ( test/utils/Test/Shrun/Installer.hs, nothing )
+[2026-08-07 14:29:40][Command][haddock_push] [4 of 4] Compiling Test.Shrun.Verifier ( test/utils/Test/Shrun/Verifier.hs, nothing )
+[2026-08-07 14:29:40][Command][haddock_push] [ 1 of 64] Compiling Paths_shrun      ( dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/noopt/build/autogen/Paths_shrun.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_12.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_12.dyn_o )
+[2026-08-07 14:29:41][Command][haddock_push] [ 2 of 64] Compiling Shrun.Data.Result ( src/Shrun/Data/Result.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_112.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_112.dyn_o )
+[2026-08-07 14:29:41][Command][haddock_push] [ 3 of 64] Compiling Shrun.Prelude    ( src/Shrun/Prelude.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_132.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_132.dyn_o )
+[2026-08-07 14:29:43][Command][haddock_push] [ 4 of 64] Compiling Shrun.Logging.Types.Internal ( src/Shrun/Logging/Types/Internal.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_128.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_128.dyn_o )
+[2026-08-07 14:29:43][Command][haddock_push] [ 5 of 64] Compiling Shrun.Logging.MonadRegionLogger ( src/Shrun/Logging/MonadRegionLogger.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_124.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_124.dyn_o )
+[2026-08-07 14:29:43][Command][haddock_push] [ 6 of 64] Compiling Shrun.Data.Text  ( src/Shrun/Data/Text.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_114.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_114.dyn_o )
+[2026-08-07 14:29:43][Command][haddock_push] [ 7 of 64] Compiling Shrun.Configuration.Default ( src/Shrun/Configuration/Default.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_102.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_102.dyn_o )
+[2026-08-07 14:29:43][Command][haddock_push] [ 8 of 64] Compiling Shrun.Configuration.Data.WithDisabled ( src/Shrun/Configuration/Data/WithDisabled.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_100.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_100.dyn_o )
+[2026-08-07 14:29:44][Command][haddock_push] [ 9 of 64] Compiling Shrun.Configuration.Data.FileLogging.FilePathDefault ( src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_78.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_78.dyn_o )
+[2026-08-07 14:29:44][Command][haddock_push] [10 of 64] Compiling Shrun.Configuration.Data.CommandLogging.PollInterval ( src/Shrun/Configuration/Data/CommandLogging/PollInterval.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_54.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_54.dyn_o )
+[2026-08-07 14:29:44][Command][haddock_push] [11 of 64] Compiling Shrun.Command.Types.Internal ( src/Shrun/Command/Types/Internal.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_20.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_20.dyn_o )
+[2026-08-07 14:29:44][Command][haddock_push] [12 of 64] Compiling Shrun.Command.Types ( src/Shrun/Command/Types.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_18.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_18.dyn_o )
+[2026-08-07 14:29:45][Command][haddock_push] [13 of 64] Compiling Shrun.Logging.Types ( src/Shrun/Logging/Types.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_126.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_126.dyn_o )
+[2026-08-07 14:29:45][Command][haddock_push] [14 of 64] Compiling Shrun.Configuration.Data.Graph ( src/Shrun/Configuration/Data/Graph.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_82.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_82.dyn_o )
+[2026-08-07 14:29:46][Command][haddock_push] [15 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph.Utils ( src/Shrun/Configuration/Args/Parsing/Graph/Utils.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_44.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_44.dyn_o )
+[2026-08-07 14:29:47][Command][haddock_push] [16 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph.Sequential ( src/Shrun/Configuration/Args/Parsing/Graph/Sequential.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_42.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_42.dyn_o )
+[2026-08-07 14:29:47][Command][haddock_push] [17 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph.Edges ( src/Shrun/Configuration/Args/Parsing/Graph/Edges.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_40.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_40.dyn_o )
+[2026-08-07 14:29:47][Command][haddock_push] [18 of 64] Compiling Shrun.Utils      ( src/Shrun/Utils.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_136.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_136.dyn_o )
+[2026-08-07 14:29:48][Command][haddock_push] [19 of 64] Compiling Shrun.Configuration.Data.Truncation ( src/Shrun/Configuration/Data/Truncation.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_98.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_98.dyn_o )
+[2026-08-07 14:29:48][Command][haddock_push] [20 of 64] Compiling Shrun.Configuration.Data.ConfigPhase ( src/Shrun/Configuration/Data/ConfigPhase.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_64.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_64.dyn_o )
+[2026-08-07 14:29:48][Command][haddock_push] [21 of 64] Compiling Shrun.Configuration.Data.CommonLogging.KeyHideSwitch ( src/Shrun/Configuration/Data/CommonLogging/KeyHideSwitch.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_62.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_62.dyn_o )
+[2026-08-07 14:29:48][Command][haddock_push] [22 of 64] Compiling Shrun.Configuration.Data.CommonLogging ( src/Shrun/Configuration/Data/CommonLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_60.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_60.dyn_o )
+[2026-08-07 14:29:49][Command][haddock_push] [23 of 64] Compiling Shrun.Configuration.Data.StripControl ( src/Shrun/Configuration/Data/StripControl.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_96.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_96.dyn_o )
+[2026-08-07 14:29:49][Command][haddock_push] [24 of 64] Compiling Shrun.Configuration.Data.Notify.Timeout ( src/Shrun/Configuration/Data/Notify/Timeout.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_94.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_94.dyn_o )
+[2026-08-07 14:29:49][Command][haddock_push] [25 of 64] Compiling Shrun.Configuration.Data.Notify.System ( src/Shrun/Configuration/Data/Notify/System.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_92.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_92.dyn_o )
+[2026-08-07 14:29:49][Command][haddock_push] [26 of 64] Compiling Shrun.Configuration.Args.Parsing.TH ( src/Shrun/Configuration/Args/Parsing/TH.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_48.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_48.dyn_o )
+[2026-08-07 14:29:50][Command][haddock_push] <no location info>: warning: [-Wmissed-extra-shared-lib]
+[2026-08-07 14:29:50][Command][haddock_push]     libz.so: cannot open shared object file: No such file or directory
+[2026-08-07 14:29:50][Command][haddock_push]     It's OK if you don't want to use symbols from it directly.
+[2026-08-07 14:29:50][Command][haddock_push]     (the package DLL is loaded by the system linker
+[2026-08-07 14:29:50][Command][haddock_push]      which manages dependencies by itself).
+[2026-08-07 14:29:50][Command][haddock_push] 
+[2026-08-07 14:29:50][Command][haddock_push] [27 of 64] Compiling Shrun.Configuration.Data.Notify.Action ( src/Shrun/Configuration/Data/Notify/Action.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_90.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_90.dyn_o )
+[2026-08-07 14:29:51][Command][haddock_push] [28 of 64] Compiling Shrun.Configuration.Data.Notify ( src/Shrun/Configuration/Data/Notify.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_88.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_88.dyn_o )
+[2026-08-07 14:29:52][Command][haddock_push] [29 of 64] Compiling Shrun.Configuration.Data.LegendKeysCache ( src/Shrun/Configuration/Data/LegendKeysCache.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_84.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_84.dyn_o )
+[2026-08-07 14:29:52][Command][haddock_push] [30 of 64] Compiling Shrun.Configuration.Data.FileLogging.FileSizeMode ( src/Shrun/Configuration/Data/FileLogging/FileSizeMode.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_80.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_80.dyn_o )
+[2026-08-07 14:29:52][Command][haddock_push] [31 of 64] Compiling Shrun.Configuration.Data.FileLogging.FileMode ( src/Shrun/Configuration/Data/FileLogging/FileMode.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_76.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_76.dyn_o )
+[2026-08-07 14:29:53][Command][haddock_push] [32 of 64] Compiling Shrun.Configuration.Data.FileLogging ( src/Shrun/Configuration/Data/FileLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_74.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_74.dyn_o )
+[2026-08-07 14:29:57][Command][haddock_push] [33 of 64] Compiling Shrun.Configuration.Data.Core.Timeout ( src/Shrun/Configuration/Data/Core/Timeout.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_72.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_72.dyn_o )
+[2026-08-07 14:29:57][Command][haddock_push] [34 of 64] Compiling Shrun.Configuration.Data.ConsoleLogging.TimerFormat ( src/Shrun/Configuration/Data/ConsoleLogging/TimerFormat.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_68.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_68.dyn_o )
+[2026-08-07 14:29:57][Command][haddock_push] [35 of 64] Compiling Shrun.Configuration.Data.ConsoleLogging ( src/Shrun/Configuration/Data/ConsoleLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_66.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_66.dyn_o )
+[2026-08-07 14:29:59][Command][haddock_push] [36 of 64] Compiling Shrun.Configuration.Data.CommandLogging.ReadStrategy ( src/Shrun/Configuration/Data/CommandLogging/ReadStrategy.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_58.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_58.dyn_o )
+[2026-08-07 14:29:59][Command][haddock_push] [37 of 64] Compiling Shrun.Configuration.Data.CommandLogging.ReadSize ( src/Shrun/Configuration/Data/CommandLogging/ReadSize.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_56.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_56.dyn_o )
+[2026-08-07 14:29:59][Command][haddock_push] [38 of 64] Compiling Shrun.Configuration.Data.CommandLogging ( src/Shrun/Configuration/Data/CommandLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_52.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_52.dyn_o )
+[2026-08-07 14:30:00][Command][haddock_push] Haddock coverage:
+[2026-08-07 14:30:00][Command][haddock_push]    0% (  0 /  4) in 'Test.Shrun.Logger'
+[2026-08-07 14:30:00][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:00][Command][haddock_push]     Module header
+[2026-08-07 14:30:00][Command][haddock_push]     putLog (test/utils/Test/Shrun/Logger.hs:19)
+[2026-08-07 14:30:00][Command][haddock_push]     putLogHeader (test/utils/Test/Shrun/Logger.hs:33)
+[2026-08-07 14:30:00][Command][haddock_push]     putLogLines (test/utils/Test/Shrun/Logger.hs:22)
+[2026-08-07 14:30:00][Command][haddock_push]   22% (  2 /  9) in 'Test.Shrun.Process'
+[2026-08-07 14:30:00][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:00][Command][haddock_push]     Module header
+[2026-08-07 14:30:00][Command][haddock_push]     runProcess (test/utils/Test/Shrun/Process.hs:27)
+[2026-08-07 14:30:00][Command][haddock_push]     runProcessArgs (test/utils/Test/Shrun/Process.hs:34)
+[2026-08-07 14:30:00][Command][haddock_push]     runProcessOrDie (test/utils/Test/Shrun/Process.hs:41)
+[2026-08-07 14:30:00][Command][haddock_push]     runProcessOrDieQuiet (test/utils/Test/Shrun/Process.hs:68)
+[2026-08-07 14:30:00][Command][haddock_push]     runProcessTotal (test/utils/Test/Shrun/Process.hs:85)
+[2026-08-07 14:30:00][Command][haddock_push]     displayCmd (test/utils/Test/Shrun/Process.hs:112)
+[2026-08-07 14:30:00][Command][haddock_push]    0% (  0 /  2) in 'Test.Shrun.Installer'
+[2026-08-07 14:30:00][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:00][Command][haddock_push]     Module header
+[2026-08-07 14:30:00][Command][haddock_push]     installShrunOnce (test/utils/Test/Shrun/Installer.hs:15)
+[2026-08-07 14:30:00][Command][haddock_push]   92% ( 12 / 13) in 'Test.Shrun.Verifier'
+[2026-08-07 14:30:00][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:00][Command][haddock_push]     verifyExpectedN (test/utils/Test/Shrun/Verifier.hs:56)
+[2026-08-07 14:30:01][Command][haddock_push] Documentation created:
+[2026-08-07 14:30:01][Command][haddock_push] /home/tommy/Dev/tommy/github/shrun/./dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/l/test-utils/noopt/doc/html/shrun/test-utils
+[2026-08-07 14:30:01][Command][haddock_push] [39 of 64] Compiling Shrun.IO.Handle  ( src/Shrun/IO/Handle.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_118.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_118.dyn_o )
+[2026-08-07 14:30:02][Command][haddock_push] [40 of 64] Compiling Shrun.Configuration.Data.Core ( src/Shrun/Configuration/Data/Core.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_70.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_70.dyn_o )
+[2026-08-07 14:30:04][Command][haddock_push] [41 of 64] Compiling Shrun.Configuration.Env.Types ( src/Shrun/Configuration/Env/Types.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_104.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_104.dyn_o )
+[2026-08-07 14:30:06][Command][haddock_push] [42 of 64] Compiling Shrun.ShellT     ( src/Shrun/ShellT.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_134.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_134.dyn_o )
+[2026-08-07 14:30:11][Command][haddock_push] [43 of 64] Compiling Shrun.Logging.Formatting ( src/Shrun/Logging/Formatting.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_122.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_122.dyn_o )
+[2026-08-07 14:30:12][Command][haddock_push] [44 of 64] Compiling Shrun.Logging    ( src/Shrun/Logging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_120.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_120.dyn_o )
+[2026-08-07 14:30:13][Command][haddock_push] [45 of 64] Compiling Shrun.Notify     ( src/Shrun/Notify.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_130.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_130.dyn_o )
+[2026-08-07 14:30:14][Command][haddock_push] [46 of 64] Compiling Shrun.IO         ( src/Shrun/IO.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_116.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_116.dyn_o )
+[2026-08-07 14:30:20][Command][haddock_push] [47 of 64] Compiling Shrun.Command    ( src/Shrun/Command.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_16.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_16.dyn_o )
+[2026-08-07 14:30:22][Command][haddock_push] [48 of 64] Compiling Shrun.Configuration.Data.MergedConfig ( src/Shrun/Configuration/Data/MergedConfig.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_86.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_86.dyn_o )
+[2026-08-07 14:30:23][Command][haddock_push] [49 of 64] Compiling Shrun.Configuration.Args.Parsing.Utils ( src/Shrun/Configuration/Args/Parsing/Utils.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_50.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_50.dyn_o )
+[2026-08-07 14:30:24][Command][haddock_push] [50 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph ( src/Shrun/Configuration/Args/Parsing/Graph.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_38.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_38.dyn_o )
+[2026-08-07 14:30:24][Command][haddock_push] [51 of 64] Compiling Shrun.Configuration.Toml.Legend ( src/Shrun/Configuration/Toml/Legend.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_110.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_110.dyn_o )
+[2026-08-07 14:30:25][Command][haddock_push] [52 of 64] Compiling Shrun.Configuration.Toml ( src/Shrun/Configuration/Toml.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_108.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_108.dyn_o )
+[2026-08-07 14:30:27][Command][haddock_push] [53 of 64] Compiling Shrun.Configuration.Legend ( src/Shrun/Configuration/Legend.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_106.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_106.dyn_o )
+[2026-08-07 14:30:28][Command][haddock_push] [54 of 64] Compiling Shrun.Configuration.Args.Parsing.CommonLogging ( src/Shrun/Configuration/Args/Parsing/CommonLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_30.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_30.dyn_o )
+[2026-08-07 14:30:29][Command][haddock_push] [55 of 64] Compiling Shrun.Configuration.Args.Parsing.Notify ( src/Shrun/Configuration/Args/Parsing/Notify.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_46.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_46.dyn_o )
+[2026-08-07 14:30:29][Command][haddock_push] [56 of 64] Compiling Shrun.Configuration.Args.Parsing.FileLogging ( src/Shrun/Configuration/Args/Parsing/FileLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_36.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_36.dyn_o )
+[2026-08-07 14:30:30][Command][haddock_push] [57 of 64] Compiling Shrun.Configuration.Args.Parsing.ConsoleLogging ( src/Shrun/Configuration/Args/Parsing/ConsoleLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_32.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_32.dyn_o )
+[2026-08-07 14:30:30][Command][haddock_push] [58 of 64] Compiling Shrun.Configuration.Args.Parsing.CommandLogging ( src/Shrun/Configuration/Args/Parsing/CommandLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_28.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_28.dyn_o )
+[2026-08-07 14:30:31][Command][haddock_push] [59 of 64] Compiling Shrun.Configuration.Args.Parsing.Core ( src/Shrun/Configuration/Args/Parsing/Core.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_34.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_34.dyn_o )
+[2026-08-07 14:30:32][Command][haddock_push] [60 of 64] Compiling Shrun.Configuration.Args.Parsing ( src/Shrun/Configuration/Args/Parsing.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_26.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_26.dyn_o )
+[2026-08-07 14:30:38][Command][haddock_push] [61 of 64] Compiling Shrun.Configuration.Args ( src/Shrun/Configuration/Args.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_24.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_24.dyn_o )
+[2026-08-07 14:30:38][Command][haddock_push] [62 of 64] Compiling Shrun.Configuration ( src/Shrun/Configuration.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_22.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_22.dyn_o )
+[2026-08-07 14:30:39][Command][haddock_push] [63 of 64] Compiling Shrun            ( src/Shrun.hs, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_14.o, /tmp/nix-shell-3210585-1784310710/ghc3215944_tmp_0/ghc_tmp_14.dyn_o )
+[2026-08-07 14:30:44][Command][haddock_push] [64 of 64] Compiling Shrun.Configuration.Env ( src/Shrun/Configuration/Env.hs, nothing ) [Flags changed]
+[2026-08-07 14:30:46][Command][haddock_push] Haddock coverage:
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Data.Result'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'fromIntegral' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   91% (332 /362) in 'Shrun.Prelude'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     foldMapA (src/Shrun/Prelude.hs:739)
+[2026-08-07 14:30:46][Command][haddock_push]     PrettySwitch (src/Shrun/Prelude.hs:674)
+[2026-08-07 14:30:46][Command][haddock_push]     indentField (src/Shrun/Prelude.hs:682)
+[2026-08-07 14:30:46][Command][haddock_push]     prettyBytesFloat (src/Shrun/Prelude.hs:695)
+[2026-08-07 14:30:46][Command][haddock_push]     prettyBytesInt (src/Shrun/Prelude.hs:708)
+[2026-08-07 14:30:46][Command][haddock_push]     prettyMaybe (src/Shrun/Prelude.hs:729)
+[2026-08-07 14:30:46][Command][haddock_push]     prettyToText (src/Shrun/Prelude.hs:733)
+[2026-08-07 14:30:46][Command][haddock_push]     onJust (src/Shrun/Prelude.hs:629)
+[2026-08-07 14:30:46][Command][haddock_push]     catSeqMaybes (src/Shrun/Prelude.hs:665)
+[2026-08-07 14:30:46][Command][haddock_push]     neToList (src/Shrun/Prelude.hs:531)
+[2026-08-07 14:30:46][Command][haddock_push]     listToSeq (src/Shrun/Prelude.hs:543)
+[2026-08-07 14:30:46][Command][haddock_push]     neseqToSeq (src/Shrun/Prelude.hs:534)
+[2026-08-07 14:30:46][Command][haddock_push]     unsafeListToNE (src/Shrun/Prelude.hs:537)
+[2026-08-07 14:30:46][Command][haddock_push]     unsafeListToNESeq (src/Shrun/Prelude.hs:540)
+[2026-08-07 14:30:46][Command][haddock_push]     todo (src/Shrun/Prelude.hs:593)
+[2026-08-07 14:30:46][Command][haddock_push]     traceFile (src/Shrun/Prelude.hs:601)
+[2026-08-07 14:30:46][Command][haddock_push]     traceFileA (src/Shrun/Prelude.hs:620)
+[2026-08-07 14:30:46][Command][haddock_push]     traceFileLine (src/Shrun/Prelude.hs:623)
+[2026-08-07 14:30:46][Command][haddock_push]     traceFileLineA (src/Shrun/Prelude.hs:626)
+[2026-08-07 14:30:46][Command][haddock_push]     tryMySync (src/Shrun/Prelude.hs:644)
+[2026-08-07 14:30:46][Command][haddock_push]     tryMySync_ (src/Shrun/Prelude.hs:647)
+[2026-08-07 14:30:46][Command][haddock_push]     onMyAsync (src/Shrun/Prelude.hs:650)
+[2026-08-07 14:30:46][Command][haddock_push]     isMyAsync (src/Shrun/Prelude.hs:657)
+[2026-08-07 14:30:46][Command][haddock_push]     isTermException (src/Shrun/Prelude.hs:660)
+[2026-08-07 14:30:46][Command][haddock_push]     renderTOMLError
+[2026-08-07 14:30:46][Command][haddock_push]     Ordering
+[2026-08-07 14:30:46][Command][haddock_push]     CreateProcess
+[2026-08-07 14:30:46][Command][haddock_push]     TOMLError
+[2026-08-07 14:30:46][Command][haddock_push]     Value
+[2026-08-07 14:30:46][Command][haddock_push]     Bool
+[2026-08-07 14:30:46][Command][haddock_push]  100% (  4 /  4) in 'Shrun.Logging.Types.Internal'
+[2026-08-07 14:30:46][Command][haddock_push]  100% (  3 /  3) in 'Shrun.Logging.MonadRegionLogger'
+[2026-08-07 14:30:46][Command][haddock_push]   66% ( 10 / 15) in 'Shrun.Data.Text'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     toText (src/Shrun/Data/Text.hs:91)
+[2026-08-07 14:30:46][Command][haddock_push]     length (src/Shrun/Data/Text.hs:110)
+[2026-08-07 14:30:46][Command][haddock_push]     intercalate (src/Shrun/Data/Text.hs:98)
+[2026-08-07 14:30:46][Command][haddock_push]     isWhitespace (src/Shrun/Data/Text.hs:113)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: '(<>?)' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'fromDefault' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  2 /  4) in 'Shrun.Configuration.Default'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     fromMaybe (src/Shrun/Configuration/Default.hs:24)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'disabled' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.WithDisabled'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     disabledParser (src/Shrun/Configuration/Data/WithDisabled.hs:66)
+[2026-08-07 14:30:46][Command][haddock_push]     toMaybe (src/Shrun/Configuration/Data/WithDisabled.hs:77)
+[2026-08-07 14:30:46][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.FileLogging.FilePathDefault'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     parseFilePathDefault (src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs:29)
+[2026-08-07 14:30:46][Command][haddock_push]     _FPDefault (src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs:36)
+[2026-08-07 14:30:46][Command][haddock_push]     _FPManual (src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs:46)
+[2026-08-07 14:30:46][Command][haddock_push]   66% (  2 /  3) in 'Shrun.Configuration.Data.CommandLogging.PollInterval'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     parsePollInterval (src/Shrun/Configuration/Data/CommandLogging/PollInterval.hs:30)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'indexToVertex' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'indexFromVertex' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   71% ( 10 / 14) in 'Shrun.Command.Types.Internal'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     fromPositive (src/Shrun/Command/Types/Internal.hs:85)
+[2026-08-07 14:30:46][Command][haddock_push]     unsafeFromInt (src/Shrun/Command/Types/Internal.hs:88)
+[2026-08-07 14:30:46][Command][haddock_push]     succ (src/Shrun/Command/Types/Internal.hs:52)
+[2026-08-07 14:30:46][Command][haddock_push]     addNN (src/Shrun/Command/Types/Internal.hs:55)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'Command' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   79% ( 23 / 29) in 'Shrun.Command.Types'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     commandToProcess (src/Shrun/Command/Types.hs:144)
+[2026-08-07 14:30:46][Command][haddock_push]     fromPositive (src/Shrun/Command/Types/Internal.hs:85)
+[2026-08-07 14:30:46][Command][haddock_push]     unsafeFromInt (src/Shrun/Command/Types/Internal.hs:88)
+[2026-08-07 14:30:46][Command][haddock_push]     succ (src/Shrun/Command/Types/Internal.hs:52)
+[2026-08-07 14:30:46][Command][haddock_push]     addNN (src/Shrun/Command/Types/Internal.hs:55)
+[2026-08-07 14:30:46][Command][haddock_push]     CommandPhase (src/Shrun/Command/Types.hs:51)
+[2026-08-07 14:30:46][Command][haddock_push]   76% ( 10 / 13) in 'Shrun.Logging.Types'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     LogMessage (src/Shrun/Logging/Types.hs:55)
+[2026-08-07 14:30:46][Command][haddock_push]     fromUnlined (src/Shrun/Logging/Types.hs:70)
+[2026-08-07 14:30:46][Command][haddock_push]     unsafeMapLogMessage (src/Shrun/Logging/Types.hs:73)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'and' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'or' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   88% ( 23 / 26) in 'Shrun.Configuration.Data.Graph'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     sortEdges (src/Shrun/Configuration/Data/Graph.hs:144)
+[2026-08-07 14:30:46][Command][haddock_push]     displayEdgeLabel (src/Shrun/Configuration/Data/Graph.hs:88)
+[2026-08-07 14:30:46][Command][haddock_push]   91% ( 21 / 23) in 'Shrun.Configuration.Args.Parsing.Graph.Utils'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     mkMpError (src/Shrun/Configuration/Args/Parsing/Graph/Utils.hs:248)
+[2026-08-07 14:30:46][Command][haddock_push]    0% (  0 /  2) in 'Shrun.Configuration.Args.Parsing.Graph.Sequential'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseSequential (src/Shrun/Configuration/Args/Parsing/Graph/Sequential.hs:15)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.Graph.Edges'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]   78% ( 26 / 33) in 'Shrun.Utils'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     hWithHidden (src/Shrun/Utils.hs:425)
+[2026-08-07 14:30:46][Command][haddock_push]     hHide (src/Shrun/Utils.hs:446)
+[2026-08-07 14:30:46][Command][haddock_push]     mkMetaStr (src/Shrun/Utils.hs:348)
+[2026-08-07 14:30:46][Command][haddock_push]     readIncCounter (src/Shrun/Utils.hs:469)
+[2026-08-07 14:30:46][Command][haddock_push]     surroundJust (src/Shrun/Utils.hs:390)
+[2026-08-07 14:30:46][Command][haddock_push]     readStripUnderscores (src/Shrun/Utils.hs:315)
+[2026-08-07 14:30:46][Command][haddock_push]     indexPos (src/Shrun/Utils.hs:378)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'detect' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  6 / 12) in 'Shrun.Configuration.Data.Truncation'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseTruncation (src/Shrun/Configuration/Data/Truncation.hs:57)
+[2026-08-07 14:30:46][Command][haddock_push]     parseLineTruncation (src/Shrun/Configuration/Data/Truncation.hs:80)
+[2026-08-07 14:30:46][Command][haddock_push]     decodeCommandNameTrunc (src/Shrun/Configuration/Data/Truncation.hs:107)
+[2026-08-07 14:30:46][Command][haddock_push]     decodeLineTrunc (src/Shrun/Configuration/Data/Truncation.hs:110)
+[2026-08-07 14:30:46][Command][haddock_push]     lineTruncMeta (src/Shrun/Configuration/Data/Truncation.hs:104)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'false' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   81% (  9 / 11) in 'Shrun.Configuration.Data.ConfigPhase'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     ConfigPhaseDisabledMaybeF (src/Shrun/Configuration/Data/ConfigPhase.hs:62)
+[2026-08-07 14:30:46][Command][haddock_push]     parseSwitch (src/Shrun/Configuration/Data/ConfigPhase.hs:92)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Data.CommonLogging.KeyHideSwitch'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]   45% (  5 / 11) in 'Shrun.Configuration.Data.CommonLogging'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     Debug (src/Shrun/Configuration/Data/CommonLogging.hs:32)
+[2026-08-07 14:30:46][Command][haddock_push]     CommonLoggingArgs (src/Shrun/Configuration/Data/CommonLogging.hs:101)
+[2026-08-07 14:30:46][Command][haddock_push]     CommonLoggingToml (src/Shrun/Configuration/Data/CommonLogging.hs:103)
+[2026-08-07 14:30:46][Command][haddock_push]     CommonLoggingMerged (src/Shrun/Configuration/Data/CommonLogging.hs:105)
+[2026-08-07 14:30:46][Command][haddock_push]     CommonLoggingEnv (src/Shrun/Configuration/Data/CommonLogging.hs:107)
+[2026-08-07 14:30:46][Command][haddock_push]   16% (  1 /  6) in 'Shrun.Configuration.Data.StripControl'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseStripControl (src/Shrun/Configuration/Data/StripControl.hs:45)
+[2026-08-07 14:30:46][Command][haddock_push]     ConsoleLogStripControl (src/Shrun/Configuration/Data/StripControl.hs:40)
+[2026-08-07 14:30:46][Command][haddock_push]     FileLogStripControl (src/Shrun/Configuration/Data/StripControl.hs:42)
+[2026-08-07 14:30:46][Command][haddock_push]     stripControlMeta (src/Shrun/Configuration/Data/StripControl.hs:54)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'off' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.Notify.Timeout'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     notifyTimeoutMeta (src/Shrun/Configuration/Data/Notify/Timeout.hs:78)
+[2026-08-07 14:30:46][Command][haddock_push]     notifyTimeoutDecoder (src/Shrun/Configuration/Data/Notify/Timeout.hs:21)
+[2026-08-07 14:30:46][Command][haddock_push]     prettyNotifyTimeout (src/Shrun/Configuration/Data/Notify/Timeout.hs:29)
+[2026-08-07 14:30:46][Command][haddock_push]   83% (  5 /  6) in 'Shrun.Configuration.Data.Notify.System'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     defNotifySystemStr (src/Shrun/Configuration/Data/Notify/System.hs:39)
+[2026-08-07 14:30:46][Command][haddock_push]    0% (  0 /  3) in 'Shrun.Configuration.Args.Parsing.TH'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     gitData (src/Shrun/Configuration/Args/Parsing/TH.hs:34)
+[2026-08-07 14:30:46][Command][haddock_push]     defaultToml (src/Shrun
+[2026-08-07 14:30:46][Command][haddock_push] /Configuration/Args/Parsing/TH.hs:155)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'complete' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]  100% (  7 /  7) in 'Shrun.Configuration.Data.Notify.Action'
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'These' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   46% (  7 / 15) in 'Shrun.Configuration.Data.Notify'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     _NotifyActionsActiveCompleteAny (src/Shrun/Configuration/Data/Notify.hs:169)
+[2026-08-07 14:30:46][Command][haddock_push]     _NotifyActionsActiveStartAny (src/Shrun/Configuration/Data/Notify.hs:176)
+[2026-08-07 14:30:46][Command][haddock_push]     NotifyArgs (src/Shrun/Configuration/Data/Notify.hs:278)
+[2026-08-07 14:30:46][Command][haddock_push]     NotifyToml (src/Shrun/Configuration/Data/Notify.hs:280)
+[2026-08-07 14:30:46][Command][haddock_push]     NotifyMerged (src/Shrun/Configuration/Data/Notify.hs:282)
+[2026-08-07 14:30:46][Command][haddock_push]     NotificationEnv (src/Shrun/Configuration/Data/Notify.hs:285)
+[2026-08-07 14:30:46][Command][haddock_push]     toEnv (src/Shrun/Configuration/Data/Notify.hs:370)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  2 /  4) in 'Shrun.Configuration.Data.LegendKeysCache'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseLegendKeysCache (src/Shrun/Configuration/Data/LegendKeysCache.hs:39)
+[2026-08-07 14:30:46][Command][haddock_push]   25% (  1 /  4) in 'Shrun.Configuration.Data.FileLogging.FileSizeMode'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseFileSizeMode (src/Shrun/Configuration/Data/FileLogging/FileSizeMode.hs:38)
+[2026-08-07 14:30:46][Command][haddock_push]     fileSizeModeMeta (src/Shrun/Configuration/Data/FileLogging/FileSizeMode.hs:65)
+[2026-08-07 14:30:46][Command][haddock_push]   20% (  1 /  5) in 'Shrun.Configuration.Data.FileLogging.FileMode'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseFileMode (src/Shrun/Configuration/Data/FileLogging/FileMode.hs:30)
+[2026-08-07 14:30:46][Command][haddock_push]     fileModeMeta (src/Shrun/Configuration/Data/FileLogging/FileMode.hs:37)
+[2026-08-07 14:30:46][Command][haddock_push]     toIOMode (src/Shrun/Configuration/Data/FileLogging/FileMode.hs:40)
+[2026-08-07 14:30:46][Command][haddock_push]   64% (  9 / 14) in 'Shrun.Configuration.Data.FileLogging'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     FileLoggingArgs (src/Shrun/Configuration/Data/FileLogging.hs:486)
+[2026-08-07 14:30:46][Command][haddock_push]     FileLoggingToml (src/Shrun/Configuration/Data/FileLogging.hs:488)
+[2026-08-07 14:30:46][Command][haddock_push]     FileLoggingMerged (src/Shrun/Configuration/Data/FileLogging.hs:490)
+[2026-08-07 14:30:46][Command][haddock_push]     FileLoggingEnv (src/Shrun/Configuration/Data/FileLogging.hs:492)
+[2026-08-07 14:30:46][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.Core.Timeout'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     parseTimeout (src/Shrun/Configuration/Data/Core/Timeout.hs:47)
+[2026-08-07 14:30:46][Command][haddock_push]     parseTimeoutStr (src/Shrun/Configuration/Data/Core/Timeout.hs:52)
+[2026-08-07 14:30:46][Command][haddock_push]     timeoutMeta (src/Shrun/Configuration/Data/Core/Timeout.hs:65)
+[2026-08-07 14:30:46][Command][haddock_push]  100% (  9 /  9) in 'Shrun.Configuration.Data.ConsoleLogging.TimerFormat'
+[2026-08-07 14:30:46][Command][haddock_push]   45% (  5 / 11) in 'Shrun.Configuration.Data.ConsoleLogging'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     ConsoleLoggingArgs (src/Shrun/Configuration/Data/ConsoleLogging.hs:189)
+[2026-08-07 14:30:46][Command][haddock_push]     ConsoleLoggingToml (src/Shrun/Configuration/Data/ConsoleLogging.hs:191)
+[2026-08-07 14:30:46][Command][haddock_push]     ConsoleLoggingMerged (src/Shrun/Configuration/Data/ConsoleLogging.hs:193)
+[2026-08-07 14:30:46][Command][haddock_push]     ConsoleLoggingEnv (src/Shrun/Configuration/Data/ConsoleLogging.hs:195)
+[2026-08-07 14:30:46][Command][haddock_push]     toEnv (src/Shrun/Configuration/Data/ConsoleLogging.hs:274)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  3 /  6) in 'Shrun.Configuration.Data.CommandLogging.ReadStrategy'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     defaultReadStrategy (src/Shrun/Configuration/Data/CommandLogging/ReadStrategy.hs:36)
+[2026-08-07 14:30:46][Command][haddock_push]     readBlockLineBufferNotAllowed (src/Shrun/Configuration/Data/CommandLogging/ReadStrategy.hs:42)
+[2026-08-07 14:30:46][Command][haddock_push]   33% (  1 /  3) in 'Shrun.Configuration.Data.CommandLogging.ReadSize'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     parseReadSize (src/Shrun/Configuration/Data/CommandLogging/ReadSize.hs:120)
+[2026-08-07 14:30:46][Command][haddock_push]   50% ( 11 / 22) in 'Shrun.Configuration.Data.CommandLogging'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     BufferLength (src/Shrun/Configuration/Data/CommandLogging.hs:60)
+[2026-08-07 14:30:46][Command][haddock_push]     parseBufferLength (src/Shrun/Configuration/Data/CommandLogging.hs:78)
+[2026-08-07 14:30:46][Command][haddock_push]     BufferTimeout (src/Shrun/Configuration/Data/CommandLogging.hs:85)
+[2026-08-07 14:30:46][Command][haddock_push]     parseBufferTimeout (src/Shrun/Configuration/Data/CommandLogging.hs:107)
+[2026-08-07 14:30:46][Command][haddock_push]     CommandLoggingArgs (src/Shrun/Configuration/Data/CommandLogging.hs:260)
+[2026-08-07 14:30:46][Command][haddock_push]     CommandLoggingToml (src/Shrun/Configuration/Data/CommandLogging.hs:262)
+[2026-08-07 14:30:46][Command][haddock_push]     CommandLoggingMerged (src/Shrun/Configuration/Data/CommandLogging.hs:264)
+[2026-08-07 14:30:46][Command][haddock_push]     CommandLoggingEnv (src/Shrun/Configuration/Data/CommandLogging.hs:266)
+[2026-08-07 14:30:46][Command][haddock_push]     defaultCommandLoggingMerged (src/Shrun/Configuration/Data/CommandLogging.hs:296)
+[2026-08-07 14:30:46][Command][haddock_push]     ReadStrategyException (src/Shrun/Configuration/Data/CommandLogging.hs:394)
+[2026-08-07 14:30:46][Command][haddock_push]   87% (  7 /  8) in 'Shrun.IO.Handle'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     HandleResult (src/Shrun/IO/Handle.hs:36)
+[2026-08-07 14:30:46][Command][haddock_push]   44% (  4 /  9) in 'Shrun.Configuration.Data.Core'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     CoreConfigArgs (src/Shrun/Configuration/Data/Core.hs:277)
+[2026-08-07 14:30:46][Command][haddock_push]     CoreConfigToml (src/Shrun/Configuration/Data/Core.hs:279)
+[2026-08-07 14:30:46][Command][haddock_push]     CoreConfigMerged (src/Shrun/Configuration/Data/Core.hs:281)
+[2026-08-07 14:30:46][Command][haddock_push]     mergeCoreConfig (src/Shrun/Configuration/Data/Core.hs:307)
+[2026-08-07 14:30:46][Command][haddock_push]   72% ( 16 / 22) in 'Shrun.Configuration.Env.Types'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     CommandCleanup (src/Shrun/Configuration/Env/Types.hs:63)
+[2026-08-07 14:30:46][Command][haddock_push]     HasCommandLogging (src/Shrun/Configuration/Env/Types.hs:113)
+[2026-08-07 14:30:46][Command][haddock_push]     HasCommonLogging (src/Shrun/Configuration/Env/Types.hs:116)
+[2026-08-07 14:30:46][Command][haddock_push]     HasConsoleLogging (src/Shrun/Configuration/Env/Types.hs:119)
+[2026-08-07 14:30:46][Command][haddock_push]     HasFileLogging (src/Shrun/Configuration/Env/Types.hs:130)
+[2026-08-07 14:30:46][Command][haddock_push]     HasAnyError (src/Shrun/Configuration/Env/Types.hs:133)
+[2026-08-07 14:30:46][Command][haddock_push]  100% (  3 /  3) in 'Shrun.ShellT'
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'Command' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'KeyHideOff' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   94% ( 18 / 19) in 'Shrun.Logging.Formatting'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     formatCommand (src/Shrun/Logging/Formatting.hs:375)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'Logging' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   87% ( 14 / 16) in 'Shrun.Logging'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     putDebugLog (src/Shrun/Logging.hs:332)
+[2026-08-07 14:30:46][Command][haddock_push]     putDebugLogDirect (src/Shrun/Logging.hs:318)
+[2026-08-07 14:30:46][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Notify'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     NotifyMessage (src/Shrun/Notify.hs:34)
+[2026-08-07 14:30:46][Command][haddock_push]     fromUnlined (src/Shrun/Notify.hs:49)
+[2026-08-07 14:30:46][Command][haddock_push]     formatNotifyMessage (src/Shrun/Notify.hs:110)
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'tryCommand' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   77% (  7 /  9) in 'Shrun.IO'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     killChildPids (src/Shrun/IO.hs:744)
+[2026-08-07 14:30:46][Command][haddock_push]     killPids (src/Shrun/IO.hs:837)
+[2026-08-07 14:30:46][Command][haddock_push]   80% (  4 /  5) in 'Shrun.Command'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Data.MergedConfig'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push] Warning: 'auto' is out of scope.
+[2026-08-07 14:30:46][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:30:46][Command][haddock_push]   52% ( 10 / 19) in 'Shrun.Configuration.Args.Parsing.Utils'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     mkHelp (src/Shrun/Configuration/Args/Parsing/Utils.hs:45)
+[2026-08-07 14:30:46][Command][haddock_push]     mkHelpNoLine (src/Shrun/Configuration/Args/Parsing/Utils.hs:51)
+[2026-08-07 14:30:46][Command][haddock_push]     switchParser (src/Shrun/Configuration/Args/Parsing/Utils.hs:108)
+[2026-08-07 14:30:46][Command][haddock_push]     switchParserNoLine (src/Shrun/Configuration/Args/Parsing/Utils.hs:114)
+[2026-08-07 14:30:46][Command][haddock_push]     switchParserOpts (src/Shrun/Configuration/Args/Parsing/Utils.hs:111)
+[2026-08-07 14:30:46][Command][haddock_push]     itemizeHelper (src/Shrun/Configuration/Args/Parsing/Utils.hs:175)
+[2026-08-07 14:30:46][Command][haddock_push]     toChunk (src/Shrun/Configuration/Args/Parsing/Utils.hs:189)
+[2026-08-07 14:30:46][Command][haddock_push]     toMDoc (src/Shrun/Configuration/Args/Parsing/Utils.hs:146)
+[2026-08-07 14:30:46][Command][haddock_push]    0% (  0 /  3) in 'Shrun.Configuration.Args.Parsing.Graph'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]     edgesParser (src/Shrun/Configuration/Args/Parsing/Graph.hs:31)
+[2026-08-07 14:30:46][Command][haddock_push]     parseEdges (src/Shrun/Configuration/Args/Parsing/Graph.hs:84)
+[2026-08-07 14:30:46][Command][haddock_push]  100% (  5 /  5) in 'Shrun.Configuration.Toml.Legend'
+[2026-08-07 14:30:46][Command][haddock_push]   66% (  2 /  3) in 'Shrun.Configuration.Toml'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     Module header
+[2026-08-07 14:30:46][Command][haddock_push]   87% (  7 /  8) in 'Shrun.Configuration.Legend'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     CyclicKeyError (src/Shrun/Configuration/Legend.hs:63)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.CommonLogging'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     commonLoggingParser (src/Shrun/Configuration/Args/Parsing/CommonLogging.hs:20)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.Notify'
+[2026-08-07 14:30:46][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:46][Command][haddock_push]     notifyParser (src/Shrun/Configuration/Args/Parsing/Notify.hs:29)
+[2026-08-07 14:30:46][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.FileLogging'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     fileLoggingParser (src/Shrun/Configuration/Args/Parsing/FileLogging.hs:50)
+[2026-08-07 14:30:51][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.ConsoleLogging'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     consoleLoggingParser (src/Shrun/Configuration/Args/Parsing/ConsoleLogging.hs:39)
+[2026-08-07 14:30:51][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.CommandLogging'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     commandLoggingParser (src/Shrun/Configuration/Args/Parsing/CommandLogging.hs:40)
+[2026-08-07 14:30:51][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.Core'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     coreParser (src/Shrun/Configuration/Args/Parsing/Core.hs:40)
+[2026-08-07 14:30:51][Command][haddock_push] Warning: 'ParserInfo' is ambiguous. It is defined
+[2026-08-07 14:30:51][Command][haddock_push]     * in ‘Options.Applicative.Types’
+[2026-08-07 14:30:51][Command][haddock_push]     * in ‘Options.Applicative.Types’
+[2026-08-07 14:30:51][Command][haddock_push]     You may be able to disambiguate the identifier by qualifying it or
+[2026-08-07 14:30:51][Command][haddock_push]     by specifying the type/value namespace explicitly.
+[2026-08-07 14:30:51][Command][haddock_push]     Defaulting to the one defined in ‘Options.Applicative.Types’
+[2026-08-07 14:30:51][Command][haddock_push]   75% (  3 /  4) in 'Shrun.Configuration.Args.Parsing'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     parserPrefs (src/Shrun/Configuration/Args/Parsing.hs:216)
+[2026-08-07 14:30:51][Command][haddock_push]   33% (  1 /  3) in 'Shrun.Configuration.Args'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     Module header
+[2026-08-07 14:30:51][Command][haddock_push]     defaultArgs (src/Shrun/Configuration/Args.hs:21)
+[2026-08-07 14:30:51][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     Module header
+[2026-08-07 14:30:51][Command][haddock_push]  100% (  5 /  5) in 'Shrun'
+[2026-08-07 14:30:51][Command][haddock_push]   85% (  6 /  7) in 'Shrun.Configuration.Env'
+[2026-08-07 14:30:51][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:30:51][Command][haddock_push]     TomlPathError (src/Shrun/Configuration/Env.hs:247)
+[2026-08-07 14:30:51][Command][haddock_push] Warning: Shrun.Prelude: could not find link destinations for: 
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Prim.~#
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Applicative.Rep_WrappedArrow
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Applicative.Rep_WrappedMonad
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Complex.Rep_Complex
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Functor.Sum.Rep_Sum
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Functor.Product.Rep_Product
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Functor.Compose.Rep_Compose
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Semigroup.Rep_WrappedMonoid
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Semigroup.Rep_Last
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Semigroup.Rep_First
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Semigroup.Rep_Arg
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Semigroup.Rep_Max
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Semigroup.Rep_Min
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Foldable1.JoinWith
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Foldable1.FromMaybe
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Foldable1.NonEmptyDList
+[2026-08-07 14:30:51][Command][haddock_push] - Data.ByteString.Builder.RealFloat.FormatMode
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.Rep_ViewR
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.Rep_ViewL
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.Rep_Elem
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.Rep_Node
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.Rep_Digit
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.Rep_FingerTree
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Tree.Rep_Tree
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Rep_SCC
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.FileSystem.PathWriter.Rep_CopyDirConfig
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.FileSystem.PathWriter.Rep_Overwrite
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.FileSystem.PathWriter.Rep_TargetName
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.Time.Rep_TimeSpec
+[2026-08-07 14:30:51][Command][haddock_push] - FileSystem.OsPath.Rep_OsPathOrEmpty
+[2026-08-07 14:30:51][Command][haddock_push] - FileSystem.OsPath.Rep_TildeException
+[2026-08-07 14:30:51][Command][haddock_push] - FileSystem.OsPath.Rep_TildePrefixState
+[2026-08-07 14:30:51][Command][haddock_push] - FileSystem.OsString.Rep_TildeException
+[2026-08-07 14:30:51][Command][haddock_push] - FileSystem.OsString.Rep_TildePrefixState
+[2026-08-07 14:30:51][Command][haddock_push] - FileSystem.PathType.Rep_PathType
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.SingKind
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.DemoteRep
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.fromSing
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.SingI
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.sing
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Sing
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple5
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple4
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple3
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple2
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Proxy
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Either
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_Maybe
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_NonEmpty
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_List
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Fingerprint
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_GeneralCategory
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_SrcLoc
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Down
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple15
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple14
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple13
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple12
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple11
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple10
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple9
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple8
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple7
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple6
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple5
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple4
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple3
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple2
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Solo
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Unit
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Proxy
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Ordering
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Bool
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Either
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Maybe
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_NonEmpty
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_List
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Void
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_M1
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_V1
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_U1
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Par1
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Rec1
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_K1
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_:+:
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_:*:
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_:.:
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckWordp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckIntp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckIntp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckFloatp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckDoublep
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckDoublep
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckCharp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckCharp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckPtrp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Fixity
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_Associativity
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_SourceUnpackedness
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_SourceStrictness
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_DecidedStrictness
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Alt
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Product
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Sum
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Any
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_All
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Endo
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Dual
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep_Ap
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep1_Ap
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep_Last
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep_First
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.ByteOrder.Rep_ByteOrder
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Functor.Const.Rep_Const
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Functor.Identity.Rep_Identity
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Data.Version.Rep_Version
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Functor.ZipList.Rep_ZipList
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Control.Arrow.Rep_Kleisli
+[2026-08-07 14:30:51][Command][haddock_push] - Development.GitRev.Internal.Git.Common.InternalError
+[2026-08-07 14:30:51][Command][haddock_push] - Development.GitRev.Internal.Git.Common.GitError
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Debug.Blind
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Debug.ShowComment
+[2026-08-07 14:30:51][Command][haddock_push] - Network.Socket.Info.GetAddrInfo
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Label.GenericLabelOpticContext
+[2026-08-07 14:30:51][Command][haddock_push] - Options.Applicative.Help.Core.Parenthetic
+[2026-08-07 14:30:51][Command][haddock_push] - Options.Applicative.BashCompletion.Richness
+[2026-08-07 14:30:51][Command][haddock_push] - Prettyprinter.Render.Util.SimpleDocTree.UniqueParser
+[2026-08-07 14:30:51][Command][haddock_push] - Prettyprinter.Render.Terminal.Internal.Layer
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Relative.Rep_RelativeTime
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bytes.Network.Direction.Rep_Direction
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bytes.Size.Rep_Size
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bytes.Internal.Rep_Bytes
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bytes.Network.Internal.Rep_NetBytes
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.Fraction.Internal.Rep_Fraction
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.Interval.Internal.Rep_IntervalBound
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.Interval.Internal.Rep_Interval
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.ModN.Internal.Rep_ModN
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.ModP.Internal.Rep_ModP
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.NonNegative.Internal.Rep_NonNegative
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.NonZero.Internal.Rep_NonZero
+[2026-08-07 14:30:51][Command][haddock_push] - Numeric.Data.Positive.Internal.Rep_Positive
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Text.Internal.Encoding.PartialUtf8CodePoint
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Text.Short.Internal.B
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Calendar.CalendarDiffDays.Rep_CalendarDiffDays
+[2026-08-07 14:30:51][Command][haddock_push] - Data.UUID.Types.Internal.Builder.ByteSink
+[2026-08-07 14:30:51][Command][haddock_push] - Data.UUID.Types.Internal.Builder.ByteSource
+[2026-08-07 14:30:51][Command][haddock_push] - Data.UUID.Types.Internal.Builder./-/
+[2026-08-07 14:30:51][Command][haddock_push] - Data.UUID.Types.Internal.Builder.Takes2Bytes
+[2026-08-07 14:30:51][Command][haddock_push] - Data.UUID.Types.Internal.Builder.Takes4Bytes
+[2026-08-07 14:30:51][Command][haddock_push] - Data.UUID.Types.Internal.UnpackedUUID
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_2
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_3
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_4
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_5
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Bool
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Char
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Double
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Float
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Int
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Word16
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.IO.Exception.Rep_ExitCode
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Printf.UPrintf
+[2026-08-07 14:30:51][Command][haddock_push] - System.Console.Regions.LineUpdate
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Printf.hspr
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Printf.spr
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Label.GenericOptic
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Label.genericOptic
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Label.Void0
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.LocalTime.Internal.LocalTime.Rep_LocalTime
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.LocalTime.Internal.ZonedTime.Rep_ZonedTime
+[2026-08-07 14:30:51][Command][haddock_push] - DBus.Internal.Types.Rep_Type
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.STrue
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.SFalse
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckFloatp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.SNothing
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.Generics.SJust
+[2026-08-07 14:30:51][Command][haddock_push] - DBus.Introspection.Render.Render
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.Notify.Internal.Data.Note.Rep_Note
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.Notify.Internal.Data.NotifySystem.Rep_NotifySystemOs
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.Notify.Internal.Data.NotifySystem.Rep_NotifySystem
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.Notify.Internal.Data.NotifyTimeout.Rep_NotifyTimeout
+[2026-08-07 14:30:51][Command][haddock_push] - Effects.Notify.Internal.Data.NotifyUrgency.Rep_NotifyUrgency
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Comonad.Cofree.Rep_Cofree
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Comonad.Trans.Cofree.Rep_CofreeF
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Free.Rep_Free
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Free.Rep_FreeF
+[2026-08-07 14:30:51][Command][haddock_push] - Data.NonNull.NullError
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_ConstructorInfo
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_ConstructorVariant
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_DatatypeInfo
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_DatatypeVariant
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_FieldStrictness
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_Strictness
+[2026-08-07 14:30:51][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_Unpackedness
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Content
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Doctype
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Document
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Element
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Event
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_ExternalID
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Instruction
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Miscellaneous
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Name
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Node
+[2026-08-07 14:30:51][Command][haddock_push] - Data.XML.Types.Rep_Prologue
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Aeson.Types.Internal.Rep_Value
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Fix.Rep_Fix
+[2026-08-07 14:30:51][Command][haddock_push] - Network.URI.Rep_URIAuth
+[2026-08-07 14:30:51][Command][haddock_push] - Network.URI.Rep_URI
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Functor.These.Rep_These1
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Calendar.Quarter.Rep_QuarterOfYear
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Calendar.Quarter.Rep_Quarter
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Biff.Rep_Biff
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Clown.Rep_Clown
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Fix.Rep_Fix
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Flip.Rep_Flip
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Join.Rep_Join
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Joker.Rep_Joker
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Product.Rep_Product
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Sum.Rep_Sum
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Tannen.Rep_Tannen
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Bifunctor.Wrapped.Rep_WrappedBifunctor
+[2026-08-07 14:30:51][Command][haddock_push] - System.OsString.Internal.Types.Rep_OsChar
+[2026-08-07 14:30:51][Command][haddock_push] - System.OsString.Internal.Types.Rep_OsString
+[2026-08-07 14:30:51][Command][haddock_push] - System.OsString.Internal.Types.Rep_PosixChar
+[2026-08-07 14:30:51][Command][haddock_push] - System.OsString.Internal.Types.Rep_PosixString
+[2026-08-07 14:30:51][Command][haddock_push] - System.OsString.Internal.Types.Rep_WindowsChar
+[2026-08-07 14:30:51][Command][haddock_push] - System.OsString.Internal.Types.Rep_WindowsString
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Strict.Either.Rep_Either
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Strict.Maybe.Rep_Maybe
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Strict.These.Rep_These
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Strict.Tuple.Rep_Pair
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Tagged.Rep_Tagged
+[2026-08-07 14:30:51][Command][haddock_push] - Data.These.Rep_These
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Applicative.Lift.Rep_Lift
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Error.Rep_ErrorFancy
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Error.Rep_ErrorItem
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Error.Rep_ParseErrorBundle
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Error.Rep_ParseError
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Pos.Rep_InvalidPosException
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Pos.Rep_Pos
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Pos.Rep_SourcePos
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Set.Internal.MergeSet
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.State.Rep_PosState
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.State.Rep_State
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Applicative.Backwards.Rep_Backwards
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Functor.Constant.Rep_Constant
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Functor.Reverse.Rep_Reverse
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Calendar.Days.Rep_Day
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Calendar.Month.Rep_Month
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Calendar.Week.Rep_DayOfWeek
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Clock.Internal.SystemTime.Rep_SystemTime
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Clock.Internal.UTCTime.Rep_UTCTime
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.Clock.Internal.UniversalTime.Rep_UniversalTime
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.LocalTime.Internal.CalendarDiffTime.Rep_CalendarDiffTime
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.LocalTime.Internal.TimeOfDay.Rep_TimeOfDay
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Time.LocalTime.Internal.TimeZone.Rep_TimeZone
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_AnnLookup
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_AnnTarget
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Bang
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_BndrVis
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Body
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Bytes
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Callconv
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Clause
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Con
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Dec
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DecidedStrictness
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DerivClause
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DerivStrategy
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DocLoc
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Exp
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_FamilyResultSig
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_FixityDirection
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Fixity
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Foreign
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_FunDep
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Guard
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Info
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_InjectivityAnn
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Inline
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Lit
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Loc
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Match
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_ModName
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_ModuleInfo
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Module
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_NameFlavour
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_NameSpace
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Name
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_NamespaceSpecifier
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_OccName
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Overlap
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Pat
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_PatSynArgs
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_PatSynDir
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Phases
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_PkgName
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Pragma
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Range
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Role
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_RuleBndr
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_RuleMatch
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Safety
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_SourceStrictness
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_SourceUnpackedness
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Specificity
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Stmt
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TyLit
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TySynEqn
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TyVarBndr
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Type
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TypeFamilyHead
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Accum.Rep_AccumT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.RWS.CPS.Rep_RWST
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Select.Rep_SelectT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Writer.CPS.Rep_WriterT
+[2026-08-07 14:30:51][Command][haddock_push] - System.Console.Terminal.Common.Rep1_Window
+[2026-08-07 14:30:51][Command][haddock_push] - System.Console.Terminal.Common.Rep_Window
+[2026-08-07 14:30:51][Command][haddock_push] - UnliftIO.Internals.Async.Rep_ConcException
+[2026-08-07 14:30:51][Command][haddock_push] - Prettyprinter.Internal.Rep_Doc
+[2026-08-07 14:30:51][Command][haddock_push] - Prettyprinter.Internal.Rep_SimpleDocStream
+[2026-08-07 14:30:51][Command][haddock_push] - Prettyprinter.Internal.FlattenResult
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Cont.Rep_ContT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Except.Rep_ExceptT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Maybe.Rep_MaybeT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.RWS.Lazy.Rep_RWST
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.RWS.Strict.Rep_RWST
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.State.Strict.Rep_StateT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Writer.Lazy.Rep_WriterT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Writer.Strict.Rep_WriterT
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.UnzipWith
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Sequence.Internal.unzipWith'
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Reader.Rep1_ReaderT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Reader.Rep_ReaderT
+[2026-08-07 14:30:51][Command][haddock_push] - Data.ByteString.Short.Internal.Rep_ShortByteString
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Command.Types.Internal.Rep_CommandIndex
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.ForeignSrcLang.Rep_ForeignSrcLang
+[2026-08-07 14:30:51][Command][haddock_push] - GHC.Internal.LanguageExtensions.Rep_Extension
+[2026-08-07 14:30:51][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_Doc
+[2026-08-07 14:30:51][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_Mode
+[2026-08-07 14:30:51][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_Style
+[2026-08-07 14:30:51][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_TextDetails
+[2026-08-07 14:30:51][Command][haddock_push] - Text.PrettyPrint.HughesPJ.Rep_Doc
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.Identity.Rep_IdentityT
+[2026-08-07 14:30:51][Command][haddock_push] - Control.Monad.Trans.State.Lazy.Rep_StateT
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapIndexF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Command.Types.Rep_CommandP
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Internal.Generic.GPositionPath
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Internal.Generic.GAffineFieldMaybe
+[2026-08-07 14:30:51][Command][haddock_push] - Optics.Internal.Generic.gafieldMaybe
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.Graph.GroupEdges
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.PatriciaTree.Rep_Gr
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.PatriciaTree.FromListCounting
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.PatriciaTree.GraphRep
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeSequential
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeLabel
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifySystemF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionsF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionCompleteF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogMultiF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogFileF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogPathF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Core.LegendKeysCacheF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Core.TimeoutF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Core.TomlOptF
+[2026-08-07 14:30:51][Command][haddock_push] - Shrun.Configuration.Data.Core.ArgsOnlyDetF
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.SetM
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.Query.ArtPoint.DFSTree
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.Query.ArtPoint.LOWTree
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.Query.MaxFlow2.Direction
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.Tree.Rep_Gr
+[2026-08-07 14:30:51][Command][haddock_push] - Data.Graph.Inductive.Tree.GraphRep
+[2026-08-07 14:30:51][Command][haddock_push] - Text.Megaparsec.Error.Builder.Rep_EF
+[2026-08-07 14:31:17][Command][haddock_push] -
+[2026-08-07 14:31:35][Command][haddock_push]  Text.Megaparsec.Error.Builder.Rep_ET
+[2026-08-07 14:31:35][Command][haddock_push] - Optics.Arrow.WrappedArrow
+[2026-08-07 14:31:35][Command][haddock_push] - Options.Applicative.Internal.ComplResult
+[2026-08-07 14:31:35][Command][haddock_push] - Prettyprinter.Render.Util.SimpleDocTree.Rep_SimpleDocTree
+[2026-08-07 14:31:35][Command][haddock_push] - Prettyprinter.Render.Util.SimpleDocTree.SimpleDocTok
+[2026-08-07 14:31:35][Command][haddock_push] - Numeric.Data.ModP.Internal.Primality.Rep_MaybePrime
+[2026-08-07 14:31:35][Command][haddock_push] - Numeric.Data.ModP.Internal.Primality.Rep_Rand
+[2026-08-07 14:31:35][Command][haddock_push] - TOML.Parser.NormalizeM
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Command.Types.Internal: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.Internal.Rep_CommandIndex
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Command.Types: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.Internal.Rep_CommandIndex
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapIndexF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapIndex
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapStm
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapPure
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Command.Types.Rep_CommandP
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Data.Graph: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeSequential
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeLabel
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Args.Parsing.Graph.Utils: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Args.Parsing.Graph.Utils.runFatalError
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Data.StripControl: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlType
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlConsoleLog
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlFileLog
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Data.Notify: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifySystemF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionsF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionCompleteF
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Data.FileLogging: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogMultiF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogFileF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogPathF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.createLogFile
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.IO.Handle: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.IO.Handle.BufferParams
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Data.Core: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Core.CoreConfigEnv
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Core.LegendKeysCacheF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Core.TimeoutF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Core.TomlOptF
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.Core.ArgsOnlyDetF
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Logging.Formatting: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlType
+[2026-08-07 14:31:35][Command][haddock_push] Warning: Shrun.Configuration.Toml.Legend: could not find link destinations for: 
+[2026-08-07 14:31:35][Command][haddock_push] - Shrun.Configuration.Toml.Legend.UnsafeKeyVal
+[2026-08-07 14:31:35][Command][haddock_push] Documentation created:
+[2026-08-07 14:31:35][Command][haddock_push] /home/tommy/Dev/tommy/github/shrun/./dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/noopt/doc/html/shrun
+[2026-08-07 14:31:36][Command][haddock_push] cp: cannot stat 'dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/opt/doc/html/*': No such file or directory
+[2026-08-07 14:31:36][Error][haddock_push] 2 minutes, 5 seconds
+  Documentation created:
+  /home/tommy/Dev/tommy/github/shrun/./dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/noopt/doc/html/shrun
+  cp: cannot stat 'dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/opt/doc/html/*': No such file or directory
+[2026-08-07 14:31:36][Finished][0|0|1|0] 2 minutes, 5 seconds
+[2026-08-07 14:32:53][Command][haddock_push] Starting...
+[2026-08-07 14:32:53][Command][haddock_push] Your branch is ahead of 'origin/main' by 1 commit.
+[2026-08-07 14:32:53][Command][haddock_push]   (use "git push" to publish your local commits)
+[2026-08-07 14:32:53][Command][haddock_push] Deleted branch gh-pages (was b61beebc).
+[2026-08-07 14:32:53][Command][haddock_push] Already on 'main'
+[2026-08-07 14:32:53][Command][haddock_push] Switched to a new branch 'gh-pages'
+[2026-08-07 14:32:53][Command][haddock_push] Build profile: -w ghc-9.12.3 -O0
+[2026-08-07 14:32:53][Command][haddock_push] In order, the following will be built (use -v for more details):
+[2026-08-07 14:32:53][Command][haddock_push]  - shrun-0.10 (lib) (first run)
+[2026-08-07 14:32:53][Command][haddock_push]  - shrun-0.10 (lib:test-utils) (first run)
+[2026-08-07 14:32:54][Command][haddock_push] Preprocessing library 'test-utils' for shrun-0.10...
+[2026-08-07 14:32:54][Command][haddock_push] Running Haddock on library 'test-utils' for shrun-0.10...
+[2026-08-07 14:32:54][Command][haddock_push] Warning: The following packages have no Haddock documentation installed. No
+[2026-08-07 14:32:54][Command][haddock_push] links will be generated to these packages: path-0.9.6
+[2026-08-07 14:32:54][Command][haddock_push] Preprocessing library for shrun-0.10...
+[2026-08-07 14:32:54][Command][haddock_push] Running Haddock on library for shrun-0.10...
+[2026-08-07 14:32:54][Command][haddock_push] Warning: The following packages have no Haddock documentation installed. No
+[2026-08-07 14:32:54][Command][haddock_push] links will be generated to these packages: attoparsec-0.14.4, path-0.9.6
+[2026-08-07 14:32:55][Command][haddock_push] [1 of 4] Compiling Test.Shrun.Logger ( test/utils/Test/Shrun/Logger.hs, /tmp/nix-shell-3210585-1784310710/ghc3240750_tmp_0/ghc_tmp_4.o, /tmp/nix-shell-3210585-1784310710/ghc3240750_tmp_0/ghc_tmp_4.dyn_o )
+[2026-08-07 14:32:55][Command][haddock_push] [2 of 4] Compiling Test.Shrun.Process ( test/utils/Test/Shrun/Process.hs, /tmp/nix-shell-3210585-1784310710/ghc3240750_tmp_0/ghc_tmp_6.o, /tmp/nix-shell-3210585-1784310710/ghc3240750_tmp_0/ghc_tmp_6.dyn_o )
+[2026-08-07 14:32:56][Command][haddock_push] [ 1 of 64] Compiling Paths_shrun      ( dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/noopt/build/autogen/Paths_shrun.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_12.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_12.dyn_o )
+[2026-08-07 14:32:56][Command][haddock_push] [3 of 4] Compiling Test.Shrun.Installer ( test/utils/Test/Shrun/Installer.hs, nothing )
+[2026-08-07 14:32:56][Command][haddock_push] [4 of 4] Compiling Test.Shrun.Verifier ( test/utils/Test/Shrun/Verifier.hs, nothing )
+[2026-08-07 14:32:56][Command][haddock_push] [ 2 of 64] Compiling Shrun.Data.Result ( src/Shrun/Data/Result.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_112.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_112.dyn_o )
+[2026-08-07 14:32:57][Command][haddock_push] [ 3 of 64] Compiling Shrun.Prelude    ( src/Shrun/Prelude.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_132.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_132.dyn_o )
+[2026-08-07 14:32:59][Command][haddock_push] [ 4 of 64] Compiling Shrun.Logging.Types.Internal ( src/Shrun/Logging/Types/Internal.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_128.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_128.dyn_o )
+[2026-08-07 14:33:00][Command][haddock_push] [ 5 of 64] Compiling Shrun.Logging.MonadRegionLogger ( src/Shrun/Logging/MonadRegionLogger.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_124.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_124.dyn_o )
+[2026-08-07 14:33:00][Command][haddock_push] [ 6 of 64] Compiling Shrun.Data.Text  ( src/Shrun/Data/Text.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_114.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_114.dyn_o )
+[2026-08-07 14:33:00][Command][haddock_push] [ 7 of 64] Compiling Shrun.Configuration.Default ( src/Shrun/Configuration/Default.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_102.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_102.dyn_o )
+[2026-08-07 14:33:00][Command][haddock_push] [ 8 of 64] Compiling Shrun.Configuration.Data.WithDisabled ( src/Shrun/Configuration/Data/WithDisabled.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_100.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_100.dyn_o )
+[2026-08-07 14:33:00][Command][haddock_push] [ 9 of 64] Compiling Shrun.Configuration.Data.FileLogging.FilePathDefault ( src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_78.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_78.dyn_o )
+[2026-08-07 14:33:01][Command][haddock_push] [10 of 64] Compiling Shrun.Configuration.Data.CommandLogging.PollInterval ( src/Shrun/Configuration/Data/CommandLogging/PollInterval.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_54.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_54.dyn_o )
+[2026-08-07 14:33:01][Command][haddock_push] [11 of 64] Compiling Shrun.Command.Types.Internal ( src/Shrun/Command/Types/Internal.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_20.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_20.dyn_o )
+[2026-08-07 14:33:01][Command][haddock_push] [12 of 64] Compiling Shrun.Command.Types ( src/Shrun/Command/Types.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_18.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_18.dyn_o )
+[2026-08-07 14:33:02][Command][haddock_push] [13 of 64] Compiling Shrun.Logging.Types ( src/Shrun/Logging/Types.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_126.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_126.dyn_o )
+[2026-08-07 14:33:02][Command][haddock_push] [14 of 64] Compiling Shrun.Configuration.Data.Graph ( src/Shrun/Configuration/Data/Graph.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_82.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_82.dyn_o )
+[2026-08-07 14:33:04][Command][haddock_push] [15 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph.Utils ( src/Shrun/Configuration/Args/Parsing/Graph/Utils.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_44.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_44.dyn_o )
+[2026-08-07 14:33:04][Command][haddock_push] [16 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph.Sequential ( src/Shrun/Configuration/Args/Parsing/Graph/Sequential.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_42.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_42.dyn_o )
+[2026-08-07 14:33:04][Command][haddock_push] [17 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph.Edges ( src/Shrun/Configuration/Args/Parsing/Graph/Edges.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_40.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_40.dyn_o )
+[2026-08-07 14:33:04][Command][haddock_push] [18 of 64] Compiling Shrun.Utils      ( src/Shrun/Utils.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_136.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_136.dyn_o )
+[2026-08-07 14:33:05][Command][haddock_push] [19 of 64] Compiling Shrun.Configuration.Data.Truncation ( src/Shrun/Configuration/Data/Truncation.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_98.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_98.dyn_o )
+[2026-08-07 14:33:05][Command][haddock_push] [20 of 64] Compiling Shrun.Configuration.Data.ConfigPhase ( src/Shrun/Configuration/Data/ConfigPhase.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_64.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_64.dyn_o )
+[2026-08-07 14:33:05][Command][haddock_push] [21 of 64] Compiling Shrun.Configuration.Data.CommonLogging.KeyHideSwitch ( src/Shrun/Configuration/Data/CommonLogging/KeyHideSwitch.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_62.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_62.dyn_o )
+[2026-08-07 14:33:06][Command][haddock_push] [22 of 64] Compiling Shrun.Configuration.Data.CommonLogging ( src/Shrun/Configuration/Data/CommonLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_60.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_60.dyn_o )
+[2026-08-07 14:33:06][Command][haddock_push] [23 of 64] Compiling Shrun.Configuration.Data.StripControl ( src/Shrun/Configuration/Data/StripControl.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_96.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_96.dyn_o )
+[2026-08-07 14:33:06][Command][haddock_push] [24 of 64] Compiling Shrun.Configuration.Data.Notify.Timeout ( src/Shrun/Configuration/Data/Notify/Timeout.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_94.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_94.dyn_o )
+[2026-08-07 14:33:06][Command][haddock_push] [25 of 64] Compiling Shrun.Configuration.Data.Notify.System ( src/Shrun/Configuration/Data/Notify/System.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_92.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_92.dyn_o )
+[2026-08-07 14:33:06][Command][haddock_push] [26 of 64] Compiling Shrun.Configuration.Args.Parsing.TH ( src/Shrun/Configuration/Args/Parsing/TH.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_48.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_48.dyn_o )
+[2026-08-07 14:33:07][Command][haddock_push] <no location info>: warning: [-Wmissed-extra-shared-lib]
+[2026-08-07 14:33:07][Command][haddock_push]     libz.so: cannot open shared object file: No such file or directory
+[2026-08-07 14:33:07][Command][haddock_push]     It's OK if you don't want to use symbols from it directly.
+[2026-08-07 14:33:07][Command][haddock_push]     (the package DLL is loaded by the system linker
+[2026-08-07 14:33:07][Command][haddock_push]      which manages dependencies by itself).
+[2026-08-07 14:33:07][Command][haddock_push] 
+[2026-08-07 14:33:08][Command][haddock_push] [27 of 64] Compiling Shrun.Configuration.Data.Notify.Action ( src/Shrun/Configuration/Data/Notify/Action.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_90.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_90.dyn_o )
+[2026-08-07 14:33:09][Command][haddock_push] [28 of 64] Compiling Shrun.Configuration.Data.Notify ( src/Shrun/Configuration/Data/Notify.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_88.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_88.dyn_o )
+[2026-08-07 14:33:11][Command][haddock_push] [29 of 64] Compiling Shrun.Configuration.Data.LegendKeysCache ( src/Shrun/Configuration/Data/LegendKeysCache.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_84.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_84.dyn_o )
+[2026-08-07 14:33:11][Command][haddock_push] [30 of 64] Compiling Shrun.Configuration.Data.FileLogging.FileSizeMode ( src/Shrun/Configuration/Data/FileLogging/FileSizeMode.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_80.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_80.dyn_o )
+[2026-08-07 14:33:12][Command][haddock_push] [31 of 64] Compiling Shrun.Configuration.Data.FileLogging.FileMode ( src/Shrun/Configuration/Data/FileLogging/FileMode.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_76.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_76.dyn_o )
+[2026-08-07 14:33:12][Command][haddock_push] [32 of 64] Compiling Shrun.Configuration.Data.FileLogging ( src/Shrun/Configuration/Data/FileLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_74.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_74.dyn_o )
+[2026-08-07 14:33:23][Command][haddock_push] [33 of 64] Compiling Shrun.Configuration.Data.Core.Timeout ( src/Shrun/Configuration/Data/Core/Timeout.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_72.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_72.dyn_o )
+[2026-08-07 14:33:24][Command][haddock_push] [34 of 64] Compiling Shrun.Configuration.Data.ConsoleLogging.TimerFormat ( src/Shrun/Configuration/Data/ConsoleLogging/TimerFormat.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_68.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_68.dyn_o )
+[2026-08-07 14:33:24][Command][haddock_push] [35 of 64] Compiling Shrun.Configuration.Data.ConsoleLogging ( src/Shrun/Configuration/Data/ConsoleLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_66.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_66.dyn_o )
+[2026-08-07 14:33:26][Command][haddock_push] [36 of 64] Compiling Shrun.Configuration.Data.CommandLogging.ReadStrategy ( src/Shrun/Configuration/Data/CommandLogging/ReadStrategy.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_58.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_58.dyn_o )
+[2026-08-07 14:33:26][Command][haddock_push] [37 of 64] Compiling Shrun.Configuration.Data.CommandLogging.ReadSize ( src/Shrun/Configuration/Data/CommandLogging/ReadSize.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_56.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_56.dyn_o )
+[2026-08-07 14:33:27][Command][haddock_push] Haddock coverage:
+[2026-08-07 14:33:27][Command][haddock_push]    0% (  0 /  4) in 'Test.Shrun.Logger'
+[2026-08-07 14:33:27][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:27][Command][haddock_push]     Module header
+[2026-08-07 14:33:27][Command][haddock_push]     putLog (test/utils/Test/Shrun/Logger.hs:19)
+[2026-08-07 14:33:27][Command][haddock_push]     putLogHeader (test/utils/Test/Shrun/Logger.hs:33)
+[2026-08-07 14:33:27][Command][haddock_push]     putLogLines (test/utils/Test/Shrun/Logger.hs:22)
+[2026-08-07 14:33:27][Command][haddock_push]   22% (  2 /  9) in 'Test.Shrun.Process'
+[2026-08-07 14:33:27][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:27][Command][haddock_push]     Module header
+[2026-08-07 14:33:27][Command][haddock_push]     runProcess (test/utils/Test/Shrun/Process.hs:27)
+[2026-08-07 14:33:27][Command][haddock_push]     runProcessArgs (test/utils/Test/Shrun/Process.hs:34)
+[2026-08-07 14:33:27][Command][haddock_push]     runProcessOrDie (test/utils/Test/Shrun/Process.hs:41)
+[2026-08-07 14:33:27][Command][haddock_push]     runProcessOrDieQuiet (test/utils/Test/Shrun/Process.hs:68)
+[2026-08-07 14:33:27][Command][haddock_push]     runProcessTotal (test/utils/Test/Shrun/Process.hs:85)
+[2026-08-07 14:33:27][Command][haddock_push]     displayCmd (test/utils/Test/Shrun/Process.hs:112)
+[2026-08-07 14:33:27][Command][haddock_push]    0% (  0 /  2) in 'Test.Shrun.Installer'
+[2026-08-07 14:33:27][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:27][Command][haddock_push]     Module header
+[2026-08-07 14:33:27][Command][haddock_push]     installShrunOnce (test/utils/Test/Shrun/Installer.hs:15)
+[2026-08-07 14:33:27][Command][haddock_push]   92% ( 12 / 13) in 'Test.Shrun.Verifier'
+[2026-08-07 14:33:27][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:27][Command][haddock_push]     verifyExpectedN (test/utils/Test/Shrun/Verifier.hs:56)
+[2026-08-07 14:33:27][Command][haddock_push] [38 of 64] Compiling Shrun.Configuration.Data.CommandLogging ( src/Shrun/Configuration/Data/CommandLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_52.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_52.dyn_o )
+[2026-08-07 14:33:27][Command][haddock_push] Documentation created:
+[2026-08-07 14:33:27][Command][haddock_push] /home/tommy/Dev/tommy/github/shrun/./dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/l/test-utils/noopt/doc/html/shrun/test-utils
+[2026-08-07 14:33:29][Command][haddock_push] [39 of 64] Compiling Shrun.IO.Handle  ( src/Shrun/IO/Handle.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_118.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_118.dyn_o )
+[2026-08-07 14:33:30][Command][haddock_push] [40 of 64] Compiling Shrun.Configuration.Data.Core ( src/Shrun/Configuration/Data/Core.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_70.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_70.dyn_o )
+[2026-08-07 14:33:32][Command][haddock_push] [41 of 64] Compiling Shrun.Configuration.Env.Types ( src/Shrun/Configuration/Env/Types.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_104.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_104.dyn_o )
+[2026-08-07 14:33:33][Command][haddock_push] [42 of 64] Compiling Shrun.ShellT     ( src/Shrun/ShellT.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_134.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_134.dyn_o )
+[2026-08-07 14:33:35][Command][haddock_push] [43 of 64] Compiling Shrun.Logging.Formatting ( src/Shrun/Logging/Formatting.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_122.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_122.dyn_o )
+[2026-08-07 14:33:36][Command][haddock_push] [44 of 64] Compiling Shrun.Logging    ( src/Shrun/Logging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_120.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_120.dyn_o )
+[2026-08-07 14:33:37][Command][haddock_push] [45 of 64] Compiling Shrun.Notify     ( src/Shrun/Notify.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_130.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_130.dyn_o )
+[2026-08-07 14:33:37][Command][haddock_push] [46 of 64] Compiling Shrun.IO         ( src/Shrun/IO.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_116.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_116.dyn_o )
+[2026-08-07 14:33:39][Command][haddock_push] [47 of 64] Compiling Shrun.Command    ( src/Shrun/Command.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_16.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_16.dyn_o )
+[2026-08-07 14:33:40][Command][haddock_push] [48 of 64] Compiling Shrun.Configuration.Data.MergedConfig ( src/Shrun/Configuration/Data/MergedConfig.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_86.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_86.dyn_o )
+[2026-08-07 14:33:40][Command][haddock_push] [49 of 64] Compiling Shrun.Configuration.Args.Parsing.Utils ( src/Shrun/Configuration/Args/Parsing/Utils.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_50.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_50.dyn_o )
+[2026-08-07 14:33:40][Command][haddock_push] [50 of 64] Compiling Shrun.Configuration.Args.Parsing.Graph ( src/Shrun/Configuration/Args/Parsing/Graph.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_38.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_38.dyn_o )
+[2026-08-07 14:33:40][Command][haddock_push] [51 of 64] Compiling Shrun.Configuration.Toml.Legend ( src/Shrun/Configuration/Toml/Legend.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_110.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_110.dyn_o )
+[2026-08-07 14:33:41][Command][haddock_push] [52 of 64] Compiling Shrun.Configuration.Toml ( src/Shrun/Configuration/Toml.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_108.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_108.dyn_o )
+[2026-08-07 14:33:41][Command][haddock_push] [53 of 64] Compiling Shrun.Configuration.Legend ( src/Shrun/Configuration/Legend.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_106.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_106.dyn_o )
+[2026-08-07 14:33:42][Command][haddock_push] [54 of 64] Compiling Shrun.Configuration.Args.Parsing.CommonLogging ( src/Shrun/Configuration/Args/Parsing/CommonLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_30.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_30.dyn_o )
+[2026-08-07 14:33:42][Command][haddock_push] [55 of 64] Compiling Shrun.Configuration.Args.Parsing.Notify ( src/Shrun/Configuration/Args/Parsing/Notify.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_46.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_46.dyn_o )
+[2026-08-07 14:33:42][Command][haddock_push] [56 of 64] Compiling Shrun.Configuration.Args.Parsing.FileLogging ( src/Shrun/Configuration/Args/Parsing/FileLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_36.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_36.dyn_o )
+[2026-08-07 14:33:42][Command][haddock_push] [57 of 64] Compiling Shrun.Configuration.Args.Parsing.ConsoleLogging ( src/Shrun/Configuration/Args/Parsing/ConsoleLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_32.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_32.dyn_o )
+[2026-08-07 14:33:42][Command][haddock_push] [58 of 64] Compiling Shrun.Configuration.Args.Parsing.CommandLogging ( src/Shrun/Configuration/Args/Parsing/CommandLogging.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_28.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_28.dyn_o )
+[2026-08-07 14:33:43][Command][haddock_push] [59 of 64] Compiling Shrun.Configuration.Args.Parsing.Core ( src/Shrun/Configuration/Args/Parsing/Core.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_34.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_34.dyn_o )
+[2026-08-07 14:33:43][Command][haddock_push] [60 of 64] Compiling Shrun.Configuration.Args.Parsing ( src/Shrun/Configuration/Args/Parsing.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_26.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_26.dyn_o )
+[2026-08-07 14:33:45][Command][haddock_push] [61 of 64] Compiling Shrun.Configuration.Args ( src/Shrun/Configuration/Args.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_24.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_24.dyn_o )
+[2026-08-07 14:33:45][Command][haddock_push] [62 of 64] Compiling Shrun.Configuration ( src/Shrun/Configuration.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_22.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_22.dyn_o )
+[2026-08-07 14:33:45][Command][haddock_push] [63 of 64] Compiling Shrun            ( src/Shrun.hs, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_14.o, /tmp/nix-shell-3210585-1784310710/ghc3240755_tmp_0/ghc_tmp_14.dyn_o )
+[2026-08-07 14:33:47][Command][haddock_push] [64 of 64] Compiling Shrun.Configuration.Env ( src/Shrun/Configuration/Env.hs, nothing ) [Flags changed]
+[2026-08-07 14:33:49][Command][haddock_push] Haddock coverage:
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Data.Result'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'fromIntegral' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   91% (332 /362) in 'Shrun.Prelude'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     foldMapA (src/Shrun/Prelude.hs:739)
+[2026-08-07 14:33:49][Command][haddock_push]     PrettySwitch (src/Shrun/Prelude.hs:674)
+[2026-08-07 14:33:49][Command][haddock_push]     indentField (src/Shrun/Prelude.hs:682)
+[2026-08-07 14:33:49][Command][haddock_push]     prettyBytesFloat (src/Shrun/Prelude.hs:695)
+[2026-08-07 14:33:49][Command][haddock_push]     prettyBytesInt (src/Shrun/Prelude.hs:708)
+[2026-08-07 14:33:49][Command][haddock_push]     prettyMaybe (src/Shrun/Prelude.hs:729)
+[2026-08-07 14:33:49][Command][haddock_push]     prettyToText (src/Shrun/Prelude.hs:733)
+[2026-08-07 14:33:49][Command][haddock_push]     onJust (src/Shrun/Prelude.hs:629)
+[2026-08-07 14:33:49][Command][haddock_push]     catSeqMaybes (src/Shrun/Prelude.hs:665)
+[2026-08-07 14:33:49][Command][haddock_push]     neToList (src/Shrun/Prelude.hs:531)
+[2026-08-07 14:33:49][Command][haddock_push]     listToSeq (src/Shrun/Prelude.hs:543)
+[2026-08-07 14:33:49][Command][haddock_push]     neseqToSeq (src/Shrun/Prelude.hs:534)
+[2026-08-07 14:33:49][Command][haddock_push]     unsafeListToNE (src/Shrun/Prelude.hs:537)
+[2026-08-07 14:33:49][Command][haddock_push]     unsafeListToNESeq (src/Shrun/Prelude.hs:540)
+[2026-08-07 14:33:49][Command][haddock_push]     todo (src/Shrun/Prelude.hs:593)
+[2026-08-07 14:33:49][Command][haddock_push]     traceFile (src/Shrun/Prelude.hs:601)
+[2026-08-07 14:33:49][Command][haddock_push]     traceFileA (src/Shrun/Prelude.hs:620)
+[2026-08-07 14:33:49][Command][haddock_push]     traceFileLine (src/Shrun/Prelude.hs:623)
+[2026-08-07 14:33:49][Command][haddock_push]     traceFileLineA (src/Shrun/Prelude.hs:626)
+[2026-08-07 14:33:49][Command][haddock_push]     tryMySync (src/Shrun/Prelude.hs:644)
+[2026-08-07 14:33:49][Command][haddock_push]     tryMySync_ (src/Shrun/Prelude.hs:647)
+[2026-08-07 14:33:49][Command][haddock_push]     onMyAsync (src/Shrun/Prelude.hs:650)
+[2026-08-07 14:33:49][Command][haddock_push]     isMyAsync (src/Shrun/Prelude.hs:657)
+[2026-08-07 14:33:49][Command][haddock_push]     isTermException (src/Shrun/Prelude.hs:660)
+[2026-08-07 14:33:49][Command][haddock_push]     renderTOMLError
+[2026-08-07 14:33:49][Command][haddock_push]     Ordering
+[2026-08-07 14:33:49][Command][haddock_push]     CreateProcess
+[2026-08-07 14:33:49][Command][haddock_push]     TOMLError
+[2026-08-07 14:33:49][Command][haddock_push]     Value
+[2026-08-07 14:33:49][Command][haddock_push]     Bool
+[2026-08-07 14:33:49][Command][haddock_push]  100% (  4 /  4) in 'Shrun.Logging.Types.Internal'
+[2026-08-07 14:33:49][Command][haddock_push]  100% (  3 /  3) in 'Shrun.Logging.MonadRegionLogger'
+[2026-08-07 14:33:49][Command][haddock_push]   66% ( 10 / 15) in 'Shrun.Data.Text'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     toText (src/Shrun/Data/Text.hs:91)
+[2026-08-07 14:33:49][Command][haddock_push]     length (src/Shrun/Data/Text.hs:110)
+[2026-08-07 14:33:49][Command][haddock_push]     intercalate (src/Shrun/Data/Text.hs:98)
+[2026-08-07 14:33:49][Command][haddock_push]     isWhitespace (src/Shrun/Data/Text.hs:113)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: '(<>?)' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'fromDefault' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  2 /  4) in 'Shrun.Configuration.Default'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     fromMaybe (src/Shrun/Configuration/Default.hs:24)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'disabled' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.WithDisabled'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     disabledParser (src/Shrun/Configuration/Data/WithDisabled.hs:66)
+[2026-08-07 14:33:49][Command][haddock_push]     toMaybe (src/Shrun/Configuration/Data/WithDisabled.hs:77)
+[2026-08-07 14:33:49][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.FileLogging.FilePathDefault'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     parseFilePathDefault (src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs:29)
+[2026-08-07 14:33:49][Command][haddock_push]     _FPDefault (src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs:36)
+[2026-08-07 14:33:49][Command][haddock_push]     _FPManual (src/Shrun/Configuration/Data/FileLogging/FilePathDefault.hs:46)
+[2026-08-07 14:33:49][Command][haddock_push]   66% (  2 /  3) in 'Shrun.Configuration.Data.CommandLogging.PollInterval'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     parsePollInterval (src/Shrun/Configuration/Data/CommandLogging/PollInterval.hs:30)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'indexToVertex' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'indexFromVertex' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   71% ( 10 / 14) in 'Shrun.Command.Types.Internal'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     fromPositive (src/Shrun/Command/Types/Internal.hs:85)
+[2026-08-07 14:33:49][Command][haddock_push]     unsafeFromInt (src/Shrun/Command/Types/Internal.hs:88)
+[2026-08-07 14:33:49][Command][haddock_push]     succ (src/Shrun/Command/Types/Internal.hs:52)
+[2026-08-07 14:33:49][Command][haddock_push]     addNN (src/Shrun/Command/Types/Internal.hs:55)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'Command' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   79% ( 23 / 29) in 'Shrun.Command.Types'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     commandToProcess (src/Shrun/Command/Types.hs:144)
+[2026-08-07 14:33:49][Command][haddock_push]     fromPositive (src/Shrun/Command/Types/Internal.hs:85)
+[2026-08-07 14:33:49][Command][haddock_push]     unsafeFromInt (src/Shrun/Command/Types/Internal.hs:88)
+[2026-08-07 14:33:49][Command][haddock_push]     succ (src/Shrun/Command/Types/Internal.hs:52)
+[2026-08-07 14:33:49][Command][haddock_push]     addNN (src/Shrun/Command/Types/Internal.hs:55)
+[2026-08-07 14:33:49][Command][haddock_push]     CommandPhase (src/Shrun/Command/Types.hs:51)
+[2026-08-07 14:33:49][Command][haddock_push]   76% ( 10 / 13) in 'Shrun.Logging.Types'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     LogMessage (src/Shrun/Logging/Types.hs:55)
+[2026-08-07 14:33:49][Command][haddock_push]     fromUnlined (src/Shrun/Logging/Types.hs:70)
+[2026-08-07 14:33:49][Command][haddock_push]     unsafeMapLogMessage (src/Shrun/Logging/Types.hs:73)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'and' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'or' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   88% ( 23 / 26) in 'Shrun.Configuration.Data.Graph'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     sortEdges (src/Shrun/Configuration/Data/Graph.hs:144)
+[2026-08-07 14:33:49][Command][haddock_push]     displayEdgeLabel (src/Shrun/Configuration/Data/Graph.hs:88)
+[2026-08-07 14:33:49][Command][haddock_push]   91% ( 21 / 23) in 'Shrun.Configuration.Args.Parsing.Graph.Utils'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     mkMpError (src/Shrun/Configuration/Args/Parsing/Graph/Utils.hs:248)
+[2026-08-07 14:33:49][Command][haddock_push]    0% (  0 /  2) in 'Shrun.Configuration.Args.Parsing.Graph.Sequential'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseSequential (src/Shrun/Configuration/Args/Parsing/Graph/Sequential.hs:15)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.Graph.Edges'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]   78% ( 26 / 33) in 'Shrun.Utils'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     hWithHidden (src/Shrun/Utils.hs:425)
+[2026-08-07 14:33:49][Command][haddock_push]     hHide (src/Shrun/Utils.hs:446)
+[2026-08-07 14:33:49][Command][haddock_push]     mkMetaStr (src/Shrun/Utils.hs:348)
+[2026-08-07 14:33:49][Command][haddock_push]     readIncCounter (src/Shrun/Utils.hs:469)
+[2026-08-07 14:33:49][Command][haddock_push]     surroundJust (src/Shrun/Utils.hs:390)
+[2026-08-07 14:33:49][Command][haddock_push]     readStripUnderscores (src/Shrun/Utils.hs:315)
+[2026-08-07 14:33:49][Command][haddock_push]     indexPos (src/Shrun/Utils.hs:378)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'detect' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  6 / 12) in 'Shrun.Configuration.Data.Truncation'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseTruncation (src/Shrun/Configuration/Data/Truncation.hs:57)
+[2026-08-07 14:33:49][Command][haddock_push]     parseLineTruncation (src/Shrun/Configuration/Data/Truncation.hs:80)
+[2026-08-07 14:33:49][Command][haddock_push]     decodeCommandNameTrunc (src/Shrun/Configuration/Data/Truncation.hs:107)
+[2026-08-07 14:33:49][Command][haddock_push]     decodeLineTrunc (src/Shrun/Configuration/Data/Truncation.hs:110)
+[2026-08-07 14:33:49][Command][haddock_push]     lineTruncMeta (src/Shrun/Configuration/Data/Truncation.hs:104)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'false' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   81% (  9 / 11) in 'Shrun.Configuration.Data.ConfigPhase'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     ConfigPhaseDisabledMaybeF (src/Shrun/Configuration/Data/ConfigPhase.hs:62)
+[2026-08-07 14:33:49][Command][haddock_push]     parseSwitch (src/Shrun/Configuration/Data/ConfigPhase.hs:92)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Data.CommonLogging.KeyHideSwitch'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]   45% (  5 / 11) in 'Shrun.Configuration.Data.CommonLogging'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     Debug (src/Shrun/Configuration/Data/CommonLogging.hs:32)
+[2026-08-07 14:33:49][Command][haddock_push]     CommonLoggingArgs (src/Shrun/Configuration/Data/CommonLogging.hs:101)
+[2026-08-07 14:33:49][Command][haddock_push]     CommonLoggingToml (src/Shrun/Configuration/Data/CommonLogging.hs:103)
+[2026-08-07 14:33:49][Command][haddock_push]     CommonLoggingMerged (src/Shrun/Configuration/Data/CommonLogging.hs:105)
+[2026-08-07 14:33:49][Command][haddock_push]     CommonLoggingEnv (src/Shrun/Configuration/Data/CommonLogging.hs:107)
+[2026-08-07 14:33:49][Command][haddock_push]   16% (  1 /  6) in 'Shrun.Configuration.Data.StripControl'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseStripControl (src/Shrun/Configuration/Data/StripControl.hs:45)
+[2026-08-07 14:33:49][Command][haddock_push]     ConsoleLogStripControl (src/Shrun/Configuration/Data/StripControl.hs:40)
+[2026-08-07 14:33:49][Command][haddock_push]     FileLogStripControl (src/Shrun/Configuration/Data/StripControl.hs:42)
+[2026-08-07 14:33:49][Command][haddock_push]     stripControlMeta (src/Shrun/Configuration/Data/StripControl.hs:54)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'off' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.Notify.Timeout'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     notifyTimeoutMeta (src/Shrun/Configuration/Data/Notify/Timeout.hs:78)
+[2026-08-07 14:33:49][Command][haddock_push]     notifyTimeoutDecoder (src/Shrun/Configuration/Data/Notify/Timeout.hs:21)
+[2026-08-07 14:33:49][Command][haddock_push]     prettyNotifyTimeout (src/Shrun/Configuration/Data/Notify/Timeout.hs:29)
+[2026-08-07 14:33:49][Command][haddock_push]   83% (  5 /  6) in 'Shrun.Configuration.Data.Notify.System'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     defNotifySystemStr (src/Shrun/Configuration/Data/Notify/System.hs:39)
+[2026-08-07 14:33:49][Command][haddock_push]    0% (  0 /  3) in 'Shrun.Configuration.Args.Parsing.TH'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     gitData (src/Shrun/Configuration/Args/Parsing/TH.hs:34)
+[2026-08-07 14:33:49][Command][haddock_push]     defaultToml (src/Shrun
+[2026-08-07 14:33:49][Command][haddock_push] /Configuration/Args/Parsing/TH.hs:155)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'complete' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]  100% (  7 /  7) in 'Shrun.Configuration.Data.Notify.Action'
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'These' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   46% (  7 / 15) in 'Shrun.Configuration.Data.Notify'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     _NotifyActionsActiveCompleteAny (src/Shrun/Configuration/Data/Notify.hs:169)
+[2026-08-07 14:33:49][Command][haddock_push]     _NotifyActionsActiveStartAny (src/Shrun/Configuration/Data/Notify.hs:176)
+[2026-08-07 14:33:49][Command][haddock_push]     NotifyArgs (src/Shrun/Configuration/Data/Notify.hs:278)
+[2026-08-07 14:33:49][Command][haddock_push]     NotifyToml (src/Shrun/Configuration/Data/Notify.hs:280)
+[2026-08-07 14:33:49][Command][haddock_push]     NotifyMerged (src/Shrun/Configuration/Data/Notify.hs:282)
+[2026-08-07 14:33:49][Command][haddock_push]     NotificationEnv (src/Shrun/Configuration/Data/Notify.hs:285)
+[2026-08-07 14:33:49][Command][haddock_push]     toEnv (src/Shrun/Configuration/Data/Notify.hs:370)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  2 /  4) in 'Shrun.Configuration.Data.LegendKeysCache'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseLegendKeysCache (src/Shrun/Configuration/Data/LegendKeysCache.hs:39)
+[2026-08-07 14:33:49][Command][haddock_push]   25% (  1 /  4) in 'Shrun.Configuration.Data.FileLogging.FileSizeMode'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseFileSizeMode (src/Shrun/Configuration/Data/FileLogging/FileSizeMode.hs:38)
+[2026-08-07 14:33:49][Command][haddock_push]     fileSizeModeMeta (src/Shrun/Configuration/Data/FileLogging/FileSizeMode.hs:65)
+[2026-08-07 14:33:49][Command][haddock_push]   20% (  1 /  5) in 'Shrun.Configuration.Data.FileLogging.FileMode'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseFileMode (src/Shrun/Configuration/Data/FileLogging/FileMode.hs:30)
+[2026-08-07 14:33:49][Command][haddock_push]     fileModeMeta (src/Shrun/Configuration/Data/FileLogging/FileMode.hs:37)
+[2026-08-07 14:33:49][Command][haddock_push]     toIOMode (src/Shrun/Configuration/Data/FileLogging/FileMode.hs:40)
+[2026-08-07 14:33:49][Command][haddock_push]   64% (  9 / 14) in 'Shrun.Configuration.Data.FileLogging'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     FileLoggingArgs (src/Shrun/Configuration/Data/FileLogging.hs:486)
+[2026-08-07 14:33:49][Command][haddock_push]     FileLoggingToml (src/Shrun/Configuration/Data/FileLogging.hs:488)
+[2026-08-07 14:33:49][Command][haddock_push]     FileLoggingMerged (src/Shrun/Configuration/Data/FileLogging.hs:490)
+[2026-08-07 14:33:49][Command][haddock_push]     FileLoggingEnv (src/Shrun/Configuration/Data/FileLogging.hs:492)
+[2026-08-07 14:33:49][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Configuration.Data.Core.Timeout'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     parseTimeout (src/Shrun/Configuration/Data/Core/Timeout.hs:47)
+[2026-08-07 14:33:49][Command][haddock_push]     parseTimeoutStr (src/Shrun/Configuration/Data/Core/Timeout.hs:52)
+[2026-08-07 14:33:49][Command][haddock_push]     timeoutMeta (src/Shrun/Configuration/Data/Core/Timeout.hs:65)
+[2026-08-07 14:33:49][Command][haddock_push]  100% (  9 /  9) in 'Shrun.Configuration.Data.ConsoleLogging.TimerFormat'
+[2026-08-07 14:33:49][Command][haddock_push]   45% (  5 / 11) in 'Shrun.Configuration.Data.ConsoleLogging'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     ConsoleLoggingArgs (src/Shrun/Configuration/Data/ConsoleLogging.hs:189)
+[2026-08-07 14:33:49][Command][haddock_push]     ConsoleLoggingToml (src/Shrun/Configuration/Data/ConsoleLogging.hs:191)
+[2026-08-07 14:33:49][Command][haddock_push]     ConsoleLoggingMerged (src/Shrun/Configuration/Data/ConsoleLogging.hs:193)
+[2026-08-07 14:33:49][Command][haddock_push]     ConsoleLoggingEnv (src/Shrun/Configuration/Data/ConsoleLogging.hs:195)
+[2026-08-07 14:33:49][Command][haddock_push]     toEnv (src/Shrun/Configuration/Data/ConsoleLogging.hs:274)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  3 /  6) in 'Shrun.Configuration.Data.CommandLogging.ReadStrategy'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     defaultReadStrategy (src/Shrun/Configuration/Data/CommandLogging/ReadStrategy.hs:36)
+[2026-08-07 14:33:49][Command][haddock_push]     readBlockLineBufferNotAllowed (src/Shrun/Configuration/Data/CommandLogging/ReadStrategy.hs:42)
+[2026-08-07 14:33:49][Command][haddock_push]   33% (  1 /  3) in 'Shrun.Configuration.Data.CommandLogging.ReadSize'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     parseReadSize (src/Shrun/Configuration/Data/CommandLogging/ReadSize.hs:120)
+[2026-08-07 14:33:49][Command][haddock_push]   50% ( 11 / 22) in 'Shrun.Configuration.Data.CommandLogging'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     BufferLength (src/Shrun/Configuration/Data/CommandLogging.hs:60)
+[2026-08-07 14:33:49][Command][haddock_push]     parseBufferLength (src/Shrun/Configuration/Data/CommandLogging.hs:78)
+[2026-08-07 14:33:49][Command][haddock_push]     BufferTimeout (src/Shrun/Configuration/Data/CommandLogging.hs:85)
+[2026-08-07 14:33:49][Command][haddock_push]     parseBufferTimeout (src/Shrun/Configuration/Data/CommandLogging.hs:107)
+[2026-08-07 14:33:49][Command][haddock_push]     CommandLoggingArgs (src/Shrun/Configuration/Data/CommandLogging.hs:260)
+[2026-08-07 14:33:49][Command][haddock_push]     CommandLoggingToml (src/Shrun/Configuration/Data/CommandLogging.hs:262)
+[2026-08-07 14:33:49][Command][haddock_push]     CommandLoggingMerged (src/Shrun/Configuration/Data/CommandLogging.hs:264)
+[2026-08-07 14:33:49][Command][haddock_push]     CommandLoggingEnv (src/Shrun/Configuration/Data/CommandLogging.hs:266)
+[2026-08-07 14:33:49][Command][haddock_push]     defaultCommandLoggingMerged (src/Shrun/Configuration/Data/CommandLogging.hs:296)
+[2026-08-07 14:33:49][Command][haddock_push]     ReadStrategyException (src/Shrun/Configuration/Data/CommandLogging.hs:394)
+[2026-08-07 14:33:49][Command][haddock_push]   87% (  7 /  8) in 'Shrun.IO.Handle'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     HandleResult (src/Shrun/IO/Handle.hs:36)
+[2026-08-07 14:33:49][Command][haddock_push]   44% (  4 /  9) in 'Shrun.Configuration.Data.Core'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     CoreConfigArgs (src/Shrun/Configuration/Data/Core.hs:277)
+[2026-08-07 14:33:49][Command][haddock_push]     CoreConfigToml (src/Shrun/Configuration/Data/Core.hs:279)
+[2026-08-07 14:33:49][Command][haddock_push]     CoreConfigMerged (src/Shrun/Configuration/Data/Core.hs:281)
+[2026-08-07 14:33:49][Command][haddock_push]     mergeCoreConfig (src/Shrun/Configuration/Data/Core.hs:307)
+[2026-08-07 14:33:49][Command][haddock_push]   72% ( 16 / 22) in 'Shrun.Configuration.Env.Types'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     CommandCleanup (src/Shrun/Configuration/Env/Types.hs:63)
+[2026-08-07 14:33:49][Command][haddock_push]     HasCommandLogging (src/Shrun/Configuration/Env/Types.hs:113)
+[2026-08-07 14:33:49][Command][haddock_push]     HasCommonLogging (src/Shrun/Configuration/Env/Types.hs:116)
+[2026-08-07 14:33:49][Command][haddock_push]     HasConsoleLogging (src/Shrun/Configuration/Env/Types.hs:119)
+[2026-08-07 14:33:49][Command][haddock_push]     HasFileLogging (src/Shrun/Configuration/Env/Types.hs:130)
+[2026-08-07 14:33:49][Command][haddock_push]     HasAnyError (src/Shrun/Configuration/Env/Types.hs:133)
+[2026-08-07 14:33:49][Command][haddock_push]  100% (  3 /  3) in 'Shrun.ShellT'
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'Command' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'KeyHideOff' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   94% ( 18 / 19) in 'Shrun.Logging.Formatting'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     formatCommand (src/Shrun/Logging/Formatting.hs:375)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'Logging' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   87% ( 14 / 16) in 'Shrun.Logging'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     putDebugLog (src/Shrun/Logging.hs:332)
+[2026-08-07 14:33:49][Command][haddock_push]     putDebugLogDirect (src/Shrun/Logging.hs:318)
+[2026-08-07 14:33:49][Command][haddock_push]   40% (  2 /  5) in 'Shrun.Notify'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     NotifyMessage (src/Shrun/Notify.hs:34)
+[2026-08-07 14:33:49][Command][haddock_push]     fromUnlined (src/Shrun/Notify.hs:49)
+[2026-08-07 14:33:49][Command][haddock_push]     formatNotifyMessage (src/Shrun/Notify.hs:110)
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'tryCommand' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   77% (  7 /  9) in 'Shrun.IO'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     killChildPids (src/Shrun/IO.hs:744)
+[2026-08-07 14:33:49][Command][haddock_push]     killPids (src/Shrun/IO.hs:837)
+[2026-08-07 14:33:49][Command][haddock_push]   80% (  4 /  5) in 'Shrun.Command'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Data.MergedConfig'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push] Warning: 'auto' is out of scope.
+[2026-08-07 14:33:49][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2026-08-07 14:33:49][Command][haddock_push]   52% ( 10 / 19) in 'Shrun.Configuration.Args.Parsing.Utils'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     mkHelp (src/Shrun/Configuration/Args/Parsing/Utils.hs:45)
+[2026-08-07 14:33:49][Command][haddock_push]     mkHelpNoLine (src/Shrun/Configuration/Args/Parsing/Utils.hs:51)
+[2026-08-07 14:33:49][Command][haddock_push]     switchParser (src/Shrun/Configuration/Args/Parsing/Utils.hs:108)
+[2026-08-07 14:33:49][Command][haddock_push]     switchParserNoLine (src/Shrun/Configuration/Args/Parsing/Utils.hs:114)
+[2026-08-07 14:33:49][Command][haddock_push]     switchParserOpts (src/Shrun/Configuration/Args/Parsing/Utils.hs:111)
+[2026-08-07 14:33:49][Command][haddock_push]     itemizeHelper (src/Shrun/Configuration/Args/Parsing/Utils.hs:175)
+[2026-08-07 14:33:49][Command][haddock_push]     toChunk (src/Shrun/Configuration/Args/Parsing/Utils.hs:189)
+[2026-08-07 14:33:49][Command][haddock_push]     toMDoc (src/Shrun/Configuration/Args/Parsing/Utils.hs:146)
+[2026-08-07 14:33:49][Command][haddock_push]    0% (  0 /  3) in 'Shrun.Configuration.Args.Parsing.Graph'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]     edgesParser (src/Shrun/Configuration/Args/Parsing/Graph.hs:31)
+[2026-08-07 14:33:49][Command][haddock_push]     parseEdges (src/Shrun/Configuration/Args/Parsing/Graph.hs:84)
+[2026-08-07 14:33:49][Command][haddock_push]  100% (  5 /  5) in 'Shrun.Configuration.Toml.Legend'
+[2026-08-07 14:33:49][Command][haddock_push]   66% (  2 /  3) in 'Shrun.Configuration.Toml'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     Module header
+[2026-08-07 14:33:49][Command][haddock_push]   87% (  7 /  8) in 'Shrun.Configuration.Legend'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     CyclicKeyError (src/Shrun/Configuration/Legend.hs:63)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.CommonLogging'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     commonLoggingParser (src/Shrun/Configuration/Args/Parsing/CommonLogging.hs:20)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.Notify'
+[2026-08-07 14:33:49][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:49][Command][haddock_push]     notifyParser (src/Shrun/Configuration/Args/Parsing/Notify.hs:29)
+[2026-08-07 14:33:49][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.FileLogging'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     fileLoggingParser (src/Shrun/Configuration/Args/Parsing/FileLogging.hs:50)
+[2026-08-07 14:33:53][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.ConsoleLogging'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     consoleLoggingParser (src/Shrun/Configuration/Args/Parsing/ConsoleLogging.hs:39)
+[2026-08-07 14:33:53][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.CommandLogging'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     commandLoggingParser (src/Shrun/Configuration/Args/Parsing/CommandLogging.hs:40)
+[2026-08-07 14:33:53][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration.Args.Parsing.Core'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     coreParser (src/Shrun/Configuration/Args/Parsing/Core.hs:40)
+[2026-08-07 14:33:53][Command][haddock_push] Warning: 'ParserInfo' is ambiguous. It is defined
+[2026-08-07 14:33:53][Command][haddock_push]     * in ‘Options.Applicative.Types’
+[2026-08-07 14:33:53][Command][haddock_push]     * in ‘Options.Applicative.Types’
+[2026-08-07 14:33:53][Command][haddock_push]     You may be able to disambiguate the identifier by qualifying it or
+[2026-08-07 14:33:53][Command][haddock_push]     by specifying the type/value namespace explicitly.
+[2026-08-07 14:33:53][Command][haddock_push]     Defaulting to the one defined in ‘Options.Applicative.Types’
+[2026-08-07 14:33:53][Command][haddock_push]   75% (  3 /  4) in 'Shrun.Configuration.Args.Parsing'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     parserPrefs (src/Shrun/Configuration/Args/Parsing.hs:216)
+[2026-08-07 14:33:53][Command][haddock_push]   33% (  1 /  3) in 'Shrun.Configuration.Args'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     Module header
+[2026-08-07 14:33:53][Command][haddock_push]     defaultArgs (src/Shrun/Configuration/Args.hs:21)
+[2026-08-07 14:33:53][Command][haddock_push]   50% (  1 /  2) in 'Shrun.Configuration'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     Module header
+[2026-08-07 14:33:53][Command][haddock_push]  100% (  5 /  5) in 'Shrun'
+[2026-08-07 14:33:53][Command][haddock_push]   85% (  6 /  7) in 'Shrun.Configuration.Env'
+[2026-08-07 14:33:53][Command][haddock_push]   Missing documentation for:
+[2026-08-07 14:33:53][Command][haddock_push]     TomlPathError (src/Shrun/Configuration/Env.hs:247)
+[2026-08-07 14:33:53][Command][haddock_push] Warning: Shrun.Prelude: could not find link destinations for: 
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Prim.~#
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Applicative.Rep_WrappedArrow
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Applicative.Rep_WrappedMonad
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Complex.Rep_Complex
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Functor.Sum.Rep_Sum
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Functor.Product.Rep_Product
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Functor.Compose.Rep_Compose
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Semigroup.Rep_WrappedMonoid
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Semigroup.Rep_Last
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Semigroup.Rep_First
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Semigroup.Rep_Arg
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Semigroup.Rep_Max
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Semigroup.Rep_Min
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Foldable1.JoinWith
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Foldable1.FromMaybe
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Foldable1.NonEmptyDList
+[2026-08-07 14:33:53][Command][haddock_push] - Data.ByteString.Builder.RealFloat.FormatMode
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.Rep_ViewR
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.Rep_ViewL
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.Rep_Elem
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.Rep_Node
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.Rep_Digit
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.Rep_FingerTree
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Tree.Rep_Tree
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Rep_SCC
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.FileSystem.PathWriter.Rep_CopyDirConfig
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.FileSystem.PathWriter.Rep_Overwrite
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.FileSystem.PathWriter.Rep_TargetName
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.Time.Rep_TimeSpec
+[2026-08-07 14:33:53][Command][haddock_push] - FileSystem.OsPath.Rep_OsPathOrEmpty
+[2026-08-07 14:33:53][Command][haddock_push] - FileSystem.OsPath.Rep_TildeException
+[2026-08-07 14:33:53][Command][haddock_push] - FileSystem.OsPath.Rep_TildePrefixState
+[2026-08-07 14:33:53][Command][haddock_push] - FileSystem.OsString.Rep_TildeException
+[2026-08-07 14:33:53][Command][haddock_push] - FileSystem.OsString.Rep_TildePrefixState
+[2026-08-07 14:33:53][Command][haddock_push] - FileSystem.PathType.Rep_PathType
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.SingKind
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.DemoteRep
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.fromSing
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.SingI
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.sing
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Sing
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple5
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple4
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple3
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Tuple2
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Proxy
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Either
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_Maybe
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_NonEmpty
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_List
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Fingerprint
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_GeneralCategory
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_SrcLoc
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Down
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple15
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple14
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple13
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple12
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple11
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple10
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple9
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple8
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple7
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple6
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple5
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple4
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple3
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Tuple2
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Solo
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Unit
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Proxy
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Ordering
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Bool
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Either
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Maybe
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_NonEmpty
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_List
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Void
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_M1
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_V1
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_U1
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Par1
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Rec1
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_K1
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_:+:
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_:*:
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_:.:
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckWordp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckIntp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckIntp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckFloatp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckDoublep
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckDoublep
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckCharp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep1_R:UReckCharp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckPtrp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Fixity
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_Associativity
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_SourceUnpackedness
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_SourceStrictness
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_DecidedStrictness
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Alt
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Product
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Sum
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Any
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_All
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Endo
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Semigroup.Internal.Rep_Dual
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep_Ap
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep1_Ap
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep_Last
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Monoid.Rep_First
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.ByteOrder.Rep_ByteOrder
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Functor.Const.Rep_Const
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Functor.Identity.Rep_Identity
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Data.Version.Rep_Version
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Functor.ZipList.Rep_ZipList
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Control.Arrow.Rep_Kleisli
+[2026-08-07 14:33:53][Command][haddock_push] - Development.GitRev.Internal.Git.Common.InternalError
+[2026-08-07 14:33:53][Command][haddock_push] - Development.GitRev.Internal.Git.Common.GitError
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Debug.Blind
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Debug.ShowComment
+[2026-08-07 14:33:53][Command][haddock_push] - Network.Socket.Info.GetAddrInfo
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Label.GenericLabelOpticContext
+[2026-08-07 14:33:53][Command][haddock_push] - Options.Applicative.Help.Core.Parenthetic
+[2026-08-07 14:33:53][Command][haddock_push] - Options.Applicative.BashCompletion.Richness
+[2026-08-07 14:33:53][Command][haddock_push] - Prettyprinter.Render.Util.SimpleDocTree.UniqueParser
+[2026-08-07 14:33:53][Command][haddock_push] - Prettyprinter.Render.Terminal.Internal.Layer
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Relative.Rep_RelativeTime
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bytes.Network.Direction.Rep_Direction
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bytes.Size.Rep_Size
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bytes.Internal.Rep_Bytes
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bytes.Network.Internal.Rep_NetBytes
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.Fraction.Internal.Rep_Fraction
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.Interval.Internal.Rep_IntervalBound
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.Interval.Internal.Rep_Interval
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.ModN.Internal.Rep_ModN
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.ModP.Internal.Rep_ModP
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.NonNegative.Internal.Rep_NonNegative
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.NonZero.Internal.Rep_NonZero
+[2026-08-07 14:33:53][Command][haddock_push] - Numeric.Data.Positive.Internal.Rep_Positive
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Text.Internal.Encoding.PartialUtf8CodePoint
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Text.Short.Internal.B
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Calendar.CalendarDiffDays.Rep_CalendarDiffDays
+[2026-08-07 14:33:53][Command][haddock_push] - Data.UUID.Types.Internal.Builder.ByteSink
+[2026-08-07 14:33:53][Command][haddock_push] - Data.UUID.Types.Internal.Builder.ByteSource
+[2026-08-07 14:33:53][Command][haddock_push] - Data.UUID.Types.Internal.Builder./-/
+[2026-08-07 14:33:53][Command][haddock_push] - Data.UUID.Types.Internal.Builder.Takes2Bytes
+[2026-08-07 14:33:53][Command][haddock_push] - Data.UUID.Types.Internal.Builder.Takes4Bytes
+[2026-08-07 14:33:53][Command][haddock_push] - Data.UUID.Types.Internal.UnpackedUUID
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_2
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_3
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_4
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_5
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Bool
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Char
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Double
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Float
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Int
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Vector.Unboxed.Base.V_Word16
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.IO.Exception.Rep_ExitCode
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Printf.UPrintf
+[2026-08-07 14:33:53][Command][haddock_push] - System.Console.Regions.LineUpdate
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Printf.hspr
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Printf.spr
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Label.GenericOptic
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Label.genericOptic
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Label.Void0
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.LocalTime.Internal.LocalTime.Rep_LocalTime
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.LocalTime.Internal.ZonedTime.Rep_ZonedTime
+[2026-08-07 14:33:53][Command][haddock_push] - DBus.Internal.Types.Rep_Type
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.STrue
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.SFalse
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.Rep_R:UReckFloatp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.SNothing
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.Generics.SJust
+[2026-08-07 14:33:53][Command][haddock_push] - DBus.Introspection.Render.Render
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.Notify.Internal.Data.Note.Rep_Note
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.Notify.Internal.Data.NotifySystem.Rep_NotifySystemOs
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.Notify.Internal.Data.NotifySystem.Rep_NotifySystem
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.Notify.Internal.Data.NotifyTimeout.Rep_NotifyTimeout
+[2026-08-07 14:33:53][Command][haddock_push] - Effects.Notify.Internal.Data.NotifyUrgency.Rep_NotifyUrgency
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Comonad.Cofree.Rep_Cofree
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Comonad.Trans.Cofree.Rep_CofreeF
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Free.Rep_Free
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Free.Rep_FreeF
+[2026-08-07 14:33:53][Command][haddock_push] - Data.NonNull.NullError
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_ConstructorInfo
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_ConstructorVariant
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_DatatypeInfo
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_DatatypeVariant
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_FieldStrictness
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_Strictness
+[2026-08-07 14:33:53][Command][haddock_push] - Language.Haskell.TH.Datatype.Rep_Unpackedness
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Content
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Doctype
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Document
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Element
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Event
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_ExternalID
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Instruction
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Miscellaneous
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Name
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Node
+[2026-08-07 14:33:53][Command][haddock_push] - Data.XML.Types.Rep_Prologue
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Aeson.Types.Internal.Rep_Value
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Fix.Rep_Fix
+[2026-08-07 14:33:53][Command][haddock_push] - Network.URI.Rep_URIAuth
+[2026-08-07 14:33:53][Command][haddock_push] - Network.URI.Rep_URI
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Functor.These.Rep_These1
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Calendar.Quarter.Rep_QuarterOfYear
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Calendar.Quarter.Rep_Quarter
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Biff.Rep_Biff
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Clown.Rep_Clown
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Fix.Rep_Fix
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Flip.Rep_Flip
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Join.Rep_Join
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Joker.Rep_Joker
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Product.Rep_Product
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Sum.Rep_Sum
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Tannen.Rep_Tannen
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Bifunctor.Wrapped.Rep_WrappedBifunctor
+[2026-08-07 14:33:53][Command][haddock_push] - System.OsString.Internal.Types.Rep_OsChar
+[2026-08-07 14:33:53][Command][haddock_push] - System.OsString.Internal.Types.Rep_OsString
+[2026-08-07 14:33:53][Command][haddock_push] - System.OsString.Internal.Types.Rep_PosixChar
+[2026-08-07 14:33:53][Command][haddock_push] - System.OsString.Internal.Types.Rep_PosixString
+[2026-08-07 14:33:53][Command][haddock_push] - System.OsString.Internal.Types.Rep_WindowsChar
+[2026-08-07 14:33:53][Command][haddock_push] - System.OsString.Internal.Types.Rep_WindowsString
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Strict.Either.Rep_Either
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Strict.Maybe.Rep_Maybe
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Strict.These.Rep_These
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Strict.Tuple.Rep_Pair
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Tagged.Rep_Tagged
+[2026-08-07 14:33:53][Command][haddock_push] - Data.These.Rep_These
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Applicative.Lift.Rep_Lift
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Error.Rep_ErrorFancy
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Error.Rep_ErrorItem
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Error.Rep_ParseErrorBundle
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Error.Rep_ParseError
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Pos.Rep_InvalidPosException
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Pos.Rep_Pos
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Pos.Rep_SourcePos
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Set.Internal.MergeSet
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.State.Rep_PosState
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.State.Rep_State
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Applicative.Backwards.Rep_Backwards
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Functor.Constant.Rep_Constant
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Functor.Reverse.Rep_Reverse
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Calendar.Days.Rep_Day
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Calendar.Month.Rep_Month
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Calendar.Week.Rep_DayOfWeek
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Clock.Internal.SystemTime.Rep_SystemTime
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Clock.Internal.UTCTime.Rep_UTCTime
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.Clock.Internal.UniversalTime.Rep_UniversalTime
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.LocalTime.Internal.CalendarDiffTime.Rep_CalendarDiffTime
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.LocalTime.Internal.TimeOfDay.Rep_TimeOfDay
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Time.LocalTime.Internal.TimeZone.Rep_TimeZone
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_AnnLookup
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_AnnTarget
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Bang
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_BndrVis
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Body
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Bytes
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Callconv
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Clause
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Con
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Dec
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DecidedStrictness
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DerivClause
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DerivStrategy
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_DocLoc
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Exp
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_FamilyResultSig
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_FixityDirection
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Fixity
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Foreign
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_FunDep
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Guard
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Info
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_InjectivityAnn
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Inline
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Lit
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Loc
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Match
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_ModName
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_ModuleInfo
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Module
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_NameFlavour
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_NameSpace
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Name
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_NamespaceSpecifier
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_OccName
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Overlap
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Pat
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_PatSynArgs
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_PatSynDir
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Phases
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_PkgName
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Pragma
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Range
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Role
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_RuleBndr
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_RuleMatch
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Safety
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_SourceStrictness
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_SourceUnpackedness
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Specificity
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Stmt
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TyLit
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TySynEqn
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TyVarBndr
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_Type
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.TH.Syntax.Rep_TypeFamilyHead
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Accum.Rep_AccumT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.RWS.CPS.Rep_RWST
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Select.Rep_SelectT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Writer.CPS.Rep_WriterT
+[2026-08-07 14:33:53][Command][haddock_push] - System.Console.Terminal.Common.Rep1_Window
+[2026-08-07 14:33:53][Command][haddock_push] - System.Console.Terminal.Common.Rep_Window
+[2026-08-07 14:33:53][Command][haddock_push] - UnliftIO.Internals.Async.Rep_ConcException
+[2026-08-07 14:33:53][Command][haddock_push] - Prettyprinter.Internal.Rep_Doc
+[2026-08-07 14:33:53][Command][haddock_push] - Prettyprinter.Internal.Rep_SimpleDocStream
+[2026-08-07 14:33:53][Command][haddock_push] - Prettyprinter.Internal.FlattenResult
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Cont.Rep_ContT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Except.Rep_ExceptT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Maybe.Rep_MaybeT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.RWS.Lazy.Rep_RWST
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.RWS.Strict.Rep_RWST
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.State.Strict.Rep_StateT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Writer.Lazy.Rep_WriterT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Writer.Strict.Rep_WriterT
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.UnzipWith
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Sequence.Internal.unzipWith'
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Reader.Rep1_ReaderT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Reader.Rep_ReaderT
+[2026-08-07 14:33:53][Command][haddock_push] - Data.ByteString.Short.Internal.Rep_ShortByteString
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Command.Types.Internal.Rep_CommandIndex
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.ForeignSrcLang.Rep_ForeignSrcLang
+[2026-08-07 14:33:53][Command][haddock_push] - GHC.Internal.LanguageExtensions.Rep_Extension
+[2026-08-07 14:33:53][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_Doc
+[2026-08-07 14:33:53][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_Mode
+[2026-08-07 14:33:53][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_Style
+[2026-08-07 14:33:53][Command][haddock_push] - Text.PrettyPrint.Annotated.HughesPJ.Rep_TextDetails
+[2026-08-07 14:33:53][Command][haddock_push] - Text.PrettyPrint.HughesPJ.Rep_Doc
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.Identity.Rep_IdentityT
+[2026-08-07 14:33:53][Command][haddock_push] - Control.Monad.Trans.State.Lazy.Rep_StateT
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapIndexF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Command.Types.Rep_CommandP
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Internal.Generic.GPositionPath
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Internal.Generic.GAffineFieldMaybe
+[2026-08-07 14:33:53][Command][haddock_push] - Optics.Internal.Generic.gafieldMaybe
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.Graph.GroupEdges
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.PatriciaTree.Rep_Gr
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.PatriciaTree.FromListCounting
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.PatriciaTree.GraphRep
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeSequential
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeLabel
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifySystemF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionsF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionCompleteF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogMultiF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogFileF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogPathF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Core.LegendKeysCacheF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Core.TimeoutF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Core.TomlOptF
+[2026-08-07 14:33:53][Command][haddock_push] - Shrun.Configuration.Data.Core.ArgsOnlyDetF
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.SetM
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.Query.ArtPoint.DFSTree
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.Query.ArtPoint.LOWTree
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.Query.MaxFlow2.Direction
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.Tree.Rep_Gr
+[2026-08-07 14:33:53][Command][haddock_push] - Data.Graph.Inductive.Tree.GraphRep
+[2026-08-07 14:33:53][Command][haddock_push] - Text.Megaparsec.Error.Builder.Rep_EF
+[2026-08-07 14:34:20][Command][haddock_push] -
+[2026-08-07 14:34:32][Command][haddock_push]  Text.Megaparsec.Error.Builder.Rep_ET
+[2026-08-07 14:34:32][Command][haddock_push] - Optics.Arrow.WrappedArrow
+[2026-08-07 14:34:32][Command][haddock_push] - Options.Applicative.Internal.ComplResult
+[2026-08-07 14:34:32][Command][haddock_push] - Prettyprinter.Render.Util.SimpleDocTree.Rep_SimpleDocTree
+[2026-08-07 14:34:32][Command][haddock_push] - Prettyprinter.Render.Util.SimpleDocTree.SimpleDocTok
+[2026-08-07 14:34:32][Command][haddock_push] - Numeric.Data.ModP.Internal.Primality.Rep_MaybePrime
+[2026-08-07 14:34:32][Command][haddock_push] - Numeric.Data.ModP.Internal.Primality.Rep_Rand
+[2026-08-07 14:34:32][Command][haddock_push] - TOML.Parser.NormalizeM
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Command.Types.Internal: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.Internal.Rep_CommandIndex
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Command.Types: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.Internal.Rep_CommandIndex
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapIndexF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapIndex
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapStm
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.CommandStatusMapPure
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Command.Types.Rep_CommandP
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Data.Graph: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeSequential
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Graph.Rep_EdgeLabel
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Args.Parsing.Graph.Utils: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Args.Parsing.Graph.Utils.runFatalError
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Data.StripControl: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlType
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlConsoleLog
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlFileLog
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Data.Notify: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifySystemF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionsF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Notify.NotifyActionCompleteF
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Data.FileLogging: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogMultiF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogFileF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.FileLogPathF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.FileLogging.createLogFile
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.IO.Handle: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.IO.Handle.BufferParams
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Data.Core: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Core.CoreConfigEnv
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Core.LegendKeysCacheF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Core.TimeoutF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Core.TomlOptF
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.Core.ArgsOnlyDetF
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Logging.Formatting: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Data.StripControl.StripControlType
+[2026-08-07 14:34:32][Command][haddock_push] Warning: Shrun.Configuration.Toml.Legend: could not find link destinations for: 
+[2026-08-07 14:34:32][Command][haddock_push] - Shrun.Configuration.Toml.Legend.UnsafeKeyVal
+[2026-08-07 14:34:33][Command][haddock_push] Documentation created:
+[2026-08-07 14:34:33][Command][haddock_push] /home/tommy/Dev/tommy/github/shrun/./dist-newstyle/build/x86_64-linux/ghc-9.12.3/shrun-0.10/noopt/doc/html/shrun

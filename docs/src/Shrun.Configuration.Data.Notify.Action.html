@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679680226"><span id="local-6989586621679680227"></span></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides type for notifications.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.Action</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Start</span></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier">NotifyActionStartSwitch</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Complete</span></span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier">NotifyActionComplete</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#parseNotifyAction"><span class="hs-identifier">parseNotifyAction</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#notifyActionMeta"><span class="hs-identifier">notifyActionMeta</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html"><span class="hs-identifier">Shrun.Configuration.Data.ConfigPhase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#parseSwitch"><span class="hs-identifier">parseSwitch</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- | Type for determining if we use the command's key</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- for display, rather than the key itself.</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">newtype</span><span> </span><span id="NotifyActionStartSwitch"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier hs-var">NotifyActionStartSwitch</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkNotifyActionStartSwitch"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier hs-var">MkNotifyActionStartSwitch</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679680234"><span id="local-6989586621679680238"><span class="annot"><span class="annottext">NotifyActionStartSwitch
+NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; Bounded NotifyActionStartSwitch
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: NotifyActionStartSwitch
+minBound :: NotifyActionStartSwitch
+$cmaxBound :: NotifyActionStartSwitch
+maxBound :: NotifyActionStartSwitch
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679680245"><span id="local-6989586621679680249"><span class="annot"><span class="annottext">NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+(NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool)
+-&gt; (NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool)
+-&gt; Eq NotifyActionStartSwitch
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+== :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+$c/= :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+/= :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679680256"><span id="local-6989586621679680260"><span id="local-6989586621679680263"><span id="local-6989586621679680267"><span id="local-6989586621679680270"><span id="local-6989586621679680273"><span id="local-6989586621679680276"><span class="annot"><span class="annottext">Eq NotifyActionStartSwitch
+Eq NotifyActionStartSwitch =&gt;
+(NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Ordering)
+-&gt; (NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool)
+-&gt; (NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool)
+-&gt; (NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool)
+-&gt; (NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool)
+-&gt; (NotifyActionStartSwitch
+    -&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch)
+-&gt; (NotifyActionStartSwitch
+    -&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch)
+-&gt; Ord NotifyActionStartSwitch
+NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Ordering
+NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Ordering
+compare :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Ordering
+$c&lt; :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+&lt; :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+$c&lt;= :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+&lt;= :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+$c&gt; :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+&gt; :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+$c&gt;= :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+&gt;= :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch -&gt; Bool
+$cmax :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+max :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+$cmin :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+min :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679680284"><span id="local-6989586621679680290"><span id="local-6989586621679680294"><span class="annot"><span class="annottext">Int -&gt; NotifyActionStartSwitch -&gt; ShowS
+[NotifyActionStartSwitch] -&gt; ShowS
+NotifyActionStartSwitch -&gt; String
+(Int -&gt; NotifyActionStartSwitch -&gt; ShowS)
+-&gt; (NotifyActionStartSwitch -&gt; String)
+-&gt; ([NotifyActionStartSwitch] -&gt; ShowS)
+-&gt; Show NotifyActionStartSwitch
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; NotifyActionStartSwitch -&gt; ShowS
+showsPrec :: Int -&gt; NotifyActionStartSwitch -&gt; ShowS
+$cshow :: NotifyActionStartSwitch -&gt; String
+show :: NotifyActionStartSwitch -&gt; String
+$cshowList :: [NotifyActionStartSwitch] -&gt; ShowS
+showList :: [NotifyActionStartSwitch] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">newtype</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679680299"><span id="local-6989586621679680304"><span id="local-6989586621679680308"><span id="local-6989586621679680312"><span id="local-6989586621679680316"><span id="local-6989586621679680320"><span id="local-6989586621679680324"><span id="local-6989586621679680328"><span class="annot"><span class="annottext">Int -&gt; NotifyActionStartSwitch
+NotifyActionStartSwitch -&gt; Int
+NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch
+-&gt; [NotifyActionStartSwitch]
+(NotifyActionStartSwitch -&gt; NotifyActionStartSwitch)
+-&gt; (NotifyActionStartSwitch -&gt; NotifyActionStartSwitch)
+-&gt; (Int -&gt; NotifyActionStartSwitch)
+-&gt; (NotifyActionStartSwitch -&gt; Int)
+-&gt; (NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch])
+-&gt; (NotifyActionStartSwitch
+    -&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch])
+-&gt; (NotifyActionStartSwitch
+    -&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch])
+-&gt; (NotifyActionStartSwitch
+    -&gt; NotifyActionStartSwitch
+    -&gt; NotifyActionStartSwitch
+    -&gt; [NotifyActionStartSwitch])
+-&gt; Enum NotifyActionStartSwitch
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+succ :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+$cpred :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+pred :: NotifyActionStartSwitch -&gt; NotifyActionStartSwitch
+$ctoEnum :: Int -&gt; NotifyActionStartSwitch
+toEnum :: Int -&gt; NotifyActionStartSwitch
+$cfromEnum :: NotifyActionStartSwitch -&gt; Int
+fromEnum :: NotifyActionStartSwitch -&gt; Int
+$cenumFrom :: NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+enumFrom :: NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+$cenumFromThen :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+enumFromThen :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+$cenumFromTo :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+enumFromTo :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch -&gt; [NotifyActionStartSwitch]
+$cenumFromThenTo :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch
+-&gt; [NotifyActionStartSwitch]
+enumFromThenTo :: NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch
+-&gt; NotifyActionStartSwitch
+-&gt; [NotifyActionStartSwitch]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier hs-type">NotifyActionStartSwitch</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-27"></span><span>  </span><span id="local-6989586621679680348"><span class="annot"><span class="annottext">tomlDecoder :: Decoder NotifyActionStartSwitch
+</span><a href="#local-6989586621679680348"><span class="hs-identifier hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; NotifyActionStartSwitch
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier hs-var">MkNotifyActionStartSwitch</span></a></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; NotifyActionStartSwitch)
+-&gt; Decoder Bool -&gt; Decoder NotifyActionStartSwitch
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; (Text -&gt; Decoder Bool) -&gt; Decoder Bool
+forall a b. Decoder a -&gt; (a -&gt; Decoder b) -&gt; Decoder b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Decoder Bool
+forall (m :: Type -&gt; Type). MonadFail m =&gt; Text -&gt; m Bool
+</span><a href="Shrun.Configuration.Data.ConfigPhase.html#parseSwitch"><span class="hs-identifier hs-var">parseSwitch</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier hs-type">NotifyActionStartSwitch</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>  </span><span id="local-6989586621679680354"><span class="annot"><span class="annottext">def :: NotifyActionStartSwitch
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; NotifyActionStartSwitch
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier hs-var">MkNotifyActionStartSwitch</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-33"></span><span>  </span><span id="local-6989586621679680202"><span id="local-6989586621679680203"><span id="local-6989586621679680204"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679680202"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#An_Iso"><span class="hs-identifier hs-type">An_Iso</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679680203"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679680204"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-34"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unNotifyActionStartSwitch&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679680202"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier hs-type">NotifyActionStartSwitch</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier hs-type">NotifyActionStartSwitch</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679680203"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679680204"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-36"></span><span>  </span><span id="local-6989586621679680364"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx NotifyActionStartSwitch NotifyActionStartSwitch a b
+</span><a href="#local-6989586621679680364"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(NotifyActionStartSwitch -&gt; a)
+-&gt; (b -&gt; NotifyActionStartSwitch)
+-&gt; Iso NotifyActionStartSwitch NotifyActionStartSwitch a b
+forall s a b t. (s -&gt; a) -&gt; (b -&gt; t) -&gt; Iso s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Iso.html#iso"><span class="hs-identifier hs-var">iso</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier hs-type">MkNotifyActionStartSwitch</span></a></span><span> </span><span id="local-6989586621679680367"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679680367"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Bool
+</span><a href="#local-6989586621679680367"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">b -&gt; NotifyActionStartSwitch
+Bool -&gt; NotifyActionStartSwitch
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier hs-var">MkNotifyActionStartSwitch</span></a></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="annot"><span class="hs-comment">-- | Determines for which 'complete' actions we should send notifications.</span></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">data</span><span> </span><span id="NotifyActionComplete"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier hs-var">NotifyActionComplete</span></a></span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Send a notification after all commands are completed.</span></span><span>
+</span><span id="line-42"></span><span>    </span><span id="NotifyActionCompleteFinal"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionCompleteFinal"><span class="hs-identifier hs-var">NotifyActionCompleteFinal</span></a></span></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Send notifications when each command completes.</span></span><span>
+</span><span id="line-44"></span><span>    </span><span id="NotifyActionCompleteCommand"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionCompleteCommand"><span class="hs-identifier hs-var">NotifyActionCompleteCommand</span></a></span></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | NotifyActionCompleteFinal and NotifyActionCompleteCommand.</span></span><span>
+</span><span id="line-46"></span><span>    </span><span id="NotifyActionCompleteAll"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionCompleteAll"><span class="hs-identifier hs-var">NotifyActionCompleteAll</span></a></span></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679680372"><span id="local-6989586621679680374"><span class="annot"><span class="annottext">NotifyActionComplete
+NotifyActionComplete
+-&gt; NotifyActionComplete -&gt; Bounded NotifyActionComplete
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: NotifyActionComplete
+minBound :: NotifyActionComplete
+$cmaxBound :: NotifyActionComplete
+maxBound :: NotifyActionComplete
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679680377"><span id="local-6989586621679680385"><span id="local-6989586621679680390"><span id="local-6989586621679680396"><span id="local-6989586621679680399"><span id="local-6989586621679680404"><span id="local-6989586621679680410"><span id="local-6989586621679680414"><span class="annot"><span class="annottext">Int -&gt; NotifyActionComplete
+NotifyActionComplete -&gt; Int
+NotifyActionComplete -&gt; [NotifyActionComplete]
+NotifyActionComplete -&gt; NotifyActionComplete
+NotifyActionComplete
+-&gt; NotifyActionComplete -&gt; [NotifyActionComplete]
+NotifyActionComplete
+-&gt; NotifyActionComplete
+-&gt; NotifyActionComplete
+-&gt; [NotifyActionComplete]
+(NotifyActionComplete -&gt; NotifyActionComplete)
+-&gt; (NotifyActionComplete -&gt; NotifyActionComplete)
+-&gt; (Int -&gt; NotifyActionComplete)
+-&gt; (NotifyActionComplete -&gt; Int)
+-&gt; (NotifyActionComplete -&gt; [NotifyActionComplete])
+-&gt; (NotifyActionComplete
+    -&gt; NotifyActionComplete -&gt; [NotifyActionComplete])
+-&gt; (NotifyActionComplete
+    -&gt; NotifyActionComplete -&gt; [NotifyActionComplete])
+-&gt; (NotifyActionComplete
+    -&gt; NotifyActionComplete
+    -&gt; NotifyActionComplete
+    -&gt; [NotifyActionComplete])
+-&gt; Enum NotifyActionComplete
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: NotifyActionComplete -&gt; NotifyActionComplete
+succ :: NotifyActionComplete -&gt; NotifyActionComplete
+$cpred :: NotifyActionComplete -&gt; NotifyActionComplete
+pred :: NotifyActionComplete -&gt; NotifyActionComplete
+$ctoEnum :: Int -&gt; NotifyActionComplete
+toEnum :: Int -&gt; NotifyActionComplete
+$cfromEnum :: NotifyActionComplete -&gt; Int
+fromEnum :: NotifyActionComplete -&gt; Int
+$cenumFrom :: NotifyActionComplete -&gt; [NotifyActionComplete]
+enumFrom :: NotifyActionComplete -&gt; [NotifyActionComplete]
+$cenumFromThen :: NotifyActionComplete
+-&gt; NotifyActionComplete -&gt; [NotifyActionComplete]
+enumFromThen :: NotifyActionComplete
+-&gt; NotifyActionComplete -&gt; [NotifyActionComplete]
+$cenumFromTo :: NotifyActionComplete
+-&gt; NotifyActionComplete -&gt; [NotifyActionComplete]
+enumFromTo :: NotifyActionComplete
+-&gt; NotifyActionComplete -&gt; [NotifyActionComplete]
+$cenumFromThenTo :: NotifyActionComplete
+-&gt; NotifyActionComplete
+-&gt; NotifyActionComplete
+-&gt; [NotifyActionComplete]
+enumFromThenTo :: NotifyActionComplete
+-&gt; NotifyActionComplete
+-&gt; NotifyActionComplete
+-&gt; [NotifyActionComplete]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679680417"><span id="local-6989586621679680421"><span class="annot"><span class="annottext">NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool
+(NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool)
+-&gt; (NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool)
+-&gt; Eq NotifyActionComplete
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool
+== :: NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool
+$c/= :: NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool
+/= :: NotifyActionComplete -&gt; NotifyActionComplete -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679680425"><span id="local-6989586621679680427"><span id="local-6989586621679680431"><span class="annot"><span class="annottext">Int -&gt; NotifyActionComplete -&gt; ShowS
+[NotifyActionComplete] -&gt; ShowS
+NotifyActionComplete -&gt; String
+(Int -&gt; NotifyActionComplete -&gt; ShowS)
+-&gt; (NotifyActionComplete -&gt; String)
+-&gt; ([NotifyActionComplete] -&gt; ShowS)
+-&gt; Show NotifyActionComplete
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; NotifyActionComplete -&gt; ShowS
+showsPrec :: Int -&gt; NotifyActionComplete -&gt; ShowS
+$cshow :: NotifyActionComplete -&gt; String
+show :: NotifyActionComplete -&gt; String
+$cshowList :: [NotifyActionComplete] -&gt; ShowS
+showList :: [NotifyActionComplete] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier hs-type">NotifyActionComplete</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-50"></span><span>  </span><span id="local-6989586621679680438"><span class="annot"><span class="annottext">tomlDecoder :: Decoder NotifyActionComplete
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+-&gt; (Text -&gt; Decoder NotifyActionComplete)
+-&gt; Decoder NotifyActionComplete
+forall a b. Decoder a -&gt; (a -&gt; Decoder b) -&gt; Decoder b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Decoder NotifyActionComplete
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+Text -&gt; m NotifyActionComplete
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#parseNotifyAction"><span class="hs-identifier hs-var">parseNotifyAction</span></a></span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679680441"><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#Pretty"><span class="hs-identifier hs-type">Pretty</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier hs-type">NotifyActionComplete</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-53"></span><span>  </span><span id="local-6989586621679680449"><span class="annot"><span class="annottext">pretty :: forall ann. NotifyActionComplete -&gt; Doc ann
+</span><a href="#local-6989586621679680449"><span class="hs-identifier hs-var hs-var hs-var">pretty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><span class="annottext">NotifyActionComplete
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionCompleteFinal"><span class="hs-identifier hs-var">NotifyActionCompleteFinal</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;final&quot;</span></span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><span class="annottext">NotifyActionComplete
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionCompleteCommand"><span class="hs-identifier hs-var">NotifyActionCompleteCommand</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;command&quot;</span></span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="annottext">NotifyActionComplete
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionCompleteAll"><span class="hs-identifier hs-var">NotifyActionCompleteAll</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;all&quot;</span></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="annot"><span class="hs-comment">-- | Parses 'NotifyActionComplete'.</span></span><span>
+</span><span id="line-59"></span><span id="local-6989586621679680212"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#parseNotifyAction"><span class="hs-identifier hs-type">parseNotifyAction</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679680212"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679680212"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier hs-type">NotifyActionComplete</span></a></span></span><span>
+</span><span id="line-60"></span><span id="parseNotifyAction"><span class="annot"><span class="annottext">parseNotifyAction :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+Text -&gt; m NotifyActionComplete
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#parseNotifyAction"><span class="hs-identifier hs-var hs-var">parseNotifyAction</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; (Bool, [Text]) -&gt; Text -&gt; m NotifyActionComplete
+forall a (m :: Type -&gt; Type).
+(Bounded a, Enum a, MonadFail m, Pretty a) =&gt;
+Text -&gt; (Bool, [Text]) -&gt; Text -&gt; m a
+</span><a href="Shrun.Utils.html#inversePrettyFail"><span class="hs-identifier hs-var">Utils.inversePrettyFail</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;notify-action-complete&quot;</span></span><span> </span><span class="annot"><span class="annottext">(Bool, [Text])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#notifyActionMeta"><span class="hs-identifier hs-var">notifyActionMeta</span></a></span><span>
+</span><span id="line-61"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#parseNotifyAction"><span class="hs-pragma hs-type">parseNotifyAction</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="annot"><span class="hs-comment">-- | Available 'NotifyActionComplete' strings.</span></span><span>
+</span><span id="line-64"></span><span id="local-6989586621679680224"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#notifyActionMeta"><span class="hs-identifier hs-type">notifyActionMeta</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679680224"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Tuple2</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><a href="#local-6989586621679680224"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-65"></span><span id="notifyActionMeta"><span class="annot"><span class="annottext">notifyActionMeta :: forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#notifyActionMeta"><span class="hs-identifier hs-var hs-var">notifyActionMeta</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;all&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;command&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;final&quot;</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span></pre></body></html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Data.Result.html"><span class="hs-identifier">Shrun.Data.Result</span></a></span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier">Result</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Applicative</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Applicative</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">pure</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(&lt;*&gt;)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Category</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(.)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(&gt;&gt;=)</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">MonadFail</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fail</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Eq</span></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">foldr</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Functor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Functor</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(&lt;$&gt;)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Monoid</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Monoid</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">mempty</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Semigroup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Semigroup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(&lt;&gt;)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromString</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Traversable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Traversable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">sequenceA</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">traverse</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Show</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="annot"><span class="hs-comment">-- | Either with custom MonadFail and fail-fast Semigroup instances.</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">data</span><span> </span><span id="Result"><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-var">Result</span></a></span></span><span> </span><span id="local-6989586621679670252"><span class="annot"><a href="#local-6989586621679670252"><span class="hs-identifier hs-type">e</span></a></span></span><span> </span><span id="local-6989586621679670253"><span class="annot"><a href="#local-6989586621679670253"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="Err"><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679670252"><span class="hs-identifier hs-type">e</span></a></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="Ok"><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679670253"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679670357"><span id="local-6989586621679670364"><span class="annot"><span class="annottext">Result e a -&gt; Result e a -&gt; Bool
+(Result e a -&gt; Result e a -&gt; Bool)
+-&gt; (Result e a -&gt; Result e a -&gt; Bool) -&gt; Eq (Result e a)
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+forall e a. (Eq e, Eq a) =&gt; Result e a -&gt; Result e a -&gt; Bool
+$c== :: forall e a. (Eq e, Eq a) =&gt; Result e a -&gt; Result e a -&gt; Bool
+== :: Result e a -&gt; Result e a -&gt; Bool
+$c/= :: forall e a. (Eq e, Eq a) =&gt; Result e a -&gt; Result e a -&gt; Bool
+/= :: Result e a -&gt; Result e a -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679670369"><span id="local-6989586621679670371"><span class="annot"><span class="annottext">(forall a b. (a -&gt; b) -&gt; Result e a -&gt; Result e b)
+-&gt; (forall a b. a -&gt; Result e b -&gt; Result e a)
+-&gt; Functor (Result e)
+forall a b. a -&gt; Result e b -&gt; Result e a
+forall a b. (a -&gt; b) -&gt; Result e a -&gt; Result e b
+forall e a b. a -&gt; Result e b -&gt; Result e a
+forall e a b. (a -&gt; b) -&gt; Result e a -&gt; Result e b
+forall (f :: Type -&gt; Type).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+$cfmap :: forall e a b. (a -&gt; b) -&gt; Result e a -&gt; Result e b
+fmap :: forall a b. (a -&gt; b) -&gt; Result e a -&gt; Result e b
+$c&lt;$ :: forall e a b. a -&gt; Result e b -&gt; Result e a
+&lt;$ :: forall a b. a -&gt; Result e b -&gt; Result e a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679670378"><span id="local-6989586621679670385"><span id="local-6989586621679670389"><span class="annot"><span class="annottext">Int -&gt; Result e a -&gt; ShowS
+[Result e a] -&gt; ShowS
+Result e a -&gt; String
+(Int -&gt; Result e a -&gt; ShowS)
+-&gt; (Result e a -&gt; String)
+-&gt; ([Result e a] -&gt; ShowS)
+-&gt; Show (Result e a)
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+forall e a. (Show e, Show a) =&gt; Int -&gt; Result e a -&gt; ShowS
+forall e a. (Show e, Show a) =&gt; [Result e a] -&gt; ShowS
+forall e a. (Show e, Show a) =&gt; Result e a -&gt; String
+$cshowsPrec :: forall e a. (Show e, Show a) =&gt; Int -&gt; Result e a -&gt; ShowS
+showsPrec :: Int -&gt; Result e a -&gt; ShowS
+$cshow :: forall e a. (Show e, Show a) =&gt; Result e a -&gt; String
+show :: Result e a -&gt; String
+$cshowList :: forall e a. (Show e, Show a) =&gt; [Result e a] -&gt; ShowS
+showList :: [Result e a] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670250"><span id="local-6989586621679670251"><span id="local-6989586621679670396"><span id="local-6989586621679670400"><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="annot"><a href="#local-6989586621679670250"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670251"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670250"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-25"></span><span>  </span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670406"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670406"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679670407"><span class="annot"><span class="annottext">&lt;&gt; :: Result e a -&gt; Result e a -&gt; Result e a
+</span><span class="hs-operator hs-var hs-var hs-var">&lt;&gt;</span></span></span><span> </span><span class="annot"><span class="annottext">Result e a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">e -&gt; Result e a
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670406"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-26"></span><span>  </span><span class="annot"><span class="annottext">Result e a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670408"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670408"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">e -&gt; Result e a
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670408"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-27"></span><span>  </span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670409"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670409"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670410"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670410"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Result e a
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670409"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670410"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670257"><span id="local-6989586621679670258"><span id="local-6989586621679670417"><span id="local-6989586621679670421"><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="#local-6989586621679670257"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670258"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670257"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>  </span><span id="local-6989586621679670426"><span class="annot"><span class="annottext">mempty :: Result e a
+</span><span class="hs-identifier hs-var hs-var hs-var">mempty</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Result e a
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span> </span><span class="annot"><span class="annottext">a
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670271"><span id="local-6989586621679670432"><span id="local-6989586621679670436"><span id="local-6989586621679670439"><span class="annot"><span class="hs-identifier hs-type">Applicative</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670271"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>  </span><span id="local-6989586621679670442"><span class="annot"><span class="annottext">pure :: forall a. a -&gt; Result e a
+</span><span class="hs-identifier hs-var hs-var hs-var">pure</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Result e a
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span>  </span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670443"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670443"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679670444"><span class="annot"><span class="annottext">&lt;*&gt; :: forall a b. Result e (a -&gt; b) -&gt; Result e a -&gt; Result e b
+</span><span class="hs-operator hs-var hs-var hs-var">&lt;*&gt;</span></span></span><span> </span><span class="annot"><span class="annottext">Result e a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">e -&gt; Result e b
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670443"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-36"></span><span>  </span><span class="annot"><span class="annottext">Result e (a -&gt; b)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670445"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670445"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">e -&gt; Result e b
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670445"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-37"></span><span>  </span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670446"><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679670446"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670447"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670447"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b -&gt; Result e b
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679670446"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670447"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670282"><span id="local-6989586621679670452"><span id="local-6989586621679670456"><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670282"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-40"></span><span>  </span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670459"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670459"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679670460"><span class="annot"><span class="annottext">&gt;&gt;= :: forall a b. Result e a -&gt; (a -&gt; Result e b) -&gt; Result e b
+</span><span class="hs-operator hs-var hs-var hs-var">&gt;&gt;=</span></span></span><span> </span><span class="annot"><span class="annottext">a -&gt; Result e b
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">e -&gt; Result e b
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670459"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-41"></span><span>  </span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670461"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670461"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span id="local-6989586621679670462"><span class="annot"><span class="annottext">a -&gt; Result e b
+</span><a href="#local-6989586621679670462"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Result e b
+</span><a href="#local-6989586621679670462"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670461"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670309"><span id="local-6989586621679670464"><span id="local-6989586621679670470"><span id="local-6989586621679670475"><span id="local-6989586621679670481"><span id="local-6989586621679670484"><span id="local-6989586621679670487"><span id="local-6989586621679670490"><span id="local-6989586621679670493"><span id="local-6989586621679670496"><span id="local-6989586621679670499"><span id="local-6989586621679670502"><span id="local-6989586621679670505"><span id="local-6989586621679670510"><span id="local-6989586621679670515"><span id="local-6989586621679670520"><span id="local-6989586621679670525"><span class="annot"><span class="hs-identifier hs-type">Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670309"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-44"></span><span>  </span><span id="local-6989586621679670530"><span class="annot"><span class="annottext">foldr :: forall a b. (a -&gt; b -&gt; b) -&gt; b -&gt; Result e a -&gt; b
+</span><span class="hs-identifier hs-var hs-var hs-var">foldr</span></span></span><span> </span><span class="annot"><span class="annottext">a -&gt; b -&gt; b
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679670531"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679670531"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679670531"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-45"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">foldr</span></span><span> </span><span id="local-6989586621679670532"><span class="annot"><span class="annottext">a -&gt; b -&gt; b
+</span><a href="#local-6989586621679670532"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679670533"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679670533"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670534"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670534"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; b -&gt; b
+</span><a href="#local-6989586621679670532"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670534"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679670533"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670326"><span id="local-6989586621679670542"><span id="local-6989586621679670548"><span class="annot"><span class="hs-identifier hs-type">Traversable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670326"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-48"></span><span>  </span><span id="local-6989586621679670558"><span class="annot"><span class="annottext">sequenceA :: forall (f :: Type -&gt; Type) a.
+Applicative f =&gt;
+Result e (f a) -&gt; f (Result e a)
+</span><span class="hs-identifier hs-var hs-var hs-var">sequenceA</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670559"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670559"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Result e a -&gt; f (Result e a)
+forall a. a -&gt; f a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">e -&gt; Result e a
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670559"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">sequenceA</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670560"><span class="annot"><span class="annottext">f a
+</span><a href="#local-6989586621679670560"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Result e a
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span> </span><span class="annot"><span class="annottext">(a -&gt; Result e a) -&gt; f a -&gt; f (Result e a)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">f a
+</span><a href="#local-6989586621679670560"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span>  </span><span id="local-6989586621679670565"><span class="annot"><span class="annottext">traverse :: forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+(a -&gt; f b) -&gt; Result e a -&gt; f (Result e b)
+</span><span class="hs-identifier hs-var hs-var hs-var">traverse</span></span></span><span> </span><span class="annot"><span class="annottext">a -&gt; f b
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679670566"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670566"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Result e b -&gt; f (Result e b)
+forall a. a -&gt; f a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">e -&gt; Result e b
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679670566"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">traverse</span></span><span> </span><span id="local-6989586621679670567"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679670567"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679670568"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670568"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b -&gt; Result e b
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span> </span><span class="annot"><span class="annottext">(b -&gt; Result e b) -&gt; f b -&gt; f (Result e b)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679670567"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679670568"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679670338"><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679670338"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679670338"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-55"></span><span>  </span><span id="local-6989586621679670578"><span class="annot"><span class="annottext">fail :: forall a. String -&gt; Result e a
+</span><span class="hs-identifier hs-var hs-var hs-var">fail</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">e -&gt; Result e a
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span> </span><span class="annot"><span class="annottext">(e -&gt; Result e a) -&gt; (String -&gt; e) -&gt; String -&gt; Result e a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; e
+forall a. IsString a =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">fromString</span></span><span>
+</span><span id="line-56"></span></pre></body></html>

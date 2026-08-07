@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides type for notifications.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.Timeout</span></a></span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeout"><span class="hs-identifier">parseNotifyTimeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutMeta"><span class="hs-identifier">notifyTimeoutMeta</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutDecoder"><span class="hs-identifier">notifyTimeoutDecoder</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#prettyNotifyTimeout"><span class="hs-identifier">prettyNotifyTimeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Bits</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">toIntegralSized</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/relative-time-0.1-4e05a59c32c63c61215dd1b6a36aa590fe2232f8522594d7f7be2606f17e859a/share/doc/html/src/Data.Time.Relative.html"><span class="hs-identifier">Data.Time.Relative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">RT</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">U</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.html"><span class="hs-identifier">TOML</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Value.html#Value"><span class="hs-identifier">Value</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Value.html#Integer"><span class="hs-identifier">Integer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Value.html#String"><span class="hs-identifier">String</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- DecodeTOML instance does not reuse parseNotifyTimeout as we want to</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- enforce the integer type.</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutDecoder"><span class="hs-identifier hs-type">notifyTimeoutDecoder</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span>
+</span><span id="line-21"></span><span id="notifyTimeoutDecoder"><span class="annot"><span class="annottext">notifyTimeoutDecoder :: Decoder NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutDecoder"><span class="hs-identifier hs-var hs-var">notifyTimeoutDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Value -&gt; DecodeM NotifyTimeout) -&gt; Decoder NotifyTimeout
+forall a. (Value -&gt; DecodeM a) -&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#makeDecoder"><span class="hs-identifier hs-var">makeDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">((Value -&gt; DecodeM NotifyTimeout) -&gt; Decoder NotifyTimeout)
+-&gt; (Value -&gt; DecodeM NotifyTimeout) -&gt; Decoder NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-22"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Value.html#String"><span class="hs-identifier hs-type">String</span></a></span><span> </span><span id="local-6989586621679679658"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679658"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; DecodeM NotifyTimeout
+forall (f :: Type -&gt; Type). MonadFail f =&gt; Text -&gt; f NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeoutStr"><span class="hs-identifier hs-var">parseNotifyTimeoutStr</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679658"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-23"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Value.html#Integer"><span class="hs-identifier hs-type">Integer</span></a></span><span> </span><span id="local-6989586621679679660"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679679660"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Maybe Int
+forall a b.
+(Integral a, Integral b, Bits a, Bits b) =&gt;
+a -&gt; Maybe b
+</span><span class="hs-identifier hs-var">toIntegralSized</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679679660"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679679661"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679679661"><span class="hs-identifier hs-var">i'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; DecodeM NotifyTimeout
+forall a. a -&gt; DecodeM a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NotifyTimeout -&gt; DecodeM NotifyTimeout)
+-&gt; NotifyTimeout -&gt; DecodeM NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; NotifyTimeout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeoutMillis"><span class="hs-identifier hs-var">NotifyTimeoutMillis</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; NotifyTimeout) -&gt; Int -&gt; NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679679661"><span class="hs-identifier hs-var">i'</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1_000</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="annottext">Maybe Int
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value -&gt; DecodeM NotifyTimeout
+forall a. Text -&gt; Value -&gt; DecodeM a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#invalidValue"><span class="hs-identifier hs-var">invalidValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Integer -&gt; Text
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#tooLargeErr"><span class="hs-identifier hs-var">tooLargeErr</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Integer
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Value
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Value.html#Integer"><span class="hs-identifier hs-var">Integer</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679679660"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>  </span><span id="local-6989586621679679666"><span class="annot"><span class="annottext">Value
+</span><a href="#local-6989586621679679666"><span class="hs-identifier hs-var">badTy</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Value -&gt; DecodeM NotifyTimeout
+forall a. Value -&gt; DecodeM a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#typeMismatch"><span class="hs-identifier hs-var">typeMismatch</span></a></span><span> </span><span class="annot"><span class="annottext">Value
+</span><a href="#local-6989586621679679666"><span class="hs-identifier hs-var">badTy</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span id="local-6989586621679679565"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#prettyNotifyTimeout"><span class="hs-identifier hs-type">prettyNotifyTimeout</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#Doc"><span class="hs-identifier hs-type">Doc</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679679565"><span class="hs-identifier hs-type">ann</span></a></span></span><span>
+</span><span id="line-29"></span><span id="prettyNotifyTimeout"><span class="annot"><span class="annottext">prettyNotifyTimeout :: forall ann. NotifyTimeout -&gt; Doc ann
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#prettyNotifyTimeout"><span class="hs-identifier hs-var hs-var">prettyNotifyTimeout</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-30"></span><span>  </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeoutNever"><span class="hs-identifier hs-var">NotifyTimeoutNever</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;off&quot;</span></span><span>
+</span><span id="line-31"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeoutMillis"><span class="hs-identifier hs-type">NotifyTimeoutMillis</span></a></span><span> </span><span id="local-6989586621679679674"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679679674"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Doc ann
+forall ann. Int -&gt; Doc ann
+forall a ann. Pretty a =&gt; a -&gt; Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#pretty"><span class="hs-identifier hs-var">pretty</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Doc ann) -&gt; Int -&gt; Doc ann
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679679674"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`div`</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1_000</span></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#tooLargeErr"><span class="hs-identifier hs-type">tooLargeErr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-34"></span><span id="tooLargeErr"><span class="annot"><span class="annottext">tooLargeErr :: Maybe Integer -&gt; Text
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#tooLargeErr"><span class="hs-identifier hs-var hs-var">tooLargeErr</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe Integer
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Timeout integer too large. Max is: &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#maxW16"><span class="hs-identifier hs-var">maxW16</span></a></span><span>
+</span><span id="line-35"></span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#tooLargeErr"><span class="hs-identifier hs-var">tooLargeErr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679679679"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679679679"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-36"></span><span>  </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Timeout integer '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>      </span><span class="annot"><span class="annottext">Integer -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679679679"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>      </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;' too large. Max is: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>      </span><span class="annot"><span class="annottext">Word16 -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#maxW16"><span class="hs-identifier hs-var">maxW16</span></a></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#maxW16"><span class="hs-identifier hs-type">maxW16</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span>
+</span><span id="line-44"></span><span id="maxW16"><span class="annot"><span class="annottext">maxW16 :: Word16
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#maxW16"><span class="hs-identifier hs-var hs-var">maxW16</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="annot"><span class="hs-comment">-- | Parses 'NotifyTimeout'. For CLI only.</span></span><span>
+</span><span id="line-47"></span><span id="local-6989586621679679578"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeout"><span class="hs-identifier hs-type">parseNotifyTimeout</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679679578"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679679578"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679679578"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span></span><span>
+</span><span id="line-48"></span><span id="parseNotifyTimeout"><span class="annot"><span class="annottext">parseNotifyTimeout :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeout"><span class="hs-identifier hs-var hs-var">parseNotifyTimeout</span></a></span></span><span> </span><span id="local-6989586621679679693"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679679693"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-49"></span><span>  </span><span id="local-6989586621679679694"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679694"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679679693"><span class="hs-identifier hs-var">getTxt</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">forall (m :: Type -&gt; Type) a. (MonadFail m, Read a) =&gt; Text -&gt; m a
+</span><a href="Shrun.Utils.html#readStripUnderscores"><span class="hs-identifier hs-var">U.readStripUnderscores</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679694"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679679696"><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679679696"><span class="hs-identifier hs-var">nNat</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; m NotifyTimeout
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NotifyTimeout -&gt; m NotifyTimeout)
+-&gt; NotifyTimeout -&gt; m NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; NotifyTimeout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeoutMillis"><span class="hs-identifier hs-var">NotifyTimeoutMillis</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; NotifyTimeout) -&gt; Int -&gt; NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Int
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#unsafeFromNatSec"><span class="hs-identifier hs-var">unsafeFromNatSec</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679679696"><span class="hs-identifier hs-var">nNat</span></a></span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">Maybe Natural
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; m NotifyTimeout
+forall (f :: Type -&gt; Type). MonadFail f =&gt; Text -&gt; f NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeoutStr"><span class="hs-identifier hs-var">parseNotifyTimeoutStr</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679694"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-53"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeout"><span class="hs-pragma hs-type">parseNotifyTimeout</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#unsafeFromNatSec"><span class="hs-identifier hs-type">unsafeFromNatSec</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-56"></span><span id="unsafeFromNatSec"><span class="annot"><span class="annottext">unsafeFromNatSec :: Natural -&gt; Int
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#unsafeFromNatSec"><span class="hs-identifier hs-var hs-var">unsafeFromNatSec</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Int
+forall a b.
+(Bits a, Bits b, HasCallStack, Integral a, Integral b, Show a,
+ Typeable a, Typeable b) =&gt;
+a -&gt; b
+</span><a href="Shrun.Prelude.html#unsafeConvertIntegral"><span class="hs-identifier hs-var">unsafeConvertIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; Int) -&gt; (Natural -&gt; Natural) -&gt; Natural -&gt; Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Natural -&gt; Natural -&gt; Natural
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">1_000</span></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- | Parses a string only i.e. should either be 'off' or a time string, not</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- a literal natural. Intended for:</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- - CLI, after parsing a literal fails.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- - TOML, when given a String not Integer.</span><span>
+</span><span id="line-63"></span><span id="local-6989586621679679556"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeoutStr"><span class="hs-identifier hs-type">parseNotifyTimeoutStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679679556"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679679556"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span></span><span>
+</span><span id="line-64"></span><span id="parseNotifyTimeoutStr"><span class="annot"><span class="annottext">parseNotifyTimeoutStr :: forall (f :: Type -&gt; Type). MonadFail f =&gt; Text -&gt; f NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeoutStr"><span class="hs-identifier hs-var hs-var">parseNotifyTimeoutStr</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;off&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; f NotifyTimeout
+forall a. a -&gt; f a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeoutNever"><span class="hs-identifier hs-var">NotifyTimeoutNever</span></a></span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeoutStr"><span class="hs-identifier hs-var">parseNotifyTimeoutStr</span></a></span><span> </span><span id="local-6989586621679679715"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679715"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String RelativeTime
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/relative-time-0.1-4e05a59c32c63c61215dd1b6a36aa590fe2232f8522594d7f7be2606f17e859a/share/doc/html/src/Data.Time.Relative.html#fromString"><span class="hs-identifier hs-var">RT.fromString</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679679717"><span class="hs-identifier hs-var">str</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-66"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679679718"><span class="annot"><span class="annottext">RelativeTime
+</span><a href="#local-6989586621679679718"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; f NotifyTimeout
+forall a. a -&gt; f a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NotifyTimeout -&gt; f NotifyTimeout)
+-&gt; NotifyTimeout -&gt; f NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; NotifyTimeout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeoutMillis"><span class="hs-identifier hs-var">NotifyTimeoutMillis</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; NotifyTimeout) -&gt; Int -&gt; NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Int
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#unsafeFromNatSec"><span class="hs-identifier hs-var">unsafeFromNatSec</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; Int) -&gt; Natural -&gt; Int
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">RelativeTime -&gt; Natural
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/relative-time-0.1-4e05a59c32c63c61215dd1b6a36aa590fe2232f8522594d7f7be2606f17e859a/share/doc/html/src/Data.Time.Relative.html#toSeconds"><span class="hs-identifier hs-var">RT.toSeconds</span></a></span><span> </span><span class="annot"><span class="annottext">RelativeTime
+</span><a href="#local-6989586621679679718"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679679720"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679679720"><span class="hs-identifier hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; f NotifyTimeout
+forall a. String -&gt; f a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span>
+</span><span id="line-69"></span><span>      </span><span class="annot"><span class="annottext">(String -&gt; f NotifyTimeout) -&gt; String -&gt; f NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; (Bool, [String]) -&gt; String -&gt; String
+forall a. (IsString a, Monoid a) =&gt; a -&gt; (Bool, [a]) -&gt; a -&gt; a
+</span><a href="Shrun.Utils.html#fmtUnrecognizedError"><span class="hs-identifier hs-var">Utils.fmtUnrecognizedError</span></a></span><span>
+</span><span id="line-70"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;notify timeout&quot;</span></span><span>
+</span><span id="line-71"></span><span>        </span><span class="annot"><span class="annottext">(Bool, [String])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutMeta"><span class="hs-identifier hs-var">notifyTimeoutMeta</span></a></span><span>
+</span><span id="line-72"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679679720"><span class="hs-identifier hs-var">bad</span></a></span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-74"></span><span>    </span><span id="local-6989586621679679717"><span class="annot"><span class="annottext">str :: String
+</span><a href="#local-6989586621679679717"><span class="hs-identifier hs-var hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679679715"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-75"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeoutStr"><span class="hs-pragma hs-type">parseNotifyTimeoutStr</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span id="local-6989586621679679602"><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutMeta"><span class="hs-identifier hs-type">notifyTimeoutMeta</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679679602"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Tuple2</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><a href="#local-6989586621679679602"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-78"></span><span id="notifyTimeoutMeta"><span class="annot"><span class="annottext">notifyTimeoutMeta :: forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutMeta"><span class="hs-identifier hs-var hs-var">notifyTimeoutMeta</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;NATURAL&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;TIME_STR&quot;</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span></pre></body></html>

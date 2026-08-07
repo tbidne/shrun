@@ -1,0 +1,598 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE MonadComprehensions #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE OverloadedLists #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Edges</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdges"><span class="hs-identifier">parseEdges</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.html"><span class="hs-identifier">Data.Sequence.NonEmpty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NESeq</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html"><span class="hs-identifier">Shrun.Command.Types</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Cmd.T</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html"><span class="hs-identifier">Shrun.Command.Types.Internal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier">CommandIndex</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Utils</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier">MParser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier">Edge</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier">EdgeLabel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeAnd"><span class="hs-identifier">EdgeAnd</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeAny"><span class="hs-identifier">EdgeAny</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeOr"><span class="hs-identifier">EdgeOr</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Graph</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.html"><span class="hs-identifier">Text.Megaparsec</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">MP</span></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- | Parses at least one edge, stops if any commas are found. We return</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- NESeq rather than Edges as the former allows us to be more precise that</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- at least one edge is required for a successful parse.</span><span>
+</span><span id="line-25"></span><span class="hs-comment">--</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- After we are done parsing all edges, we can combine them.</span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdges"><span class="hs-identifier hs-type">parseEdges</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span id="parseEdges"><span class="annot"><span class="annottext">parseEdges :: MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdges"><span class="hs-identifier hs-var hs-var">parseEdges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MParser (NESeq Edge) -&gt; MParser (NESeq Edge)
+forall a.
+String
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall e s (m :: Type -&gt; Type) a.
+MonadParsec e s m =&gt;
+String -&gt; m a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#label"><span class="hs-identifier hs-var">MP.label</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677007"><span class="hs-keyword hs-var">label</span></a></span><span> </span><span class="annot"><span class="annottext">(MParser (NESeq Edge) -&gt; MParser (NESeq Edge))
+-&gt; MParser (NESeq Edge) -&gt; MParser (NESeq Edge)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-29"></span><span>  </span><span class="annot"><span class="annottext">String
+-&gt; ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+forall a.
+String -&gt; MParser a -&gt; ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#failIfNext"><span class="hs-identifier hs-var">Utils.failIfNext</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677009"><span class="hs-identifier hs-var">edgeErr</span></a></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+</span><a href="#local-6989586621679677010"><span class="hs-identifier hs-var">parseEdgeDest</span></a></span><span>
+</span><span id="line-30"></span><span>  </span><span class="annot"><span class="annottext">MParser CommandIndex -&gt; MParser (Maybe CommandIndex)
+forall a. MParser a -&gt; MParser (Maybe a)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#optionalTry"><span class="hs-identifier hs-var">Utils.optionalTry</span></a></span><span> </span><span class="annot"><span class="annottext">MParser CommandIndex
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseOneIndex"><span class="hs-identifier hs-var">Utils.parseOneIndex</span></a></span><span> </span><span class="annot"><span class="annottext">MParser (Maybe CommandIndex)
+-&gt; (Maybe CommandIndex -&gt; MParser (NESeq Edge))
+-&gt; MParser (NESeq Edge)
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; (a -&gt; ParsecT FatalError Text Identity b)
+-&gt; ParsecT FatalError Text Identity b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679677013"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677013"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndex"><span class="hs-identifier hs-var">parseEdgeIndex</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677013"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><span class="annottext">Maybe CommandIndex
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">MParser (NESeq CommandIndex)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseIndexSet"><span class="hs-identifier hs-var">Utils.parseIndexSet</span></a></span><span> </span><span class="annot"><span class="annottext">MParser (NESeq CommandIndex)
+-&gt; (NESeq CommandIndex -&gt; MParser (NESeq Edge))
+-&gt; MParser (NESeq Edge)
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; (a -&gt; ParsecT FatalError Text Identity b)
+-&gt; ParsecT FatalError Text Identity b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSet"><span class="hs-identifier hs-var">parseEdgeIndexSet</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>    </span><span id="local-6989586621679677007"><span class="annot"><span class="annottext">label :: String
+</span><a href="#local-6989586621679677007"><span class="hs-keyword hs-var hs-var">label</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;comma-delimited edge(s) (e.g. \&quot;1 &amp; 2, {3,4} ; 1, 4 &amp;.. 6\&quot;)&quot;</span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>    </span><span id="local-6989586621679677009"><span class="annot"><span class="annottext">edgeErr :: String
+</span><a href="#local-6989586621679677009"><span class="hs-identifier hs-var hs-var">edgeErr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#mkMpError"><span class="hs-identifier hs-var">Utils.mkMpError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;label&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#vertexLabel"><span class="hs-identifier hs-var">vertexLabel</span></a></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-comment">-- Improving the error message for e.g. '&amp; 3' specifically, as this is</span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-comment">-- probably an intended edge (not a literal e.g. '&amp;&amp;'). We only want to</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-comment">-- use this error when we have a correct edge and dest, otherwise fall</span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-comment">-- back to general error message.</span><span>
+</span><span id="line-42"></span><span>    </span><span id="local-6989586621679677010"><span class="annot"><span class="annottext">parseEdgeDest :: ParsecT FatalError Text Identity ()
+</span><a href="#local-6989586621679677010"><span class="hs-identifier hs-var hs-var">parseEdgeDest</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+forall a.
+ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall e s (m :: Type -&gt; Type) a. MonadParsec e s m =&gt; m a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#try"><span class="hs-identifier hs-var">MP.try</span></a></span><span> </span><span class="annot"><span class="annottext">(ParsecT FatalError Text Identity ()
+ -&gt; ParsecT FatalError Text Identity ())
+-&gt; ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-43"></span><span>      </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeLabel
+-&gt; ParsecT FatalError Text Identity ()
+forall (f :: Type -&gt; Type) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeLabel
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeLabel"><span class="hs-identifier hs-var">parseEdgeLabel</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span class="annot"><span class="annottext">MParser CommandIndex -&gt; ParsecT FatalError Text Identity ()
+forall (f :: Type -&gt; Type) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">MParser CommandIndex
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseOneIndex"><span class="hs-identifier hs-var">Utils.parseOneIndex</span></a></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+forall a.
+ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">MParser (NESeq CommandIndex) -&gt; ParsecT FatalError Text Identity ()
+forall (f :: Type -&gt; Type) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">MParser (NESeq CommandIndex)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseIndexSet"><span class="hs-identifier hs-var">Utils.parseIndexSet</span></a></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- NOTE: [Commas]</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- Edges are delimited by commas e.g. '1 &amp; 2, 2 &amp; 3'. Hence if we see a comma</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- we want to stop (without consuming them!). We use the 'parseIfNoComma'</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- function to guard our parsers s.t. they do not run if they parse a comma.</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- The lone exception to this is the /first vertex/ i.e. we want to guarantee</span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- at least one successful parse, hence a comma should be a failure.</span><span>
+</span><span id="line-54"></span><span class="hs-comment">--</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- To that end, we split our parsers X into a normal variant (called first)</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- and an 'XComma' variant that stops if a comma is found. This allows us</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- to guarantee that if the parser succeeds, we have found at least one</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- value (hence non-empty type).</span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexComma"><span class="hs-identifier hs-type">parseEdgeIndexComma</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier hs-type">CommandIndex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span id="parseEdgeIndexComma"><span class="annot"><span class="annottext">parseEdgeIndexComma :: CommandIndex -&gt; MParser (Seq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexComma"><span class="hs-identifier hs-var hs-var">parseEdgeIndexComma</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq Edge -&gt; MParser (Seq Edge) -&gt; MParser (Seq Edge)
+forall a. a -&gt; MParser a -&gt; MParser a
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseIfNoComma"><span class="hs-identifier hs-var">Utils.parseIfNoComma</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">(MParser (Seq Edge) -&gt; MParser (Seq Edge))
+-&gt; (CommandIndex -&gt; MParser (Seq Edge))
+-&gt; CommandIndex
+-&gt; MParser (Seq Edge)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(NESeq Edge -&gt; Seq Edge)
+-&gt; MParser (NESeq Edge) -&gt; MParser (Seq Edge)
+forall a b.
+(a -&gt; b)
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; Seq Edge
+forall a. NESeq a -&gt; Seq a
+</span><a href="Shrun.Prelude.html#neseqToSeq"><span class="hs-identifier hs-var">neseqToSeq</span></a></span><span> </span><span class="annot"><span class="annottext">(MParser (NESeq Edge) -&gt; MParser (Seq Edge))
+-&gt; (CommandIndex -&gt; MParser (NESeq Edge))
+-&gt; CommandIndex
+-&gt; MParser (Seq Edge)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndex"><span class="hs-identifier hs-var">parseEdgeIndex</span></a></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndex"><span class="hs-identifier hs-type">parseEdgeIndex</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier hs-type">CommandIndex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span id="parseEdgeIndex"><span class="annot"><span class="annottext">parseEdgeIndex :: CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndex"><span class="hs-identifier hs-var hs-var">parseEdgeIndex</span></a></span></span><span> </span><span id="local-6989586621679677036"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677036"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-comment">-- Try dots for a better error message.</span><span>
+</span><span id="line-66"></span><span>  </span><span class="annot"><span class="annottext">String
+-&gt; ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+forall a.
+String -&gt; MParser a -&gt; ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#failIfNext"><span class="hs-identifier hs-var">Utils.failIfNext</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677037"><span class="hs-identifier hs-var">err</span></a></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseDots"><span class="hs-identifier hs-var">Utils.parseDots</span></a></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span>  </span><span id="local-6989586621679677039"><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677039"><span class="hs-identifier hs-var">lbl</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeLabel
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeLabel"><span class="hs-identifier hs-var">parseEdgeLabel</span></a></span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity (Maybe ())
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">MP.optional</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseDots"><span class="hs-identifier hs-var">Utils.parseDots</span></a></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity (Maybe ())
+-&gt; (Maybe () -&gt; MParser (NESeq Edge)) -&gt; MParser (NESeq Edge)
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; (a -&gt; ParsecT FatalError Text Identity b)
+-&gt; ParsecT FatalError Text Identity b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">EdgeLabel -&gt; CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeDots"><span class="hs-identifier hs-var">parseEdgeDots</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677039"><span class="hs-identifier hs-var">lbl</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677036"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="annottext">Maybe ()
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">EdgeLabel -&gt; NESeq CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeNoDots"><span class="hs-identifier hs-var">parseEdgeNoDots</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677039"><span class="hs-identifier hs-var">lbl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex -&gt; NESeq CommandIndex
+forall a. a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">NESeq.singleton</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677036"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-73"></span><span>    </span><span id="local-6989586621679677037"><span class="annot"><span class="annottext">err :: String
+</span><a href="#local-6989586621679677037"><span class="hs-identifier hs-var hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Expected a label, found '..'. Perhaps you wanted an edge range (e.g. '&amp;..')?&quot;</span></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSetComma"><span class="hs-identifier hs-type">parseEdgeIndexSetComma</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier hs-type">CommandIndex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span id="parseEdgeIndexSetComma"><span class="annot"><span class="annottext">parseEdgeIndexSetComma :: NESeq CommandIndex -&gt; MParser (Seq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSetComma"><span class="hs-identifier hs-var hs-var">parseEdgeIndexSetComma</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq Edge -&gt; MParser (Seq Edge) -&gt; MParser (Seq Edge)
+forall a. a -&gt; MParser a -&gt; MParser a
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseIfNoComma"><span class="hs-identifier hs-var">Utils.parseIfNoComma</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">(MParser (Seq Edge) -&gt; MParser (Seq Edge))
+-&gt; (NESeq CommandIndex -&gt; MParser (Seq Edge))
+-&gt; NESeq CommandIndex
+-&gt; MParser (Seq Edge)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(NESeq Edge -&gt; Seq Edge)
+-&gt; MParser (NESeq Edge) -&gt; MParser (Seq Edge)
+forall a b.
+(a -&gt; b)
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; Seq Edge
+forall a. NESeq a -&gt; Seq a
+</span><a href="Shrun.Prelude.html#neseqToSeq"><span class="hs-identifier hs-var">neseqToSeq</span></a></span><span> </span><span class="annot"><span class="annottext">(MParser (NESeq Edge) -&gt; MParser (Seq Edge))
+-&gt; (NESeq CommandIndex -&gt; MParser (NESeq Edge))
+-&gt; NESeq CommandIndex
+-&gt; MParser (Seq Edge)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSet"><span class="hs-identifier hs-var">parseEdgeIndexSet</span></a></span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSet"><span class="hs-identifier hs-type">parseEdgeIndexSet</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier hs-type">CommandIndex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span id="parseEdgeIndexSet"><span class="annot"><span class="annottext">parseEdgeIndexSet :: NESeq CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSet"><span class="hs-identifier hs-var hs-var">parseEdgeIndexSet</span></a></span></span><span> </span><span id="local-6989586621679677046"><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677046"><span class="hs-identifier hs-var">idxs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-80"></span><span>  </span><span id="local-6989586621679677047"><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677047"><span class="hs-identifier hs-var">lbl</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeLabel
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeLabel"><span class="hs-identifier hs-var">parseEdgeLabel</span></a></span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-comment">-- Try dots for a better error message.</span><span>
+</span><span id="line-83"></span><span>  </span><span class="annot"><span class="annottext">String
+-&gt; ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity ()
+forall a.
+String -&gt; MParser a -&gt; ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#failIfNext"><span class="hs-identifier hs-var">Utils.failIfNext</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EdgeLabel -&gt; String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#dotsSetErr"><span class="hs-identifier hs-var">dotsSetErr</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677047"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseDots"><span class="hs-identifier hs-var">Utils.parseDots</span></a></span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span>  </span><span class="annot"><span class="annottext">EdgeLabel -&gt; NESeq CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeNoDots"><span class="hs-identifier hs-var">parseEdgeNoDots</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677047"><span class="hs-identifier hs-var">lbl</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677046"><span class="hs-identifier hs-var">idxs</span></a></span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeDots"><span class="hs-identifier hs-type">parseEdgeDots</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier hs-type">EdgeLabel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier hs-type">CommandIndex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span id="parseEdgeDots"><span class="annot"><span class="annottext">parseEdgeDots :: EdgeLabel -&gt; CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeDots"><span class="hs-identifier hs-var hs-var">parseEdgeDots</span></a></span></span><span> </span><span id="local-6989586621679677049"><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677049"><span class="hs-identifier hs-var">lbl</span></a></span></span><span> </span><span id="local-6989586621679677050"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677050"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MParser (NESeq Edge) -&gt; MParser (NESeq Edge)
+forall a.
+String
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall e s (m :: Type -&gt; Type) a.
+MonadParsec e s m =&gt;
+String -&gt; m a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#label"><span class="hs-identifier hs-var">MP.label</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677051"><span class="hs-keyword hs-var">label</span></a></span><span> </span><span class="annot"><span class="annottext">(MParser (NESeq Edge) -&gt; MParser (NESeq Edge))
+-&gt; MParser (NESeq Edge) -&gt; MParser (NESeq Edge)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-comment">-- Try set for a better error message.</span><span>
+</span><span id="line-90"></span><span>  </span><span class="annot"><span class="annottext">String
+-&gt; MParser (NESeq CommandIndex)
+-&gt; ParsecT FatalError Text Identity ()
+forall a.
+String -&gt; MParser a -&gt; ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#failIfNext"><span class="hs-identifier hs-var">Utils.failIfNext</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">EdgeLabel -&gt; String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#dotsSetErr"><span class="hs-identifier hs-var">dotsSetErr</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677049"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">MParser (NESeq CommandIndex)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseIndexSet"><span class="hs-identifier hs-var">Utils.parseIndexSet</span></a></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span>  </span><span id="local-6989586621679677052"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677052"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MParser CommandIndex
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseOneIndex"><span class="hs-identifier hs-var">Utils.parseOneIndex</span></a></span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679677053"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677053"><span class="hs-identifier hs-var">r1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679677054"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677054"><span class="hs-identifier hs-var">r2</span></a></span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-type">:&lt;||</span></a></span><span> </span><span id="local-6989586621679677056"><span class="annot"><span class="annottext">Seq CommandIndex
+</span><a href="#local-6989586621679677056"><span class="hs-identifier hs-var">rs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">CommandIndex
+-&gt; CommandIndex -&gt; Either String (CommandIndex, NESeq CommandIndex)
+</span><a href="Shrun.Command.Types.Internal.html#range"><span class="hs-identifier hs-var">Cmd.T.range</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677050"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677052"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679677058"><span class="annot"><span class="annottext">(CommandIndex, NESeq CommandIndex)
+</span><a href="#local-6989586621679677058"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(CommandIndex, NESeq CommandIndex)
+-&gt; ParsecT
+     FatalError Text Identity (CommandIndex, NESeq CommandIndex)
+forall a. a -&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(CommandIndex, NESeq CommandIndex)
+</span><a href="#local-6989586621679677058"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-95"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679677059"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677059"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+-&gt; ParsecT
+     FatalError Text Identity (CommandIndex, NESeq CommandIndex)
+forall a. String -&gt; ParsecT FatalError Text Identity a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677059"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679677060"><span class="annot"><span class="annottext">edges :: NESeq Edge
+</span><a href="#local-6989586621679677060"><span class="hs-identifier hs-var">edges</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span id="local-6989586621679677061"><span class="annot"><span class="annottext">Edge
+</span><a href="#local-6989586621679677061"><span class="hs-identifier hs-var">e1</span></a></span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-type">:&lt;||</span></a></span><span> </span><span id="local-6989586621679677062"><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677062"><span class="hs-identifier hs-var">es</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq CommandIndex -&gt; NESeq Edge -&gt; NESeq Edge
+</span><a href="#local-6989586621679677063"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677054"><span class="hs-identifier hs-var">r2</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; Seq CommandIndex -&gt; Seq CommandIndex
+forall a. a -&gt; Seq a -&gt; Seq a
+</span><span class="hs-operator hs-var">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq CommandIndex
+</span><a href="#local-6989586621679677056"><span class="hs-identifier hs-var">rs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Edge -&gt; NESeq Edge
+forall a. a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">NESeq.singleton</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677053"><span class="hs-identifier hs-var">r1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677054"><span class="hs-identifier hs-var">r2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677049"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>      </span><span id="local-6989586621679677063"><span class="annot"><span class="annottext">go :: Seq CommandIndex -&gt; NESeq Edge -&gt; NESeq Edge
+</span><a href="#local-6989586621679677063"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="annot"><span class="annottext">Seq CommandIndex
+</span><span class="hs-identifier hs-var">Empty</span></span><span> </span><span id="local-6989586621679677066"><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677066"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677066"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-99"></span><span>      </span><span class="annot"><a href="#local-6989586621679677063"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq CommandIndex
+</span><span class="hs-identifier hs-var">Empty</span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679677067"><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677067"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677067"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-100"></span><span>      </span><span class="annot"><a href="#local-6989586621679677063"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679677068"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677068"><span class="hs-identifier hs-var">x1</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&lt;|</span></span><span> </span><span id="local-6989586621679677069"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677069"><span class="hs-identifier hs-var">x2</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&lt;|</span></span><span> </span><span id="local-6989586621679677070"><span class="annot"><span class="annottext">Seq CommandIndex
+</span><a href="#local-6989586621679677070"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679677071"><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677071"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq CommandIndex -&gt; NESeq Edge -&gt; NESeq Edge
+</span><a href="#local-6989586621679677063"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677069"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; Seq CommandIndex -&gt; Seq CommandIndex
+forall a. a -&gt; Seq a -&gt; Seq a
+</span><span class="hs-operator hs-var">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq CommandIndex
+</span><a href="#local-6989586621679677070"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677071"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; Edge -&gt; NESeq Edge
+forall a. NESeq a -&gt; a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.html#%7C%3E"><span class="hs-operator hs-var">NESeq.|&gt;</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677068"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677069"><span class="hs-identifier hs-var">x2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677049"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span>  </span><span class="annot"><span class="annottext">MParser Bool
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#anyLeft"><span class="hs-identifier hs-var">Utils.anyLeft</span></a></span><span> </span><span class="annot"><span class="annottext">MParser Bool
+-&gt; (Bool -&gt; MParser (NESeq Edge)) -&gt; MParser (NESeq Edge)
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; (a -&gt; ParsecT FatalError Text Identity b)
+-&gt; ParsecT FatalError Text Identity b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-103"></span><span>    </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; MParser (NESeq Edge)
+forall a. a -&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677060"><span class="hs-identifier hs-var">edges</span></a></span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679677074"><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677074"><span class="hs-identifier hs-var">ds</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Edge
+</span><a href="#local-6989586621679677061"><span class="hs-identifier hs-var">e1</span></a></span><span> </span><span class="annot"><span class="annottext">Edge -&gt; Seq Edge -&gt; NESeq Edge
+forall a. a -&gt; Seq a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-var">:&lt;||</span></a></span><span> </span><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677062"><span class="hs-identifier hs-var">es</span></a></span><span> </span><span class="annot"><span class="annottext">Seq Edge -&gt; Seq Edge -&gt; Seq Edge
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677074"><span class="hs-identifier hs-var">ds</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Seq Edge -&gt; NESeq Edge)
+-&gt; MParser (Seq Edge) -&gt; MParser (NESeq Edge)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; MParser (Seq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexComma"><span class="hs-identifier hs-var">parseEdgeIndexComma</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677052"><span class="hs-identifier hs-var">d</span></a></span><span>
+</span><span id="line-105"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-106"></span><span>    </span><span id="local-6989586621679677051"><span class="annot"><span class="annottext">label :: String
+</span><a href="#local-6989586621679677051"><span class="hs-keyword hs-var hs-var">label</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;a single vertex (e.g. '3')&quot;</span></span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#dotsSetErr"><span class="hs-identifier hs-type">dotsSetErr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier hs-type">EdgeLabel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-109"></span><span id="dotsSetErr"><span class="annot"><span class="annottext">dotsSetErr :: EdgeLabel -&gt; String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#dotsSetErr"><span class="hs-identifier hs-var hs-var">dotsSetErr</span></a></span></span><span> </span><span id="local-6989586621679677077"><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677077"><span class="hs-identifier hs-var">lbl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-110"></span><span>  </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-111"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Edge ranges (e.g. '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-112"></span><span>      </span><span class="annot"><span class="annottext">EdgeLabel -&gt; String
+forall s. IsString s =&gt; EdgeLabel -&gt; s
+</span><a href="Shrun.Configuration.Data.Graph.html#displayEdgeLabel"><span class="hs-identifier hs-var">Graph.displayEdgeLabel</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677077"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-113"></span><span>      </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;..') are not allowed with set syntax.&quot;</span></span><span>
+</span><span id="line-114"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeNoDots"><span class="hs-identifier hs-type">parseEdgeNoDots</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier hs-type">EdgeLabel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#CommandIndex"><span class="hs-identifier hs-type">CommandIndex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edge"><span class="hs-identifier hs-type">Edge</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-117"></span><span id="parseEdgeNoDots"><span class="annot"><span class="annottext">parseEdgeNoDots :: EdgeLabel -&gt; NESeq CommandIndex -&gt; MParser (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeNoDots"><span class="hs-identifier hs-var hs-var">parseEdgeNoDots</span></a></span></span><span> </span><span id="local-6989586621679677079"><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677079"><span class="hs-identifier hs-var">lbl</span></a></span></span><span> </span><span id="local-6989586621679677080"><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677080"><span class="hs-identifier hs-var">srcs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MParser (NESeq Edge) -&gt; MParser (NESeq Edge)
+forall a.
+String
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall e s (m :: Type -&gt; Type) a.
+MonadParsec e s m =&gt;
+String -&gt; m a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#label"><span class="hs-identifier hs-var">MP.label</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#vertexLabel"><span class="hs-identifier hs-var">vertexLabel</span></a></span><span> </span><span class="annot"><span class="annottext">(MParser (NESeq Edge) -&gt; MParser (NESeq Edge))
+-&gt; MParser (NESeq Edge) -&gt; MParser (NESeq Edge)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-118"></span><span>  </span><span id="local-6989586621679677081"><span class="annot"><span class="annottext">Maybe CommandIndex
+</span><a href="#local-6989586621679677081"><span class="hs-identifier hs-var">mD</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MParser CommandIndex -&gt; MParser (Maybe CommandIndex)
+forall a. MParser a -&gt; MParser (Maybe a)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#optionalTry"><span class="hs-identifier hs-var">Utils.optionalTry</span></a></span><span> </span><span class="annot"><span class="annottext">MParser CommandIndex
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseOneIndex"><span class="hs-identifier hs-var">Utils.parseOneIndex</span></a></span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679677082"><span class="annot"><span class="annottext">edges :: NESeq Edge
+</span><a href="#local-6989586621679677082"><span class="hs-identifier hs-var">edges</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span id="local-6989586621679677083"><span class="annot"><span class="annottext">Edge
+</span><a href="#local-6989586621679677083"><span class="hs-identifier hs-var">e1</span></a></span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-type">:&lt;||</span></a></span><span> </span><span id="local-6989586621679677084"><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677084"><span class="hs-identifier hs-var">es</span></a></span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span id="local-6989586621679677085"><span class="annot"><span class="annottext">MParser (Seq Edge)
+</span><a href="#local-6989586621679677085"><span class="hs-identifier hs-var">parseMore</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe CommandIndex
+</span><a href="#local-6989586621679677081"><span class="hs-identifier hs-var">mD</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-120"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679677086"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677086"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-121"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679677087"><span class="annot"><span class="annottext">edges :: NESeq Edge
+</span><a href="#local-6989586621679677087"><span class="hs-identifier hs-var hs-var">edges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677088"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677086"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677079"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679677088"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677088"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677080"><span class="hs-identifier hs-var">srcs</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-122"></span><span>      </span><span class="annot"><span class="annottext">(NESeq Edge, MParser (Seq Edge))
+-&gt; ParsecT
+     FatalError Text Identity (NESeq Edge, MParser (Seq Edge))
+forall a. a -&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677087"><span class="hs-identifier hs-var">edges</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; MParser (Seq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexComma"><span class="hs-identifier hs-var">parseEdgeIndexComma</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677086"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>    </span><span class="annot"><span class="annottext">Maybe CommandIndex
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-124"></span><span>      </span><span id="local-6989586621679677089"><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677089"><span class="hs-identifier hs-var">dests</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MParser (NESeq CommandIndex)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseIndexSet"><span class="hs-identifier hs-var">Utils.parseIndexSet</span></a></span><span>
+</span><span id="line-125"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679677090"><span class="annot"><span class="annottext">edges :: NESeq Edge
+</span><a href="#local-6989586621679677090"><span class="hs-identifier hs-var hs-var">edges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-126"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677091"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677092"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679677079"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679677091"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677091"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677080"><span class="hs-identifier hs-var">srcs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-128"></span><span>              </span><span id="local-6989586621679677092"><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679677092"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677089"><span class="hs-identifier hs-var">dests</span></a></span><span>
+</span><span id="line-129"></span><span>            </span><span class="hs-special">]</span><span>
+</span><span id="line-130"></span><span>      </span><span class="annot"><span class="annottext">(NESeq Edge, MParser (Seq Edge))
+-&gt; ParsecT
+     FatalError Text Identity (NESeq Edge, MParser (Seq Edge))
+forall a. a -&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677090"><span class="hs-identifier hs-var">edges</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex -&gt; MParser (Seq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeIndexSetComma"><span class="hs-identifier hs-var">parseEdgeIndexSetComma</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq CommandIndex
+</span><a href="#local-6989586621679677089"><span class="hs-identifier hs-var">dests</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span>  </span><span class="annot"><span class="annottext">MParser Bool
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#anyLeft"><span class="hs-identifier hs-var">Utils.anyLeft</span></a></span><span> </span><span class="annot"><span class="annottext">MParser Bool
+-&gt; (Bool -&gt; MParser (NESeq Edge)) -&gt; MParser (NESeq Edge)
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; (a -&gt; ParsecT FatalError Text Identity b)
+-&gt; ParsecT FatalError Text Identity b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-133"></span><span>    </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; MParser (NESeq Edge)
+forall a. a -&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679677082"><span class="hs-identifier hs-var">edges</span></a></span><span>
+</span><span id="line-134"></span><span>    </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679677093"><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677093"><span class="hs-identifier hs-var">ds</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Edge
+</span><a href="#local-6989586621679677083"><span class="hs-identifier hs-var">e1</span></a></span><span> </span><span class="annot"><span class="annottext">Edge -&gt; Seq Edge -&gt; NESeq Edge
+forall a. a -&gt; Seq a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-var">:&lt;||</span></a></span><span> </span><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677084"><span class="hs-identifier hs-var">es</span></a></span><span> </span><span class="annot"><span class="annottext">Seq Edge -&gt; Seq Edge -&gt; Seq Edge
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Seq Edge
+</span><a href="#local-6989586621679677093"><span class="hs-identifier hs-var">ds</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Seq Edge -&gt; NESeq Edge)
+-&gt; MParser (Seq Edge) -&gt; MParser (NESeq Edge)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">MParser (Seq Edge)
+</span><a href="#local-6989586621679677085"><span class="hs-identifier hs-var">parseMore</span></a></span><span>
+</span><span id="line-135"></span><span>
+</span><span id="line-136"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#vertexLabel"><span class="hs-identifier hs-type">vertexLabel</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-137"></span><span id="vertexLabel"><span class="annot"><span class="annottext">vertexLabel :: String
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#vertexLabel"><span class="hs-identifier hs-var hs-var">vertexLabel</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;a vertex (e.g. '3', '{1,5}')&quot;</span></span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeLabel"><span class="hs-identifier hs-type">parseEdgeLabel</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier hs-type">EdgeLabel</span></a></span><span>
+</span><span id="line-140"></span><span id="parseEdgeLabel"><span class="annot"><span class="annottext">parseEdgeLabel :: ParsecT FatalError Text Identity EdgeLabel
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdgeLabel"><span class="hs-identifier hs-var hs-var">parseEdgeLabel</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+forall a.
+String
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall e s (m :: Type -&gt; Type) a.
+MonadParsec e s m =&gt;
+String -&gt; m a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#label"><span class="hs-identifier hs-var">MP.label</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679677094"><span class="hs-keyword hs-var">label</span></a></span><span> </span><span class="annot"><span class="annottext">(ParsecT FatalError Text Identity EdgeLabel
+ -&gt; ParsecT FatalError Text Identity EdgeLabel)
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-141"></span><span>  </span><span class="annot"><span class="annottext">forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a.
+(Foldable t, Alternative f) =&gt;
+t (f a) -&gt; f a
+</span><span class="hs-identifier hs-var">asum</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span>
+</span><span id="line-142"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeAnd"><span class="hs-identifier hs-var">EdgeAnd</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+-&gt; ParsecT FatalError Text Identity Text
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+forall a b.
+a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ParsecT FatalError Text Identity Text
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#string"><span class="hs-identifier hs-var">Utils.string</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&amp;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>      </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeOr"><span class="hs-identifier hs-var">EdgeOr</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+-&gt; ParsecT FatalError Text Identity Text
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+forall a b.
+a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ParsecT FatalError Text Identity Text
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#string"><span class="hs-identifier hs-var">Utils.string</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;|&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-144"></span><span>      </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeAny"><span class="hs-identifier hs-var">EdgeAny</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+-&gt; ParsecT FatalError Text Identity Text
+-&gt; ParsecT FatalError Text Identity EdgeLabel
+forall a b.
+a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ParsecT FatalError Text Identity Text
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#string"><span class="hs-identifier hs-var">Utils.string</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;;&quot;</span></span><span>
+</span><span id="line-145"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-146"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-147"></span><span>    </span><span id="local-6989586621679677094"><span class="annot"><span class="annottext">label :: String
+</span><a href="#local-6989586621679677094"><span class="hs-keyword hs-var hs-var">label</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;a label ('&amp;', '|', ';')&quot;</span></span><span>
+</span><span id="line-148"></span></pre></body></html>

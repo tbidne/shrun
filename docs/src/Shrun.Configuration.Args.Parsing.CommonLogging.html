@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | CLI parsing for CommonLoggingArgs</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.CommonLogging</span></a></span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#commonLoggingParser"><span class="hs-identifier">commonLoggingParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.CommonLogging</span></a></span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#CommonLoggingArgs"><span class="hs-identifier">CommonLoggingArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#CommonLoggingP"><span class="hs-identifier">CommonLoggingP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#MkCommonLoggingP"><span class="hs-identifier">MkCommonLoggingP</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#Debug"><span class="hs-identifier">Debug</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#MkDebug"><span class="hs-identifier">MkDebug</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html"><span class="hs-identifier">Shrun.Configuration.Data.CommonLogging.KeyHideSwitch</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier">KeyHideSwitch</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#MkKeyHideSwitch"><span class="hs-identifier">MkKeyHideSwitch</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#commonLoggingParser"><span class="hs-identifier hs-type">commonLoggingParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#CommonLoggingArgs"><span class="hs-identifier hs-type">CommonLoggingArgs</span></a></span><span>
+</span><span id="line-20"></span><span id="commonLoggingParser"><span class="annot"><span class="annottext">commonLoggingParser :: Parser CommonLoggingArgs
+</span><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#commonLoggingParser"><span class="hs-identifier hs-var hs-var">commonLoggingParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Debug -&gt; Maybe KeyHideSwitch -&gt; CommonLoggingArgs
+SwitchF 'ConfigPhaseArgs Debug
+-&gt; SwitchF 'ConfigPhaseArgs KeyHideSwitch -&gt; CommonLoggingArgs
+forall (p :: ConfigPhase).
+SwitchF p Debug -&gt; SwitchF p KeyHideSwitch -&gt; CommonLoggingP p
+</span><a href="Shrun.Configuration.Data.CommonLogging.html#MkCommonLoggingP"><span class="hs-identifier hs-var">MkCommonLoggingP</span></a></span><span> </span><span class="annot"><span class="annottext">(Maybe Debug -&gt; Maybe KeyHideSwitch -&gt; CommonLoggingArgs)
+-&gt; Parser (Maybe Debug)
+-&gt; Parser (Maybe KeyHideSwitch -&gt; CommonLoggingArgs)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe Debug)
+</span><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#debugParser"><span class="hs-identifier hs-var">debugParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe KeyHideSwitch -&gt; CommonLoggingArgs)
+-&gt; Parser (Maybe KeyHideSwitch) -&gt; Parser CommonLoggingArgs
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe KeyHideSwitch)
+</span><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#keyHideParser"><span class="hs-identifier hs-var">keyHideParser</span></a></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#debugParser"><span class="hs-identifier hs-type">debugParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.html#Debug"><span class="hs-identifier hs-type">Debug</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span id="debugParser"><span class="annot"><span class="annottext">debugParser :: Parser (Maybe Debug)
+</span><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#debugParser"><span class="hs-identifier hs-var hs-var">debugParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Debug) -&gt; String -&gt; String -&gt; Parser (Maybe Debug)
+forall a. (Bool -&gt; a) -&gt; String -&gt; String -&gt; Parser (Maybe a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#switchParser"><span class="hs-identifier hs-var">Utils.switchParser</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Debug
+</span><a href="Shrun.Configuration.Data.CommonLogging.html#MkDebug"><span class="hs-identifier hs-var">MkDebug</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;common-log-debug&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679702140"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-25"></span><span>    </span><span id="local-6989586621679702140"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679702140"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Enables additional debug logging.&quot;</span></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#keyHideParser"><span class="hs-identifier hs-type">keyHideParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier hs-type">KeyHideSwitch</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span id="keyHideParser"><span class="annot"><span class="annottext">keyHideParser :: Parser (Maybe KeyHideSwitch)
+</span><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#keyHideParser"><span class="hs-identifier hs-var hs-var">keyHideParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; KeyHideSwitch)
+-&gt; String -&gt; String -&gt; Parser (Maybe KeyHideSwitch)
+forall a. (Bool -&gt; a) -&gt; String -&gt; String -&gt; Parser (Maybe a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#switchParserNoLine"><span class="hs-identifier hs-var">Utils.switchParserNoLine</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; KeyHideSwitch
+</span><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#MkKeyHideSwitch"><span class="hs-identifier hs-var">MkKeyHideSwitch</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;common-log-key-hide&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679702145"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>    </span><span id="local-6989586621679702145"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679702145"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-31"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-32"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;By default, we display the key name from the legend over the &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;actual command that was run, if the former exists. This flag &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;instead shows the literal command. Commands without keys are &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unaffected.&quot;</span></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-37"></span></pre></body></html>

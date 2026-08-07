@@ -1,0 +1,352 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Module for sending notifications.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Notify.html"><span class="hs-identifier">Shrun.Notify</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier">NotifyMessage</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Notify.html#fromUnlined"><span class="hs-identifier">fromUnlined</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Notify.html#sendNotif"><span class="hs-identifier">sendNotif</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Notify.html#formatNotifyMessage"><span class="hs-identifier">formatNotifyMessage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.html"><span class="hs-identifier">Effects.Notify</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Notify</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html"><span class="hs-identifier">Shrun.Configuration.Env.Types</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasAnyError"><span class="hs-identifier">HasAnyError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier">HasCommands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasLogging"><span class="hs-identifier">HasLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasNotifyConfig"><span class="hs-identifier">HasNotifyConfig</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getNotifyConfig"><span class="hs-identifier">getNotifyConfig</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#setAnyErrorTrue"><span class="hs-identifier">setAnyErrorTrue</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ShrunText</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.html"><span class="hs-identifier">Shrun.Logging</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Logging</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html"><span class="hs-identifier">Shrun.Logging.MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier">withRegion</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier">Log</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier">MkLog</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier">cmd</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier">lvl</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier">mode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier">msg</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier">LogLevel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier">LevelError</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier">LogModeFinish</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Types</span></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">U</span></span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">newtype</span><span> </span><span id="NotifyMessage"><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-var">NotifyMessage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UnsafeNotifyMessage"><span class="annot"><a href="Shrun.Notify.html#UnsafeNotifyMessage"><span class="hs-identifier hs-var">UnsafeNotifyMessage</span></a></span></span><span> </span><span class="hs-special">{</span><span id="unNotifyMessage"><span class="annot"><span class="annottext">NotifyMessage -&gt; Text
+</span><a href="Shrun.Notify.html#unNotifyMessage"><span class="hs-identifier hs-var hs-var">unNotifyMessage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">}</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679696637"><span id="local-6989586621679696641"><span class="annot"><span class="annottext">NotifyMessage -&gt; NotifyMessage -&gt; Bool
+(NotifyMessage -&gt; NotifyMessage -&gt; Bool)
+-&gt; (NotifyMessage -&gt; NotifyMessage -&gt; Bool) -&gt; Eq NotifyMessage
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: NotifyMessage -&gt; NotifyMessage -&gt; Bool
+== :: NotifyMessage -&gt; NotifyMessage -&gt; Bool
+$c/= :: NotifyMessage -&gt; NotifyMessage -&gt; Bool
+/= :: NotifyMessage -&gt; NotifyMessage -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679696646"><span id="local-6989586621679696652"><span id="local-6989586621679696656"><span class="annot"><span class="annottext">Int -&gt; NotifyMessage -&gt; ShowS
+[NotifyMessage] -&gt; ShowS
+NotifyMessage -&gt; String
+(Int -&gt; NotifyMessage -&gt; ShowS)
+-&gt; (NotifyMessage -&gt; String)
+-&gt; ([NotifyMessage] -&gt; ShowS)
+-&gt; Show NotifyMessage
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; NotifyMessage -&gt; ShowS
+showsPrec :: Int -&gt; NotifyMessage -&gt; ShowS
+$cshow :: NotifyMessage -&gt; String
+show :: NotifyMessage -&gt; String
+$cshowList :: [NotifyMessage] -&gt; ShowS
+showList :: [NotifyMessage] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">newtype</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679696661"><span class="annot"><span class="annottext">String -&gt; NotifyMessage
+(String -&gt; NotifyMessage) -&gt; IsString NotifyMessage
+forall a. (String -&gt; a) -&gt; IsString a
+$cfromString :: String -&gt; NotifyMessage
+fromString :: String -&gt; NotifyMessage
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">IsString</span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-39"></span><span>  </span><span id="local-6989586621679696488"><span id="local-6989586621679696489"><span id="local-6989586621679696490"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679696488"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Getter"><span class="hs-identifier hs-type">A_Getter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="#local-6989586621679696489"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="#local-6989586621679696490"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-43"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unNotifyMessage&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679696488"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-type">NotifyMessage</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-type">NotifyMessage</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696489"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696490"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-45"></span><span>  </span><span id="local-6989586621679696675"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx NotifyMessage NotifyMessage a b
+</span><a href="#local-6989586621679696675"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(NotifyMessage -&gt; a) -&gt; Getter NotifyMessage a
+forall s a. (s -&gt; a) -&gt; Getter s a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Getter.html#to"><span class="hs-identifier hs-var">to</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.html#UnsafeNotifyMessage"><span class="hs-identifier hs-type">UnsafeNotifyMessage</span></a></span><span> </span><span id="local-6989586621679696678"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679696678"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Text
+</span><a href="#local-6989586621679696678"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Shrun.Notify.html#fromUnlined"><span class="hs-identifier hs-type">fromUnlined</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-type">NotifyMessage</span></a></span><span>
+</span><span id="line-49"></span><span id="fromUnlined"><span class="annot"><span class="annottext">fromUnlined :: UnlinedText -&gt; NotifyMessage
+</span><a href="Shrun.Notify.html#fromUnlined"><span class="hs-identifier hs-var hs-var">fromUnlined</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; NotifyMessage
+</span><a href="Shrun.Notify.html#UnsafeNotifyMessage"><span class="hs-identifier hs-var">UnsafeNotifyMessage</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; NotifyMessage)
+-&gt; (UnlinedText -&gt; Text) -&gt; UnlinedText -&gt; NotifyMessage
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Optic' A_Getter NoIx UnlinedText Text -&gt; UnlinedText -&gt; Text
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Getter NoIx UnlinedText Text
+</span><span class="">#unUnlinedText</span></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- | Sends a notification if they are With (linux only). Logs any failed</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- sends.</span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Shrun.Notify.html#sendNotif"><span class="hs-identifier hs-type">sendNotif</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679696507"><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679696503"><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span></span><span> </span><span id="local-6989586621679696509"><span class="annot"><a href="#local-6989586621679696509"><span class="hs-identifier hs-type">notifyEnv</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasAnyError"><span class="hs-identifier hs-type">HasAnyError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier hs-type">HasCommands</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasLogging"><span class="hs-identifier hs-type">HasLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasNotifyConfig"><span class="hs-identifier hs-type">HasNotifyConfig</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696509"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#MonadAtomic"><span class="hs-identifier hs-type">MonadAtomic</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.html#MonadNotify"><span class="hs-identifier hs-type">MonadNotify</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-time-0.1-f92abde35ffd6e17b0f1742d08fa87fff34080c3da1cbf70166e9b455eb792d7/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.html#NotifyEnvF"><span class="hs-identifier hs-type">NotifyEnvF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="#local-6989586621679696509"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-68"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Notif summary</span></span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-type">NotifyMessage</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-70"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Notif body</span></span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-type">NotifyMessage</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-72"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Notif urgency</span></span><span>
+</span><span id="line-73"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyUrgency.html#NotifyUrgency"><span class="hs-identifier hs-type">NotifyUrgency</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-74"></span><span>  </span><span class="annot"><a href="#local-6989586621679696507"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span id="sendNotif"><span class="annot"><span class="annottext">sendNotif :: forall (m :: Type -&gt; Type) env notifyEnv.
+(HasAnyError env, HasCallStack, HasCommands env, HasLogging env m,
+ HasNotifyConfig env notifyEnv, MonadAtomic m, MonadCatch m,
+ MonadNotify m, MonadReader env m, MonadRegionLogger m, MonadTime m,
+ NotifyEnvF m ~ notifyEnv) =&gt;
+NotifyMessage -&gt; NotifyMessage -&gt; NotifyUrgency -&gt; m ()
+</span><a href="Shrun.Notify.html#sendNotif"><span class="hs-identifier hs-var hs-var">sendNotif</span></a></span></span><span> </span><span id="local-6989586621679696762"><span class="annot"><span class="annottext">NotifyMessage
+</span><a href="#local-6989586621679696762"><span class="hs-identifier hs-var">summary</span></a></span></span><span> </span><span id="local-6989586621679696763"><span class="annot"><span class="annottext">NotifyMessage
+</span><a href="#local-6989586621679696763"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span id="local-6989586621679696764"><span class="annot"><span class="annottext">NotifyUrgency
+</span><a href="#local-6989586621679696764"><span class="hs-identifier hs-var">urgency</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-76"></span><span>  </span><span class="annot"><span class="annottext">(env -&gt; Maybe (NotificationEnv notifyEnv))
+-&gt; m (Maybe (NotificationEnv notifyEnv))
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall env r.
+HasNotifyConfig env r =&gt;
+env -&gt; Maybe (NotificationEnv r)
+</span><a href="Shrun.Configuration.Env.Types.html#getNotifyConfig"><span class="hs-identifier hs-var">getNotifyConfig</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679696503"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="#local-6989586621679696509"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (Maybe (NotificationEnv notifyEnv))
+-&gt; (Maybe (NotificationEnv notifyEnv) -&gt; m ()) -&gt; m ()
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="annottext">Maybe (NotificationEnv notifyEnv)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; m ()
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679696766"><span class="annot"><span class="annottext">NotificationEnv notifyEnv
+</span><a href="#local-6989586621679696766"><span class="hs-identifier hs-var">notifyConfig</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-79"></span><span>      </span><span class="annot"><span class="annottext">notifyEnv -&gt; NotifyTimeout -&gt; m ()
+</span><a href="#local-6989586621679696767"><span class="hs-identifier hs-var">notifyWithErrorLogging</span></a></span><span>
+</span><span id="line-80"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotificationEnv notifyEnv
+</span><a href="#local-6989586621679696766"><span class="hs-identifier hs-var">notifyConfig</span></a></span><span> </span><span class="annot"><span class="annottext">NotificationEnv notifyEnv
+-&gt; Optic' A_Lens NoIx (NotificationEnv notifyEnv) notifyEnv
+-&gt; notifyEnv
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (NotificationEnv notifyEnv) notifyEnv
+</span><span class="">#system</span></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotificationEnv notifyEnv
+</span><a href="#local-6989586621679696766"><span class="hs-identifier hs-var">notifyConfig</span></a></span><span> </span><span class="annot"><span class="annottext">NotificationEnv notifyEnv
+-&gt; Optic' A_Lens NoIx (NotificationEnv notifyEnv) NotifyTimeout
+-&gt; NotifyTimeout
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (NotificationEnv notifyEnv) NotifyTimeout
+</span><span class="">#timeout</span></span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-83"></span><span>    </span><span id="local-6989586621679696767"><span class="annot"><span class="annottext">notifyWithErrorLogging :: notifyEnv -&gt; NotifyTimeout -&gt; m ()
+</span><a href="#local-6989586621679696767"><span class="hs-identifier hs-var hs-var">notifyWithErrorLogging</span></a></span></span><span> </span><span id="local-6989586621679696769"><span class="annot"><span class="annottext">notifyEnv
+</span><a href="#local-6989586621679696769"><span class="hs-identifier hs-var">notifyEnv</span></a></span></span><span> </span><span id="local-6989586621679696770"><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="#local-6989586621679696770"><span class="hs-identifier hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-84"></span><span>      </span><span class="annot"><span class="annottext">NotifyEnvF m -&gt; Note -&gt; m (Maybe NotifyException)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadCatch m, MonadNotify m) =&gt;
+NotifyEnvF m -&gt; Note -&gt; m (Maybe NotifyException)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.html#tryNonFatalNotify"><span class="hs-identifier hs-var">Notify.tryNonFatalNotify</span></a></span><span> </span><span class="annot"><span class="annottext">notifyEnv
+NotifyEnvF m
+</span><a href="#local-6989586621679696769"><span class="hs-identifier hs-var">notifyEnv</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotifyTimeout -&gt; Note
+</span><a href="#local-6989586621679696772"><span class="hs-identifier hs-var">mkNote</span></a></span><span> </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="#local-6989586621679696770"><span class="hs-identifier hs-var">timeout</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (Maybe NotifyException)
+-&gt; (Maybe NotifyException -&gt; m ()) -&gt; m ()
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-85"></span><span>        </span><span class="annot"><span class="annottext">Maybe NotifyException
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; m ()
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679696773"><span class="annot"><span class="annottext">NotifyException
+</span><a href="#local-6989586621679696773"><span class="hs-identifier hs-var">notifyEx</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">RegionLayout -&gt; (Region m -&gt; m ()) -&gt; m ()
+forall a. HasCallStack =&gt; RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadRegionLogger m, HasCallStack) =&gt;
+RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var">withRegion</span></a></span><span> </span><span class="annot"><span class="annottext">RegionLayout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/concurrent-output-1.10.21-9968ece8a2edfbfa680e92c43fbd2ae858402a67efb4fe0ef150461ae4ea4c79/share/doc/html/src/System.Console.Regions.html#Linear"><span class="hs-identifier hs-var">Linear</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotifyException -&gt; Region m -&gt; m ()
+forall {env} {m :: Type -&gt; Type} {e}.
+(HasFileLogging env, HasConsoleLogging env (Region m),
+ HasCommonLogging env, HasCommandLogging env, HasCommands env,
+ MonadAtomic m, HasAnyError env, MonadReader env m, MonadTime m,
+ Exception e) =&gt;
+e -&gt; Region m -&gt; m ()
+</span><a href="#local-6989586621679696775"><span class="hs-identifier hs-var">logEx</span></a></span><span> </span><span class="annot"><span class="annottext">NotifyException
+</span><a href="#local-6989586621679696773"><span class="hs-identifier hs-var">notifyEx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span>
+</span><span id="line-88"></span><span>    </span><span id="local-6989586621679696775"><span class="annot"><span class="annottext">logEx :: e -&gt; Region m -&gt; m ()
+</span><a href="#local-6989586621679696775"><span class="hs-identifier hs-var hs-var">logEx</span></a></span></span><span> </span><span id="local-6989586621679696829"><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679696829"><span class="hs-identifier hs-var">ex</span></a></span></span><span> </span><span id="local-6989586621679696830"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679696830"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-89"></span><span>      </span><span class="hs-comment">-- set exit code</span><span>
+</span><span id="line-90"></span><span>      </span><span class="annot"><span class="annottext">m ()
+forall env (m :: Type -&gt; Type).
+(HasAnyError env, HasCallStack, MonadAtomic m,
+ MonadReader env m) =&gt;
+m ()
+</span><a href="Shrun.Configuration.Env.Types.html#setAnyErrorTrue"><span class="hs-identifier hs-var">setAnyErrorTrue</span></a></span><span>
+</span><span id="line-91"></span><span>      </span><span class="annot"><span class="annottext">Region m -&gt; Log -&gt; m ()
+forall (m :: Type -&gt; Type) env.
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadReader env m, MonadTime m) =&gt;
+Region m -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#putRegionLog"><span class="hs-identifier hs-var">Logging.putRegionLog</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679696830"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-92"></span><span>        </span><span class="annot"><span class="annottext">(Log -&gt; m ()) -&gt; Log -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span>
+</span><span id="line-93"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">cmd :: Maybe CommandP1
+</span><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-94"></span><span>            </span><span class="annot"><span class="annottext">msg :: LogMessage
+</span><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier hs-var">msg</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-95"></span><span>              </span><span class="annot"><span class="annottext">UnlinedText -&gt; LogMessage
+</span><a href="Shrun.Logging.Types.html#fromUnlined"><span class="hs-identifier hs-var">Types.fromUnlined</span></a></span><span>
+</span><span id="line-96"></span><span>                </span><span class="annot"><span class="annottext">(UnlinedText -&gt; LogMessage) -&gt; UnlinedText -&gt; LogMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><span class="hs-string">&quot;Could not send notification: &quot;</span></span><span>
+</span><span id="line-97"></span><span>                </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; UnlinedText
+</span><a href="Shrun.Data.Text.html#fromTextReplace"><span class="hs-identifier hs-var">ShrunText.fromTextReplace</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">e -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><a href="#local-6989586621679696829"><span class="hs-identifier hs-var">ex</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-98"></span><span>            </span><span class="annot"><span class="annottext">lvl :: LogLevel
+</span><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier hs-var">LevelError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>            </span><span class="annot"><span class="annottext">mode :: LogMode
+</span><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier hs-var">LogModeFinish</span></a></span><span>
+</span><span id="line-100"></span><span>          </span><span class="hs-special">}</span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span>    </span><span id="local-6989586621679696772"><span class="annot"><span class="annottext">mkNote :: NotifyTimeout -&gt; Note
+</span><a href="#local-6989586621679696772"><span class="hs-identifier hs-var hs-var">mkNote</span></a></span></span><span> </span><span id="local-6989586621679696836"><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="#local-6989586621679696836"><span class="hs-identifier hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-103"></span><span>      </span><span class="annot"><span class="annottext">Text -&gt; Note
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.Note.html#mkNote"><span class="hs-identifier hs-var">Notify.mkNote</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotifyMessage
+</span><a href="#local-6989586621679696762"><span class="hs-identifier hs-var">summary</span></a></span><span> </span><span class="annot"><span class="annottext">NotifyMessage -&gt; Optic' A_Getter NoIx NotifyMessage Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Getter NoIx NotifyMessage Text
+</span><span class="">#unNotifyMessage</span></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>        </span><span class="annot"><span class="annottext">Note -&gt; (Note -&gt; Note) -&gt; Note
+forall a b. a -&gt; (a -&gt; b) -&gt; b
+</span><span class="hs-operator hs-var">&amp;</span></span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; Note -&gt; Note
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.Note.html#setBody"><span class="hs-identifier hs-var">Notify.setBody</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Maybe Text) -&gt; Text -&gt; Maybe Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">NotifyMessage
+</span><a href="#local-6989586621679696763"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="annot"><span class="annottext">NotifyMessage -&gt; Optic' A_Getter NoIx NotifyMessage Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Getter NoIx NotifyMessage Text
+</span><span class="">#unNotifyMessage</span></span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span>        </span><span class="annot"><span class="annottext">Note -&gt; (Note -&gt; Note) -&gt; Note
+forall a b. a -&gt; (a -&gt; b) -&gt; b
+</span><span class="hs-operator hs-var">&amp;</span></span><span> </span><span class="annot"><span class="annottext">Maybe NotifyTimeout -&gt; Note -&gt; Note
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.Note.html#setTimeout"><span class="hs-identifier hs-var">Notify.setTimeout</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotifyTimeout -&gt; Maybe NotifyTimeout
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="#local-6989586621679696836"><span class="hs-identifier hs-var">timeout</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>        </span><span class="annot"><span class="annottext">Note -&gt; (Note -&gt; Note) -&gt; Note
+forall a b. a -&gt; (a -&gt; b) -&gt; b
+</span><span class="hs-operator hs-var">&amp;</span></span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; Note -&gt; Note
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.Note.html#setTitle"><span class="hs-identifier hs-var">Notify.setTitle</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Shrun&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>        </span><span class="annot"><span class="annottext">Note -&gt; (Note -&gt; Note) -&gt; Note
+forall a b. a -&gt; (a -&gt; b) -&gt; b
+</span><span class="hs-operator hs-var">&amp;</span></span><span> </span><span class="annot"><span class="annottext">Maybe NotifyUrgency -&gt; Note -&gt; Note
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.Note.html#setUrgency"><span class="hs-identifier hs-var">Notify.setUrgency</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NotifyUrgency -&gt; Maybe NotifyUrgency
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">NotifyUrgency
+</span><a href="#local-6989586621679696764"><span class="hs-identifier hs-var">urgency</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-108"></span><span>
+</span><span id="line-109"></span><span class="annot"><a href="Shrun.Notify.html#formatNotifyMessage"><span class="hs-identifier hs-type">formatNotifyMessage</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Notify.html#NotifyMessage"><span class="hs-identifier hs-type">NotifyMessage</span></a></span><span>
+</span><span id="line-110"></span><span id="formatNotifyMessage"><span class="annot"><span class="annottext">formatNotifyMessage :: UnlinedText -&gt; [UnlinedText] -&gt; NotifyMessage
+</span><a href="Shrun.Notify.html#formatNotifyMessage"><span class="hs-identifier hs-var hs-var">formatNotifyMessage</span></a></span></span><span> </span><span id="local-6989586621679696843"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679696843"><span class="hs-identifier hs-var">timeTxt</span></a></span></span><span> </span><span id="local-6989586621679696844"><span class="annot"><span class="annottext">[UnlinedText]
+</span><a href="#local-6989586621679696844"><span class="hs-identifier hs-var">messages</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-111"></span><span>  </span><span class="annot"><span class="annottext">Text -&gt; NotifyMessage
+</span><a href="Shrun.Notify.html#UnsafeNotifyMessage"><span class="hs-identifier hs-var">UnsafeNotifyMessage</span></a></span><span>
+</span><span id="line-112"></span><span>    </span><span class="annot"><span class="annottext">(Text -&gt; NotifyMessage)
+-&gt; ([UnlinedText] -&gt; Text) -&gt; [UnlinedText] -&gt; NotifyMessage
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text] -&gt; Text
+</span><span class="hs-identifier hs-var">T.intercalate</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-113"></span><span>    </span><span class="annot"><span class="annottext">([Text] -&gt; Text)
+-&gt; ([UnlinedText] -&gt; [Text]) -&gt; [UnlinedText] -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(UnlinedText -&gt; Text) -&gt; [UnlinedText] -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripControlAll"><span class="hs-identifier hs-var">U.stripControlAll</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; (UnlinedText -&gt; Text) -&gt; UnlinedText -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Optic' A_Getter NoIx UnlinedText Text -&gt; UnlinedText -&gt; Text
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Getter NoIx UnlinedText Text
+</span><span class="">#unUnlinedText</span></span><span class="hs-special">)</span><span>
+</span><span id="line-114"></span><span>    </span><span class="annot"><span class="annottext">([UnlinedText] -&gt; NotifyMessage) -&gt; [UnlinedText] -&gt; NotifyMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679696843"><span class="hs-identifier hs-var">timeTxt</span></a></span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><span class="annottext">UnlinedText -&gt; [UnlinedText] -&gt; [UnlinedText]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[UnlinedText]
+</span><a href="#local-6989586621679696844"><span class="hs-identifier hs-var">messages</span></a></span><span>
+</span><span id="line-116"></span></pre></body></html>

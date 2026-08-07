@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679681689"><span id="local-6989586621679681690"></span></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html"><span class="hs-identifier">Shrun.Configuration.Data.LegendKeysCache</span></a></span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier">LegendKeysCache</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#parseLegendKeysCache"><span class="hs-identifier">parseLegendKeysCache</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#lksMeta"><span class="hs-identifier">lksMeta</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="annot"><span class="hs-comment">-- | Determines how to handle the legend key cache.</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">data</span><span> </span><span id="LegendKeysCache"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier hs-var">LegendKeysCache</span></a></span></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | New legend keys are added to the cache.</span></span><span>
+</span><span id="line-15"></span><span>    </span><span id="LegendKeysAdd"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysAdd"><span class="hs-identifier hs-var">LegendKeysAdd</span></a></span></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | The cache is deleted, if it exists.</span></span><span>
+</span><span id="line-17"></span><span>    </span><span id="LegendKeysClear"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysClear"><span class="hs-identifier hs-var">LegendKeysClear</span></a></span></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Do nothing.</span></span><span>
+</span><span id="line-19"></span><span>    </span><span id="LegendKeysOff"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysOff"><span class="hs-identifier hs-var">LegendKeysOff</span></a></span></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | New legend keys are written to the cache. Previous values are</span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-comment">-- dropped.</span><span>
+</span><span id="line-22"></span><span>    </span><span id="LegendKeysWrite"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysWrite"><span class="hs-identifier hs-var">LegendKeysWrite</span></a></span></span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679681699"><span id="local-6989586621679681701"><span class="annot"><span class="annottext">LegendKeysCache
+LegendKeysCache -&gt; LegendKeysCache -&gt; Bounded LegendKeysCache
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: LegendKeysCache
+minBound :: LegendKeysCache
+$cmaxBound :: LegendKeysCache
+maxBound :: LegendKeysCache
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679681707"><span id="local-6989586621679681715"><span id="local-6989586621679681720"><span id="local-6989586621679681726"><span id="local-6989586621679681729"><span id="local-6989586621679681734"><span id="local-6989586621679681741"><span id="local-6989586621679681745"><span class="annot"><span class="annottext">Int -&gt; LegendKeysCache
+LegendKeysCache -&gt; Int
+LegendKeysCache -&gt; [LegendKeysCache]
+LegendKeysCache -&gt; LegendKeysCache
+LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+LegendKeysCache
+-&gt; LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+(LegendKeysCache -&gt; LegendKeysCache)
+-&gt; (LegendKeysCache -&gt; LegendKeysCache)
+-&gt; (Int -&gt; LegendKeysCache)
+-&gt; (LegendKeysCache -&gt; Int)
+-&gt; (LegendKeysCache -&gt; [LegendKeysCache])
+-&gt; (LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache])
+-&gt; (LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache])
+-&gt; (LegendKeysCache
+    -&gt; LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache])
+-&gt; Enum LegendKeysCache
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: LegendKeysCache -&gt; LegendKeysCache
+succ :: LegendKeysCache -&gt; LegendKeysCache
+$cpred :: LegendKeysCache -&gt; LegendKeysCache
+pred :: LegendKeysCache -&gt; LegendKeysCache
+$ctoEnum :: Int -&gt; LegendKeysCache
+toEnum :: Int -&gt; LegendKeysCache
+$cfromEnum :: LegendKeysCache -&gt; Int
+fromEnum :: LegendKeysCache -&gt; Int
+$cenumFrom :: LegendKeysCache -&gt; [LegendKeysCache]
+enumFrom :: LegendKeysCache -&gt; [LegendKeysCache]
+$cenumFromThen :: LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+enumFromThen :: LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+$cenumFromTo :: LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+enumFromTo :: LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+$cenumFromThenTo :: LegendKeysCache
+-&gt; LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+enumFromThenTo :: LegendKeysCache
+-&gt; LegendKeysCache -&gt; LegendKeysCache -&gt; [LegendKeysCache]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679681753"><span id="local-6989586621679681757"><span class="annot"><span class="annottext">LegendKeysCache -&gt; LegendKeysCache -&gt; Bool
+(LegendKeysCache -&gt; LegendKeysCache -&gt; Bool)
+-&gt; (LegendKeysCache -&gt; LegendKeysCache -&gt; Bool)
+-&gt; Eq LegendKeysCache
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: LegendKeysCache -&gt; LegendKeysCache -&gt; Bool
+== :: LegendKeysCache -&gt; LegendKeysCache -&gt; Bool
+$c/= :: LegendKeysCache -&gt; LegendKeysCache -&gt; Bool
+/= :: LegendKeysCache -&gt; LegendKeysCache -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679681762"><span id="local-6989586621679681764"><span id="local-6989586621679681768"><span class="annot"><span class="annottext">Int -&gt; LegendKeysCache -&gt; ShowS
+[LegendKeysCache] -&gt; ShowS
+LegendKeysCache -&gt; String
+(Int -&gt; LegendKeysCache -&gt; ShowS)
+-&gt; (LegendKeysCache -&gt; String)
+-&gt; ([LegendKeysCache] -&gt; ShowS)
+-&gt; Show LegendKeysCache
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; LegendKeysCache -&gt; ShowS
+showsPrec :: Int -&gt; LegendKeysCache -&gt; ShowS
+$cshow :: LegendKeysCache -&gt; String
+show :: LegendKeysCache -&gt; String
+$cshowList :: [LegendKeysCache] -&gt; ShowS
+showList :: [LegendKeysCache] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier hs-type">LegendKeysCache</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-26"></span><span>  </span><span id="local-6989586621679681779"><span class="annot"><span class="annottext">tomlDecoder :: Decoder LegendKeysCache
+</span><a href="#local-6989586621679681779"><span class="hs-identifier hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder LegendKeysCache
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#parseLegendKeysCache"><span class="hs-identifier hs-var">parseLegendKeysCache</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier hs-type">LegendKeysCache</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-29"></span><span>  </span><span id="local-6989586621679681784"><span class="annot"><span class="annottext">def :: LegendKeysCache
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysAdd"><span class="hs-identifier hs-var">LegendKeysAdd</span></a></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679681787"><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#Pretty"><span class="hs-identifier hs-type">Pretty</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier hs-type">LegendKeysCache</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-32"></span><span>  </span><span id="local-6989586621679681796"><span class="annot"><span class="annottext">pretty :: forall ann. LegendKeysCache -&gt; Doc ann
+</span><a href="#local-6989586621679681796"><span class="hs-identifier hs-var hs-var hs-var">pretty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="annottext">LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysAdd"><span class="hs-identifier hs-var">LegendKeysAdd</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;add&quot;</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="annottext">LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysClear"><span class="hs-identifier hs-var">LegendKeysClear</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;clear&quot;</span></span><span>
+</span><span id="line-35"></span><span>    </span><span class="annot"><span class="annottext">LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysOff"><span class="hs-identifier hs-var">LegendKeysOff</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;off&quot;</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="annottext">LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysWrite"><span class="hs-identifier hs-var">LegendKeysWrite</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;write&quot;</span></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span id="local-6989586621679681669"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#parseLegendKeysCache"><span class="hs-identifier hs-type">parseLegendKeysCache</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679681669"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679681669"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679681669"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier hs-type">LegendKeysCache</span></a></span></span><span>
+</span><span id="line-39"></span><span id="parseLegendKeysCache"><span class="annot"><span class="annottext">parseLegendKeysCache :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#parseLegendKeysCache"><span class="hs-identifier hs-var hs-var">parseLegendKeysCache</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m LegendKeysCache) -&gt; m LegendKeysCache
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; (Bool, [Text]) -&gt; Text -&gt; m LegendKeysCache
+forall a (m :: Type -&gt; Type).
+(Bounded a, Enum a, MonadFail m, Pretty a) =&gt;
+Text -&gt; (Bool, [Text]) -&gt; Text -&gt; m a
+</span><a href="Shrun.Utils.html#inversePrettyFail"><span class="hs-identifier hs-var">Utils.inversePrettyFail</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;legend-key-cache&quot;</span></span><span> </span><span class="annot"><span class="annottext">(Bool, [Text])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#lksMeta"><span class="hs-identifier hs-var">lksMeta</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#parseLegendKeysCache"><span class="hs-pragma hs-type">parseLegendKeysCache</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="annot"><span class="hs-comment">-- | Available 'LegendKeysCache' strings.</span></span><span>
+</span><span id="line-43"></span><span id="local-6989586621679681687"><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#lksMeta"><span class="hs-identifier hs-type">lksMeta</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679681687"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Tuple2</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><a href="#local-6989586621679681687"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-44"></span><span id="lksMeta"><span class="annot"><span class="annottext">lksMeta :: forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#lksMeta"><span class="hs-identifier hs-var hs-var">lksMeta</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;add&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;clear&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;write&quot;</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span></pre></body></html>

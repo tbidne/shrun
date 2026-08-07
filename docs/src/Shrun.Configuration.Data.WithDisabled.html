@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#disabledParser"><span class="hs-identifier">disabledParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier">toMaybe</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%7C%3F%7C%3E"><span class="hs-operator">(&lt;|?|&gt;)</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromMaybe</span></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- | WithDisabled augments some type with a 'disabled' option. Isomorphic to</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- 'Maybe', it exists to distinguish &quot;missing&quot; vs. explicitly</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- disabled. For instance, we want to be able to disable the parameter</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- notify-action, but we do not want to add another constructor to it, because</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- we want NotifyActionComplete to represent definite actions, hence the user config</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- (CLI and Toml) is 'Maybe (Disabled NotifyActionComplete)' i.e.</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- - Just Disabled: NotifyActionComplete explicitly disabled.</span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- - Nothing: NotifyActionComplete not given.</span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- - Just Enabled _: NotifyActionComplete explicity enabled.</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- We have this for the purposes of allowing CLI the override whatever</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- Toml parameter might exist, while at shrun's runtime it is merged to</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- 'Maybe NotifyActionComplete':</span><span>
+</span><span id="line-25"></span><span class="hs-comment">--</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- - Nothing: Notifications off.</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- - Just NotifyActionComplete: Notifications on.</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">data</span><span> </span><span id="WithDisabled"><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-var">WithDisabled</span></a></span></span><span> </span><span id="local-6989586621679672475"><span class="annot"><a href="#local-6989586621679672475"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | The field.</span></span><span>
+</span><span id="line-30"></span><span>    </span><span id="With"><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-var">With</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679672475"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Disabled.</span></span><span>
+</span><span id="line-32"></span><span>    </span><span id="Disabled"><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679672531"><span id="local-6989586621679672537"><span class="annot"><span class="annottext">WithDisabled a -&gt; WithDisabled a -&gt; Bool
+(WithDisabled a -&gt; WithDisabled a -&gt; Bool)
+-&gt; (WithDisabled a -&gt; WithDisabled a -&gt; Bool)
+-&gt; Eq (WithDisabled a)
+forall a. Eq a =&gt; WithDisabled a -&gt; WithDisabled a -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: forall a. Eq a =&gt; WithDisabled a -&gt; WithDisabled a -&gt; Bool
+== :: WithDisabled a -&gt; WithDisabled a -&gt; Bool
+$c/= :: forall a. Eq a =&gt; WithDisabled a -&gt; WithDisabled a -&gt; Bool
+/= :: WithDisabled a -&gt; WithDisabled a -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679672542"><span id="local-6989586621679672544"><span class="annot"><span class="annottext">(forall a b. (a -&gt; b) -&gt; WithDisabled a -&gt; WithDisabled b)
+-&gt; (forall a b. a -&gt; WithDisabled b -&gt; WithDisabled a)
+-&gt; Functor WithDisabled
+forall a b. a -&gt; WithDisabled b -&gt; WithDisabled a
+forall a b. (a -&gt; b) -&gt; WithDisabled a -&gt; WithDisabled b
+forall (f :: Type -&gt; Type).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+$cfmap :: forall a b. (a -&gt; b) -&gt; WithDisabled a -&gt; WithDisabled b
+fmap :: forall a b. (a -&gt; b) -&gt; WithDisabled a -&gt; WithDisabled b
+$c&lt;$ :: forall a b. a -&gt; WithDisabled b -&gt; WithDisabled a
+&lt;$ :: forall a b. a -&gt; WithDisabled b -&gt; WithDisabled a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679672550"><span id="local-6989586621679672555"><span id="local-6989586621679672559"><span class="annot"><span class="annottext">Int -&gt; WithDisabled a -&gt; ShowS
+[WithDisabled a] -&gt; ShowS
+WithDisabled a -&gt; String
+(Int -&gt; WithDisabled a -&gt; ShowS)
+-&gt; (WithDisabled a -&gt; String)
+-&gt; ([WithDisabled a] -&gt; ShowS)
+-&gt; Show (WithDisabled a)
+forall a. Show a =&gt; Int -&gt; WithDisabled a -&gt; ShowS
+forall a. Show a =&gt; [WithDisabled a] -&gt; ShowS
+forall a. Show a =&gt; WithDisabled a -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: forall a. Show a =&gt; Int -&gt; WithDisabled a -&gt; ShowS
+showsPrec :: Int -&gt; WithDisabled a -&gt; ShowS
+$cshow :: forall a. Show a =&gt; WithDisabled a -&gt; String
+show :: WithDisabled a -&gt; String
+$cshowList :: forall a. Show a =&gt; [WithDisabled a] -&gt; ShowS
+showList :: [WithDisabled a] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679672568"><span id="local-6989586621679672572"><span id="local-6989586621679672575"><span class="annot"><span class="hs-identifier hs-type">Applicative</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-36"></span><span>  </span><span id="local-6989586621679672578"><span class="annot"><span class="annottext">pure :: forall a. a -&gt; WithDisabled a
+</span><span class="hs-identifier hs-var hs-var hs-var">pure</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a
+forall a. a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-var">With</span></a></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span>  </span><span class="annot"><span class="annottext">WithDisabled (a -&gt; b)
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span id="local-6989586621679672579"><span class="annot"><span class="annottext">&lt;*&gt; :: forall a b.
+WithDisabled (a -&gt; b) -&gt; WithDisabled a -&gt; WithDisabled b
+</span><span class="hs-operator hs-var hs-var hs-var">&lt;*&gt;</span></span></span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled b
+forall a. WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span>
+</span><span id="line-39"></span><span>  </span><span class="annot"><span class="annottext">WithDisabled (a -&gt; b)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled b
+forall a. WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span>
+</span><span id="line-40"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span id="local-6989586621679672580"><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679672580"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span id="local-6989586621679672581"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672581"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b -&gt; WithDisabled b
+forall a. a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-var">With</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679672580"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672581"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- We have an Alternative instance because we want one like Maybe that is</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- left-biased. We leave Semigroup/Monoid alone for now as there is no</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- need unless we want to also use the type variable in some way.</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679672587"><span id="local-6989586621679672591"><span class="annot"><span class="hs-identifier hs-type">Alternative</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-47"></span><span>  </span><span id="local-6989586621679672594"><span class="annot"><span class="annottext">empty :: forall a. WithDisabled a
+</span><a href="#local-6989586621679672594"><span class="hs-identifier hs-var hs-var hs-var">empty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+forall a. WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span id="local-6989586621679672596"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672596"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679672597"><span class="annot"><span class="annottext">&lt;|&gt; :: forall a. WithDisabled a -&gt; WithDisabled a -&gt; WithDisabled a
+</span><a href="#local-6989586621679672597"><span class="hs-operator hs-var hs-var hs-var">&lt;|&gt;</span></a></span></span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a
+forall a. a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-var">With</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672596"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span id="local-6989586621679672599"><span class="annot"><span class="annottext">WithDisabled a
+</span><a href="#local-6989586621679672599"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+</span><a href="#local-6989586621679672599"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679672487"><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672487"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672487"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-53"></span><span>  </span><span id="local-6989586621679672609"><span class="annot"><span class="annottext">tomlDecoder :: Decoder (WithDisabled a)
+</span><a href="#local-6989586621679672609"><span class="hs-identifier hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder (WithDisabled a)
+forall {a}. Decoder (WithDisabled a)
+</span><a href="#local-6989586621679672611"><span class="hs-identifier hs-var">parseText</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (WithDisabled a)
+-&gt; Decoder (WithDisabled a) -&gt; Decoder (WithDisabled a)
+forall a. Decoder a -&gt; Decoder a -&gt; Decoder a
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a
+forall a. a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-var">With</span></a></span><span> </span><span class="annot"><span class="annottext">(a -&gt; WithDisabled a) -&gt; Decoder a -&gt; Decoder (WithDisabled a)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder a
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-55"></span><span>      </span><span id="local-6989586621679672611"><span class="annot"><span class="annottext">parseText :: Decoder (WithDisabled a)
+</span><a href="#local-6989586621679672611"><span class="hs-identifier hs-var hs-var">parseText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+-&gt; (Text -&gt; Decoder (WithDisabled a)) -&gt; Decoder (WithDisabled a)
+forall a b. Decoder a -&gt; (a -&gt; Decoder b) -&gt; Decoder b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-57"></span><span>          </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;off&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Decoder (WithDisabled a)
+forall a. a -&gt; Decoder a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+forall a. WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span>
+</span><span id="line-58"></span><span>          </span><span id="local-6989586621679672627"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679672627"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Decoder (WithDisabled a)
+forall a. String -&gt; Decoder a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Decoder (WithDisabled a))
+-&gt; String -&gt; Decoder (WithDisabled a)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Expected 'off', received: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679672627"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679672511"><span id="local-6989586621679672632"><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#Pretty"><span class="hs-identifier hs-type">Pretty</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672511"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#Pretty"><span class="hs-identifier hs-type">Pretty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672511"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-61"></span><span>  </span><span id="local-6989586621679672639"><span class="annot"><span class="annottext">pretty :: forall ann. WithDisabled a -&gt; Doc ann
+</span><a href="#local-6989586621679672639"><span class="hs-identifier hs-var hs-var hs-var">pretty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><span class="annottext">WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;off&quot;</span></span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span id="local-6989586621679672641"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672641"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Doc ann
+forall ann. a -&gt; Doc ann
+forall a ann. Pretty a =&gt; a -&gt; Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#pretty"><span class="hs-identifier hs-var">pretty</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672641"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span id="local-6989586621679672514"><span id="local-6989586621679672515"><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#disabledParser"><span class="hs-identifier hs-type">disabledParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Applicative</span></span><span> </span><span class="annot"><a href="#local-6989586621679672514"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679672514"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672515"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679672514"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672515"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-66"></span><span id="disabledParser"><span class="annot"><span class="annottext">disabledParser :: forall (f :: Type -&gt; Type) a.
+Applicative f =&gt;
+Text -&gt; f a -&gt; f (WithDisabled a)
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#disabledParser"><span class="hs-identifier hs-var hs-var">disabledParser</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;off&quot;</span></span><span> </span><span class="annot"><span class="annottext">f a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; f (WithDisabled a)
+forall a. a -&gt; f a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+forall a. WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#disabledParser"><span class="hs-identifier hs-var">disabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679672649"><span class="annot"><span class="annottext">f a
+</span><a href="#local-6989586621679672649"><span class="hs-identifier hs-var">fx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a
+forall a. a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-var">With</span></a></span><span> </span><span class="annot"><span class="annottext">(a -&gt; WithDisabled a) -&gt; f a -&gt; f (WithDisabled a)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">f a
+</span><a href="#local-6989586621679672649"><span class="hs-identifier hs-var">fx</span></a></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- | Runs Maybes Alternative instance, then binds with toMaybe. I.e., takes</span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- any Just if it exists (left-biased), then performs monadic join.</span><span>
+</span><span id="line-71"></span><span id="local-6989586621679672518"><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%7C%3F%7C%3E"><span class="hs-operator hs-type">(&lt;|?|&gt;)</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672518"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672518"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679672518"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-72"></span><span id="local-6989586621679672654"><span class="annot"><span class="annottext">Maybe (WithDisabled a)
+</span><a href="#local-6989586621679672654"><span class="hs-identifier hs-var">mx</span></a></span></span><span> </span><span id="%3C%7C%3F%7C%3E"><span class="annot"><span class="annottext">&lt;|?|&gt; :: forall a.
+Maybe (WithDisabled a) -&gt; Maybe (WithDisabled a) -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%7C%3F%7C%3E"><span class="hs-operator hs-var hs-var">&lt;|?|&gt;</span></a></span></span><span> </span><span id="local-6989586621679672655"><span class="annot"><span class="annottext">Maybe (WithDisabled a)
+</span><a href="#local-6989586621679672655"><span class="hs-identifier hs-var">my</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe (WithDisabled a)
+</span><a href="#local-6989586621679672654"><span class="hs-identifier hs-var">mx</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled a)
+-&gt; Maybe (WithDisabled a) -&gt; Maybe (WithDisabled a)
+forall a. Maybe a -&gt; Maybe a -&gt; Maybe a
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled a)
+</span><a href="#local-6989586621679672655"><span class="hs-identifier hs-var">my</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled a) -&gt; (WithDisabled a -&gt; Maybe a) -&gt; Maybe a
+forall a b. Maybe a -&gt; (a -&gt; Maybe b) -&gt; Maybe b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Maybe a
+forall a. WithDisabled a -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var">toMaybe</span></a></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="hs-keyword">infixr</span><span> </span><span class="hs-number">6</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%7C%3F%7C%3E"><span class="hs-operator hs-type">&lt;|?|&gt;</span></a></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span id="local-6989586621679672520"><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-type">toMaybe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679672520"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679672520"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-77"></span><span id="toMaybe"><span class="annot"><span class="annottext">toMaybe :: forall a. WithDisabled a -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var hs-var">toMaybe</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span id="local-6989586621679672656"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672656"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Maybe a
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679672656"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var">toMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe a
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-79"></span></pre></body></html>

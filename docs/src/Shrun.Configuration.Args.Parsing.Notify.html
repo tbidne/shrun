@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedLists #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | CLI parsing for NotifyArgs</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Notify</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyParser"><span class="hs-identifier">notifyParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify</span></a></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#NotifyActionsInit"><span class="hs-identifier">NotifyActionsInit</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#MkNotifyActionsInit"><span class="hs-identifier">MkNotifyActionsInit</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#complete"><span class="hs-identifier">complete</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#start"><span class="hs-identifier">start</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#NotifyArgs"><span class="hs-identifier">NotifyArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#NotifyP"><span class="hs-identifier">NotifyP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#MkNotifyP"><span class="hs-identifier">MkNotifyP</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#actions"><span class="hs-identifier">actions</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#system"><span class="hs-identifier">system</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#timeout"><span class="hs-identifier">timeout</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.Action</span></a></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier">NotifyActionComplete</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier">NotifyActionStartSwitch</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier">MkNotifyActionStartSwitch</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.Action</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Action</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.System.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.System</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">System</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Timeout.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.Timeout</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Timeout</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ShrunUtils</span></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span id="local-6989586621679702183"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyParser"><span class="hs-identifier hs-type">notifyParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#NotifyArgs"><span class="hs-identifier hs-type">NotifyArgs</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679702183"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-29"></span><span id="notifyParser"><span class="annot"><span class="annottext">notifyParser :: forall r. Parser (NotifyArgs r)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyParser"><span class="hs-identifier hs-var hs-var">notifyParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-30"></span><span>  </span><span id="local-6989586621679702300"><span class="annot"><span class="annottext">Maybe (WithDisabled NotifyActionComplete)
+</span><a href="#local-6989586621679702300"><span class="hs-identifier hs-var">complete</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe (WithDisabled NotifyActionComplete))
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyActionCompleteParser"><span class="hs-identifier hs-var">notifyActionCompleteParser</span></a></span><span>
+</span><span id="line-31"></span><span>  </span><span id="local-6989586621679702302"><span class="annot"><span class="annottext">Maybe NotifyActionStartSwitch
+</span><a href="#local-6989586621679702302"><span class="hs-identifier hs-var">start</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe NotifyActionStartSwitch)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyActionStartParser"><span class="hs-identifier hs-var">notifyActionStartParser</span></a></span><span>
+</span><span id="line-32"></span><span>  </span><span id="local-6989586621679702304"><span class="annot"><span class="annottext">Maybe NotifySystem
+</span><a href="#local-6989586621679702304"><span class="hs-identifier hs-var">system</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe NotifySystem)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifySystemParser"><span class="hs-identifier hs-var">notifySystemParser</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span id="local-6989586621679702306"><span class="annot"><span class="annottext">Maybe NotifyTimeout
+</span><a href="#local-6989586621679702306"><span class="hs-identifier hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe NotifyTimeout)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyTimeoutParser"><span class="hs-identifier hs-var">notifyTimeoutParser</span></a></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#MkNotifyP"><span class="hs-identifier hs-type">MkNotifyP</span></a></span><span>
+</span><span id="line-37"></span><span>      </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">actions :: NotifyActionsF 'ConfigPhaseArgs
+</span><a href="Shrun.Configuration.Data.Notify.html#actions"><span class="hs-identifier hs-var">actions</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-38"></span><span>          </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#MkNotifyActionsInit"><span class="hs-identifier hs-type">MkNotifyActionsInit</span></a></span><span>
+</span><span id="line-39"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled NotifyActionComplete)
+NotifyActionCompleteF 'ConfigPhaseArgs
+complete :: NotifyActionCompleteF 'ConfigPhaseArgs
+complete :: Maybe (WithDisabled NotifyActionComplete)
+</span><a href="Shrun.Configuration.Data.Notify.html#complete"><span class="hs-identifier hs-var hs-var">complete</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>              </span><span class="annot"><span class="annottext">Maybe NotifyActionStartSwitch
+SwitchF 'ConfigPhaseArgs NotifyActionStartSwitch
+start :: SwitchF 'ConfigPhaseArgs NotifyActionStartSwitch
+start :: Maybe NotifyActionStartSwitch
+</span><a href="Shrun.Configuration.Data.Notify.html#start"><span class="hs-identifier hs-var hs-var">start</span></a></span><span>
+</span><span id="line-41"></span><span>            </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>        </span><span class="annot"><span class="annottext">Maybe NotifySystem
+NotifySystemF 'ConfigPhaseArgs r
+system :: NotifySystemF 'ConfigPhaseArgs r
+system :: Maybe NotifySystem
+</span><a href="Shrun.Configuration.Data.Notify.html#system"><span class="hs-identifier hs-var hs-var">system</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>        </span><span class="annot"><span class="annottext">Maybe NotifyTimeout
+ConfigPhaseF 'ConfigPhaseArgs NotifyTimeout
+timeout :: ConfigPhaseF 'ConfigPhaseArgs NotifyTimeout
+timeout :: Maybe NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.html#timeout"><span class="hs-identifier hs-var hs-var">timeout</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyActionCompleteParser"><span class="hs-identifier hs-type">notifyActionCompleteParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionComplete"><span class="hs-identifier hs-type">NotifyActionComplete</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span id="notifyActionCompleteParser"><span class="annot"><span class="annottext">notifyActionCompleteParser :: Parser (Maybe (WithDisabled NotifyActionComplete))
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyActionCompleteParser"><span class="hs-identifier hs-var hs-var">notifyActionCompleteParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-48"></span><span>  </span><span class="annot"><span class="annottext">ReadM NotifyActionComplete
+-&gt; [Mod OptionFields (WithDisabled NotifyActionComplete)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled NotifyActionComplete))
+forall a.
+ReadM a
+-&gt; [Mod OptionFields (WithDisabled a)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled a))
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mWithDisabledParser"><span class="hs-identifier hs-var">Utils.mWithDisabledParser</span></a></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+-&gt; (Text -&gt; ReadM NotifyActionComplete)
+-&gt; ReadM NotifyActionComplete
+forall a b. ReadM a -&gt; (a -&gt; ReadM b) -&gt; ReadM b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ReadM NotifyActionComplete
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+Text -&gt; m NotifyActionComplete
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#parseNotifyAction"><span class="hs-identifier hs-var">Action.parseNotifyAction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">[Mod OptionFields (WithDisabled NotifyActionComplete)]
+</span><a href="#local-6989586621679702311"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">(Bool, [String])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#notifyActionMeta"><span class="hs-identifier hs-var">Action.notifyActionMeta</span></a></span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679702311"><span class="annot"><span class="annottext">opts :: [Mod OptionFields (WithDisabled NotifyActionComplete)]
+</span><a href="#local-6989586621679702311"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-54"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled NotifyActionComplete)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;notify-action-complete&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>        </span><span class="annot"><span class="annottext">[String] -&gt; Mod OptionFields (WithDisabled NotifyActionComplete)
+forall (f :: Type -&gt; Type) a. HasCompleter f =&gt; [String] -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completeWith"><span class="hs-identifier hs-var">OA.completeWith</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;final&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;command&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;all&quot;</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">Item [Mod OptionFields (WithDisabled NotifyActionComplete)]
+Mod OptionFields (WithDisabled NotifyActionComplete)
+</span><a href="#local-6989586621679702315"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-57"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span>    </span><span id="local-6989586621679702315"><span class="annot"><span class="annottext">helpTxt :: Mod OptionFields (WithDisabled NotifyActionComplete)
+</span><a href="#local-6989586621679702315"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">NESeq String
+-&gt; Mod OptionFields (WithDisabled NotifyActionComplete)
+forall a. NESeq String -&gt; Mod OptionFields a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#itemize"><span class="hs-identifier hs-var">Utils.itemize</span></a></span><span>
+</span><span id="line-61"></span><span>        </span><span class="annot"><span class="annottext">(NESeq String
+ -&gt; Mod OptionFields (WithDisabled NotifyActionComplete))
+-&gt; NESeq String
+-&gt; Mod OptionFields (WithDisabled NotifyActionComplete)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679702317"><span class="hs-identifier hs-var">intro</span></a></span><span>
+</span><span id="line-62"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Seq String -&gt; NESeq String
+forall a. a -&gt; Seq a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-var">:&lt;||</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679702319"><span class="hs-identifier hs-var">hall</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679702320"><span class="hs-identifier hs-var">hcommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679702321"><span class="hs-identifier hs-var">hfinal</span></a></span><span>
+</span><span id="line-65"></span><span>             </span><span class="hs-special">]</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span>    </span><span id="local-6989586621679702317"><span class="annot"><span class="annottext">intro :: String
+</span><a href="#local-6989586621679702317"><span class="hs-identifier hs-var hs-var">intro</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Sends notifications for various 'complete' actions.&quot;</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span>    </span><span id="local-6989586621679702321"><span class="annot"><span class="annottext">hfinal :: String
+</span><a href="#local-6989586621679702321"><span class="hs-identifier hs-var hs-var">hfinal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;final: Sends off a single notification when shrun itself finishes.&quot;</span></span><span>
+</span><span id="line-70"></span><span>    </span><span id="local-6989586621679702320"><span class="annot"><span class="annottext">hcommand :: String
+</span><a href="#local-6989586621679702320"><span class="hs-identifier hs-var hs-var">hcommand</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;command: Sends off a notification for each command that finishes.&quot;</span></span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679702319"><span class="annot"><span class="annottext">hall :: String
+</span><a href="#local-6989586621679702319"><span class="hs-identifier hs-var hs-var">hall</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;all: Implies 'final' and 'command'.&quot;</span></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyActionStartParser"><span class="hs-identifier hs-type">notifyActionStartParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.Action.html#NotifyActionStartSwitch"><span class="hs-identifier hs-type">NotifyActionStartSwitch</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span id="notifyActionStartParser"><span class="annot"><span class="annottext">notifyActionStartParser :: Parser (Maybe NotifyActionStartSwitch)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyActionStartParser"><span class="hs-identifier hs-var hs-var">notifyActionStartParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; NotifyActionStartSwitch)
+-&gt; String -&gt; String -&gt; Parser (Maybe NotifyActionStartSwitch)
+forall a. (Bool -&gt; a) -&gt; String -&gt; String -&gt; Parser (Maybe a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#switchParser"><span class="hs-identifier hs-var">Utils.switchParser</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; NotifyActionStartSwitch
+</span><a href="Shrun.Configuration.Data.Notify.Action.html#MkNotifyActionStartSwitch"><span class="hs-identifier hs-var">MkNotifyActionStartSwitch</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;notify-action-start&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679702327"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-76"></span><span>    </span><span id="local-6989586621679702327"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679702327"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Sends a notification when a command is started.&quot;</span></span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifySystemParser"><span class="hs-identifier hs-type">notifySystemParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifySystem.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span id="notifySystemParser"><span class="annot"><span class="annottext">notifySystemParser :: Parser (Maybe NotifySystem)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifySystemParser"><span class="hs-identifier hs-var hs-var">notifySystemParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe NotifySystem)
+</span><a href="#local-6989586621679702329"><span class="hs-identifier hs-var">mainParser</span></a></span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-81"></span><span>    </span><span id="local-6989586621679702329"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe NotifySystem)
+</span><a href="#local-6989586621679702329"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-82"></span><span>      </span><span class="annot"><span class="annottext">Parser NotifySystem -&gt; Parser (Maybe NotifySystem)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-83"></span><span>        </span><span class="annot"><span class="annottext">(Parser NotifySystem -&gt; Parser (Maybe NotifySystem))
+-&gt; Parser NotifySystem -&gt; Parser (Maybe NotifySystem)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM NotifySystem
+-&gt; Mod OptionFields NotifySystem -&gt; Parser NotifySystem
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM NotifySystem
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m NotifySystem
+</span><a href="Shrun.Configuration.Data.Notify.System.html#parseNotifySystem"><span class="hs-identifier hs-var">System.parseNotifySystem</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>        </span><span class="annot"><span class="annottext">(Mod OptionFields NotifySystem -&gt; Parser NotifySystem)
+-&gt; Mod OptionFields NotifySystem -&gt; Parser NotifySystem
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields NotifySystem] -&gt; Mod OptionFields NotifySystem
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-85"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields NotifySystem
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;notify-system&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-86"></span><span>            </span><span class="annot"><span class="annottext">[String] -&gt; Mod OptionFields NotifySystem
+forall (f :: Type -&gt; Type) a. HasCompleter f =&gt; [String] -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completeWith"><span class="hs-identifier hs-var">OA.completeWith</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;dbus&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;notify-send&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;apple-script&quot;</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-87"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields NotifySystem
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679702334"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-88"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields NotifySystem
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Bool, [String]) -&gt; String
+forall a. (IsString a, Monoid a) =&gt; (Bool, [a]) -&gt; a
+</span><a href="Shrun.Utils.html#mkMetaStr"><span class="hs-identifier hs-var">ShrunUtils.mkMetaStr</span></a></span><span> </span><span class="annot"><span class="annottext">(Bool, [String])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.System.html#notifySystemMeta"><span class="hs-identifier hs-var">System.notifySystemMeta</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-90"></span><span>    </span><span id="local-6989586621679702334"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679702334"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-91"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-92"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;The system used for sending notifications. 'dbus' and 'notify-send' &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-93"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;are available on linux, whereas 'apple-script' is available for osx.&quot;</span></span><span>
+</span><span id="line-94"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyTimeoutParser"><span class="hs-identifier hs-type">notifyTimeoutParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-notify-0.1-8ff7c3a282ae92e65a0b4aeda0b900974ea30acb3b1016c37896c8bf4d8aad5b/share/doc/html/src/Effects.Notify.Internal.Data.NotifyTimeout.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span id="notifyTimeoutParser"><span class="annot"><span class="annottext">notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyTimeoutParser"><span class="hs-identifier hs-var hs-var">notifyTimeoutParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe NotifyTimeout)
+</span><a href="#local-6989586621679702344"><span class="hs-identifier hs-var">mainParser</span></a></span><span>
+</span><span id="line-98"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-99"></span><span>    </span><span id="local-6989586621679702344"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe NotifyTimeout)
+</span><a href="#local-6989586621679702344"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-100"></span><span>      </span><span class="annot"><span class="annottext">Parser NotifyTimeout -&gt; Parser (Maybe NotifyTimeout)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-101"></span><span>        </span><span class="annot"><span class="annottext">(Parser NotifyTimeout -&gt; Parser (Maybe NotifyTimeout))
+-&gt; Parser NotifyTimeout -&gt; Parser (Maybe NotifyTimeout)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM NotifyTimeout
+-&gt; Mod OptionFields NotifyTimeout -&gt; Parser NotifyTimeout
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM NotifyTimeout
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#parseNotifyTimeout"><span class="hs-identifier hs-var">Timeout.parseNotifyTimeout</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>        </span><span class="annot"><span class="annottext">(Mod OptionFields NotifyTimeout -&gt; Parser NotifyTimeout)
+-&gt; Mod OptionFields NotifyTimeout -&gt; Parser NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields NotifyTimeout] -&gt; Mod OptionFields NotifyTimeout
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-103"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields NotifyTimeout
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;notify-timeout&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-104"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields NotifyTimeout
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelpNoLine"><span class="hs-identifier hs-var">Utils.mkHelpNoLine</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679702347"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-105"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields NotifyTimeout
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Bool, [String]) -&gt; String
+forall a. (IsString a, Monoid a) =&gt; (Bool, [a]) -&gt; a
+</span><a href="Shrun.Utils.html#mkMetaStr"><span class="hs-identifier hs-var">ShrunUtils.mkMetaStr</span></a></span><span> </span><span class="annot"><span class="annottext">(Bool, [String])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Notify.Timeout.html#notifyTimeoutMeta"><span class="hs-identifier hs-var">Timeout.notifyTimeoutMeta</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-107"></span><span>    </span><span id="local-6989586621679702347"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679702347"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-108"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-109"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;When to timeout success notifications. Defaults to 10 seconds. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-110"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Note that the underlying notification system may not support &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-111"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;timeouts.&quot;</span></span><span>
+</span><span id="line-112"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-113"></span></pre></body></html>

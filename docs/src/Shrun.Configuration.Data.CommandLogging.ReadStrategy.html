@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679686348"><span id="local-6989586621679686349"></span></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html"><span class="hs-identifier">Shrun.Configuration.Data.CommandLogging.ReadStrategy</span></a></span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadStrategy"><span class="hs-identifier">ReadStrategy</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#parseReadStrategy"><span class="hs-identifier">parseReadStrategy</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readStrategyMeta"><span class="hs-identifier">readStrategyMeta</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#defaultReadStrategy"><span class="hs-identifier">defaultReadStrategy</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readBlockLineBufferNotAllowed"><span class="hs-identifier">readBlockLineBufferNotAllowed</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html"><span class="hs-identifier">Shrun.Command.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Command.Types.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Different read strategies for simplicity vs. potential prettier</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- formatting.</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">data</span><span> </span><span id="ReadStrategy"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadStrategy"><span class="hs-identifier hs-var">ReadStrategy</span></a></span></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Reads N bytes at a time.</span></span><span>
+</span><span id="line-20"></span><span>    </span><span id="ReadBlock"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadBlock"><span class="hs-identifier hs-var">ReadBlock</span></a></span></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Reads N bytes at a time, but attempts to distinguish &quot;complete&quot; (newline</span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-comment">-- terminated) vs. &quot;partial&quot; (anything else) reads. We do this to make</span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-comment">-- the file log output prettier.</span><span>
+</span><span id="line-24"></span><span>    </span><span id="ReadBlockLineBuffer"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadBlockLineBuffer"><span class="hs-identifier hs-var">ReadBlockLineBuffer</span></a></span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679686363"><span id="local-6989586621679686365"><span class="annot"><span class="annottext">ReadStrategy
+ReadStrategy -&gt; ReadStrategy -&gt; Bounded ReadStrategy
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: ReadStrategy
+minBound :: ReadStrategy
+$cmaxBound :: ReadStrategy
+maxBound :: ReadStrategy
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679686371"><span id="local-6989586621679686378"><span id="local-6989586621679686383"><span id="local-6989586621679686389"><span id="local-6989586621679686392"><span id="local-6989586621679686397"><span id="local-6989586621679686403"><span id="local-6989586621679686407"><span class="annot"><span class="annottext">Int -&gt; ReadStrategy
+ReadStrategy -&gt; Int
+ReadStrategy -&gt; [ReadStrategy]
+ReadStrategy -&gt; ReadStrategy
+ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+ReadStrategy -&gt; ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+(ReadStrategy -&gt; ReadStrategy)
+-&gt; (ReadStrategy -&gt; ReadStrategy)
+-&gt; (Int -&gt; ReadStrategy)
+-&gt; (ReadStrategy -&gt; Int)
+-&gt; (ReadStrategy -&gt; [ReadStrategy])
+-&gt; (ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy])
+-&gt; (ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy])
+-&gt; (ReadStrategy -&gt; ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy])
+-&gt; Enum ReadStrategy
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: ReadStrategy -&gt; ReadStrategy
+succ :: ReadStrategy -&gt; ReadStrategy
+$cpred :: ReadStrategy -&gt; ReadStrategy
+pred :: ReadStrategy -&gt; ReadStrategy
+$ctoEnum :: Int -&gt; ReadStrategy
+toEnum :: Int -&gt; ReadStrategy
+$cfromEnum :: ReadStrategy -&gt; Int
+fromEnum :: ReadStrategy -&gt; Int
+$cenumFrom :: ReadStrategy -&gt; [ReadStrategy]
+enumFrom :: ReadStrategy -&gt; [ReadStrategy]
+$cenumFromThen :: ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+enumFromThen :: ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+$cenumFromTo :: ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+enumFromTo :: ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+$cenumFromThenTo :: ReadStrategy -&gt; ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+enumFromThenTo :: ReadStrategy -&gt; ReadStrategy -&gt; ReadStrategy -&gt; [ReadStrategy]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679686415"><span id="local-6989586621679686419"><span class="annot"><span class="annottext">ReadStrategy -&gt; ReadStrategy -&gt; Bool
+(ReadStrategy -&gt; ReadStrategy -&gt; Bool)
+-&gt; (ReadStrategy -&gt; ReadStrategy -&gt; Bool) -&gt; Eq ReadStrategy
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ReadStrategy -&gt; ReadStrategy -&gt; Bool
+== :: ReadStrategy -&gt; ReadStrategy -&gt; Bool
+$c/= :: ReadStrategy -&gt; ReadStrategy -&gt; Bool
+/= :: ReadStrategy -&gt; ReadStrategy -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679686424"><span id="local-6989586621679686426"><span id="local-6989586621679686430"><span class="annot"><span class="annottext">Int -&gt; ReadStrategy -&gt; ShowS
+[ReadStrategy] -&gt; ShowS
+ReadStrategy -&gt; String
+(Int -&gt; ReadStrategy -&gt; ShowS)
+-&gt; (ReadStrategy -&gt; String)
+-&gt; ([ReadStrategy] -&gt; ShowS)
+-&gt; Show ReadStrategy
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ReadStrategy -&gt; ShowS
+showsPrec :: Int -&gt; ReadStrategy -&gt; ShowS
+$cshow :: ReadStrategy -&gt; String
+show :: ReadStrategy -&gt; String
+$cshowList :: [ReadStrategy] -&gt; ShowS
+showList :: [ReadStrategy] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadStrategy"><span class="hs-identifier hs-type">ReadStrategy</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-28"></span><span>  </span><span id="local-6989586621679686441"><span class="annot"><span class="annottext">tomlDecoder :: Decoder ReadStrategy
+</span><a href="#local-6989586621679686441"><span class="hs-identifier hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder ReadStrategy
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#parseReadStrategy"><span class="hs-identifier hs-var">parseReadStrategy</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679686445"><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#Pretty"><span class="hs-identifier hs-type">Pretty</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadStrategy"><span class="hs-identifier hs-type">ReadStrategy</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-31"></span><span>  </span><span id="local-6989586621679686452"><span class="annot"><span class="annottext">pretty :: forall ann. ReadStrategy -&gt; Doc ann
+</span><a href="#local-6989586621679686452"><span class="hs-identifier hs-var hs-var hs-var">pretty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><span class="annottext">ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadBlock"><span class="hs-identifier hs-var">ReadBlock</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;block&quot;</span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="annottext">ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadBlockLineBuffer"><span class="hs-identifier hs-var">ReadBlockLineBuffer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Doc ann
+</span><span class="hs-string">&quot;block-line-buffer&quot;</span></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#defaultReadStrategy"><span class="hs-identifier hs-type">defaultReadStrategy</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadStrategy"><span class="hs-identifier hs-type">ReadStrategy</span></a></span><span>
+</span><span id="line-36"></span><span id="defaultReadStrategy"><span class="annot"><span class="annottext">defaultReadStrategy :: Bool -&gt; Bool -&gt; NESeq CommandP1 -&gt; ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#defaultReadStrategy"><span class="hs-identifier hs-var hs-var">defaultReadStrategy</span></a></span></span><span> </span><span id="local-6989586621679686454"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686454"><span class="hs-identifier hs-var">isFileLog</span></a></span></span><span> </span><span id="local-6989586621679686455"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686455"><span class="hs-identifier hs-var">isFileLogMulti</span></a></span></span><span> </span><span id="local-6989586621679686456"><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679686456"><span class="hs-identifier hs-var">cmds</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; NESeq CommandP1 -&gt; Bool
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readBlockLineBufferNotAllowed"><span class="hs-identifier hs-var">readBlockLineBufferNotAllowed</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686454"><span class="hs-identifier hs-var">isFileLog</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686455"><span class="hs-identifier hs-var">isFileLogMulti</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679686456"><span class="hs-identifier hs-var">cmds</span></a></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadBlock"><span class="hs-identifier hs-var">ReadBlock</span></a></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadBlockLineBuffer"><span class="hs-identifier hs-var">ReadBlockLineBuffer</span></a></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readBlockLineBufferNotAllowed"><span class="hs-identifier hs-type">readBlockLineBufferNotAllowed</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-42"></span><span id="readBlockLineBufferNotAllowed"><span class="annot"><span class="annottext">readBlockLineBufferNotAllowed :: Bool -&gt; Bool -&gt; NESeq CommandP1 -&gt; Bool
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readBlockLineBufferNotAllowed"><span class="hs-identifier hs-var hs-var">readBlockLineBufferNotAllowed</span></a></span></span><span> </span><span id="local-6989586621679686457"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686457"><span class="hs-identifier hs-var">isFileLog</span></a></span></span><span> </span><span id="local-6989586621679686458"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686458"><span class="hs-identifier hs-var">isFileLogMulti</span></a></span></span><span> </span><span id="local-6989586621679686459"><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679686459"><span class="hs-identifier hs-var">cmds</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-43"></span><span>  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686460"><span class="hs-identifier hs-var">isMulti</span></a></span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686457"><span class="hs-identifier hs-var">isFileLog</span></a></span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679686458"><span class="hs-identifier hs-var">isFileLogMulti</span></a></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-47"></span><span>    </span><span id="local-6989586621679686460"><span class="annot"><span class="annottext">isMulti :: Bool
+</span><a href="#local-6989586621679686460"><span class="hs-identifier hs-var hs-var">isMulti</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NESeq CommandP1 -&gt; Int
+forall a. NESeq a -&gt; Int
+forall (t :: Type -&gt; Type) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679686459"><span class="hs-identifier hs-var">cmds</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="annot"><span class="hs-comment">-- | Parses 'ReadStrategy'.</span></span><span>
+</span><span id="line-50"></span><span id="local-6989586621679686325"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#parseReadStrategy"><span class="hs-identifier hs-type">parseReadStrategy</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679686325"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679686325"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679686325"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#ReadStrategy"><span class="hs-identifier hs-type">ReadStrategy</span></a></span></span><span>
+</span><span id="line-51"></span><span id="parseReadStrategy"><span class="annot"><span class="annottext">parseReadStrategy :: forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m ReadStrategy
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#parseReadStrategy"><span class="hs-identifier hs-var hs-var">parseReadStrategy</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m ReadStrategy) -&gt; m ReadStrategy
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; (Bool, [Text]) -&gt; Text -&gt; m ReadStrategy
+forall a (m :: Type -&gt; Type).
+(Bounded a, Enum a, MonadFail m, Pretty a) =&gt;
+Text -&gt; (Bool, [Text]) -&gt; Text -&gt; m a
+</span><a href="Shrun.Utils.html#inversePrettyFail"><span class="hs-identifier hs-var">Utils.inversePrettyFail</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;read-strategy&quot;</span></span><span> </span><span class="annot"><span class="annottext">(Bool, [Text])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readStrategyMeta"><span class="hs-identifier hs-var">readStrategyMeta</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#parseReadStrategy"><span class="hs-pragma hs-type">parseReadStrategy</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="annot"><span class="hs-comment">-- | Available 'ReadStrategy' strings.</span></span><span>
+</span><span id="line-55"></span><span id="local-6989586621679686346"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readStrategyMeta"><span class="hs-identifier hs-type">readStrategyMeta</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679686346"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Tuple2</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span> </span><span class="annot"><a href="#local-6989586621679686346"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-56"></span><span id="readStrategyMeta"><span class="annot"><span class="annottext">readStrategyMeta :: forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadStrategy.html#readStrategyMeta"><span class="hs-identifier hs-var hs-var">readStrategyMeta</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;block&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;block-line-buffer&quot;</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span></pre></body></html>

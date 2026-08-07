@@ -1,0 +1,596 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedLists #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE QuasiQuotes #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.TH</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#gitData"><span class="hs-identifier">gitData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#defaultToml"><span class="hs-identifier">defaultToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Applicative</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftA3</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Clock.POSIX</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">POSIXTime</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Clock.POSIX</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">PosixTime</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time.Format</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Fmt</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Typed.OsString.html"><span class="hs-identifier">Development.GitRev.Typed.OsString</span></a></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#EnvError"><span class="hs-identifier">EnvError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#MkEnvError"><span class="hs-identifier">MkEnvError</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.OsString.html#GitError"><span class="hs-identifier">GitError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevError"><span class="hs-identifier">GitRevError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevErrorEnv"><span class="hs-identifier">GitRevErrorEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevErrorText"><span class="hs-identifier">GitRevErrorText</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.Common.html#IndexUsed"><span class="hs-identifier">IndexUsed</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.Common.html#IdxNotUsed"><span class="hs-identifier">IdxNotUsed</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Typed.OsString.html"><span class="hs-identifier">Development.GitRev.Typed.OsString</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">GRT</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html"><span class="hs-identifier">FileSystem.OsString</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">osstr</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html"><span class="hs-identifier">FileSystem.OsString</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FS.OsString</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Num</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Num</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromInteger</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Code</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Q</span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH.Syntax</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Lift</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftTyped</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH.Syntax</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TH</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.System.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify.System</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">System</span></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.OsString</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OsString</span></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Read</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TR</span></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#gitData"><span class="hs-identifier hs-type">gitData</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span id="gitData"><span class="annot"><span class="annottext">gitData :: Code Q (OsString, OsString, OsString)
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#gitData"><span class="hs-identifier hs-var hs-var">gitData</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+-&gt; Code Q (OsString, OsString, OsString)
+</span><a href="#local-6989586621679679998"><span class="hs-identifier hs-var">toCode</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+</span><a href="#local-6989586621679679999"><span class="hs-identifier hs-var">qs</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-36"></span><span>    </span><span id="local-6989586621679679998"><span class="annot"><span class="annottext">toCode :: Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+-&gt; Code Q (OsString, OsString, OsString)
+</span><a href="#local-6989586621679679998"><span class="hs-identifier hs-var hs-var">toCode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q (OsString, OsString, OsString)
+-&gt; Code Q (OsString, OsString, OsString)
+forall a. Lift a =&gt; Q a -&gt; Code Q a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Typed.OsString.html#qToCode"><span class="hs-identifier hs-var">GRT.qToCode</span></a></span><span> </span><span class="annot"><span class="annottext">(Q (OsString, OsString, OsString)
+ -&gt; Code Q (OsString, OsString, OsString))
+-&gt; (Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+    -&gt; Q (OsString, OsString, OsString))
+-&gt; Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+-&gt; Code Q (OsString, OsString, OsString)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+-&gt; Q (OsString, OsString, OsString)
+forall (f :: Type -&gt; Type) e a.
+(Exception e, Functor f) =&gt;
+f (Either e a) -&gt; f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.Common.html#projectError"><span class="hs-identifier hs-var">GRT.projectError</span></a></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span>    </span><span id="local-6989586621679679999"><span class="annot"><span class="annottext">qs :: Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+</span><a href="#local-6989586621679679999"><span class="hs-identifier hs-var hs-var">qs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-39"></span><span>      </span><span class="annot"><span class="annottext">NonEmpty (Q (Either GitRevError (OsString, OsString, OsString)))
+-&gt; Q (Either (Errors GitRevError) (OsString, OsString, OsString))
+forall e a. NonEmpty (Q (Either e a)) -&gt; Q (Either (Errors e) a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.QFirst.html#firstSuccessQ"><span class="hs-identifier hs-var">GRT.firstSuccessQ</span></a></span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Q (Either GitError (OsString, OsString, OsString))
+-&gt; Q (Either GitRevError (OsString, OsString, OsString))
+forall (f :: Type -&gt; Type) (p :: Type -&gt; Type -&gt; Type) a.
+(Bifunctor p, Functor f) =&gt;
+f (p GitError a) -&gt; f (p GitRevError a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#embedGitError"><span class="hs-identifier hs-var">GRT.embedGitError</span></a></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError (OsString, OsString, OsString))
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromGitQ"><span class="hs-identifier hs-var">gitDataFromGitQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>          </span><span class="annot"><span class="annottext">OsString
+-&gt; Q (Either GitError (OsString, OsString, OsString))
+-&gt; Q (Either GitRevError (OsString, OsString, OsString))
+forall a.
+OsString -&gt; Q (Either GitError a) -&gt; Q (Either GitRevError a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#runGitInEnvDirQ"><span class="hs-identifier hs-var">GRT.runGitInEnvDirQ</span></a></span><span> </span><span class="annot"><span class="">[osstr|SHRUN_HOME|]</span></span><span> </span><span class="annot"><span class="annottext">Q (Either GitError (OsString, OsString, OsString))
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromGitQ"><span class="hs-identifier hs-var">gitDataFromGitQ</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>          </span><span class="annot"><span class="annottext">Q (Either GitRevError (OsString, OsString, OsString))
+Item
+  (NonEmpty (Q (Either GitRevError (OsString, OsString, OsString))))
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromEnvQ"><span class="hs-identifier hs-var">gitDataFromEnvQ</span></a></span><span>
+</span><span id="line-43"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><span class="hs-comment">-- | Normal process, get info from git.</span></span><span>
+</span><span id="line-46"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromGitQ"><span class="hs-identifier hs-type">gitDataFromGitQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.OsString.html#GitError"><span class="hs-identifier hs-type">GitError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span id="gitDataFromGitQ"><span class="annot"><span class="annottext">gitDataFromGitQ :: Q (Either GitError (OsString, OsString, OsString))
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromGitQ"><span class="hs-identifier hs-var hs-var">gitDataFromGitQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-comment">-- We use custom runGit rather than normal gitCommitDateQ because the</span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-comment">-- latter uses --format=%cd e.g.</span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-comment">--     Thu May 1 14:05:35 2025 +1200</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-comment">-- whereas we want --format=%cs i.e.</span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-comment">--     2025-05-01</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-comment">-- We do this because we want consistency with nix, and unfortunately</span><span>
+</span><span id="line-58"></span><span>  </span><span class="hs-comment">-- nix only gives us a local timestamp without any timezone information.</span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-comment">-- So we throw away the timezone here too. Notice there is still a</span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-comment">-- possibility of discrepancies because runGit implicitly includes zone</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-comment">-- info, though we live with it, since it's a minor issue.</span><span>
+</span><span id="line-62"></span><span>  </span><span id="local-6989586621679680035"><span class="annot"><span class="annottext">Either GitError OsString
+</span><a href="#local-6989586621679680035"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="annottext">[OsString] -&gt; IndexUsed -&gt; Q (Either GitError OsString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.OsString.html#runGitQ"><span class="hs-identifier hs-var">GRT.runGitQ</span></a></span><span>
+</span><span id="line-64"></span><span>      </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Item [OsString]
+</span><span class="">[osstr|log|]</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Item [OsString]
+</span><span class="">[osstr|HEAD|]</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Item [OsString]
+</span><span class="">[osstr|-1|]</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Item [OsString]
+</span><span class="">[osstr|--format=%cs|]</span></span><span class="hs-special">]</span><span>
+</span><span id="line-65"></span><span>      </span><span class="annot"><span class="annottext">IndexUsed
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.Common.html#IdxNotUsed"><span class="hs-identifier hs-var">IdxNotUsed</span></a></span><span>
+</span><span id="line-66"></span><span>  </span><span id="local-6989586621679680037"><span class="annot"><span class="annottext">Either GitError OsString
+</span><a href="#local-6989586621679680037"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Q (Either GitError OsString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.OsString.html#gitHashQ"><span class="hs-identifier hs-var">GRT.gitHashQ</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span id="local-6989586621679680039"><span class="annot"><span class="annottext">Either GitError OsString
+</span><a href="#local-6989586621679680039"><span class="hs-identifier hs-var">sh</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Q (Either GitError OsString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Git.OsString.html#gitShortHashQ"><span class="hs-identifier hs-var">GRT.gitShortHashQ</span></a></span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-identifier">pure</span><span> </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">(OsString
+ -&gt; OsString -&gt; OsString -&gt; (OsString, OsString, OsString))
+-&gt; Either GitError OsString
+-&gt; Either GitError OsString
+-&gt; Either GitError OsString
+-&gt; Either GitError (OsString, OsString, OsString)
+forall (f :: Type -&gt; Type) a b c d.
+Applicative f =&gt;
+(a -&gt; b -&gt; c -&gt; d) -&gt; f a -&gt; f b -&gt; f c -&gt; f d
+</span><span class="hs-identifier hs-var">liftA3</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Either GitError OsString
+</span><a href="#local-6989586621679680035"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">Either GitError OsString
+</span><a href="#local-6989586621679680037"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Either GitError OsString
+</span><a href="#local-6989586621679680039"><span class="hs-identifier hs-var">sh</span></a></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- | Backup for when we cannot use git e.g. nix. We instead get the data</span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- from environment variables:</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- - SHRUN_MODIFIED: unix time like &quot;1746055623&quot;</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- - SHRUN_HASH: long hash</span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- - SHRUN_SHORT_HASH: short hash</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--</span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- We have to convert the unix time into the intended format</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- YYYY-MM-DD.</span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromEnvQ"><span class="hs-identifier hs-type">gitDataFromEnvQ</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevError"><span class="hs-identifier hs-type">GitRevError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span id="gitDataFromEnvQ"><span class="annot"><span class="annottext">gitDataFromEnvQ :: Q (Either GitRevError (OsString, OsString, OsString))
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#gitDataFromEnvQ"><span class="hs-identifier hs-var hs-var">gitDataFromEnvQ</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679680041"><span class="annot"><span class="annottext">dateVar :: OsString
+</span><a href="#local-6989586621679680041"><span class="hs-identifier hs-var hs-var">dateVar</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="">[osstr|SHRUN_MODIFIED|]</span></span><span>
+</span><span id="line-82"></span><span>  </span><span id="local-6989586621679680042"><span class="annot"><span class="annottext">Either GitRevError OsString
+</span><a href="#local-6989586621679680042"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Q (Either EnvError OsString) -&gt; Q (Either GitRevError OsString)
+forall (f :: Type -&gt; Type) (p :: Type -&gt; Type -&gt; Type) a.
+(Bifunctor p, Functor f) =&gt;
+f (p EnvError a) -&gt; f (p GitRevError a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#embedEnvError"><span class="hs-identifier hs-var">GRT.embedEnvError</span></a></span><span> </span><span class="annot"><span class="annottext">(Q (Either EnvError OsString) -&gt; Q (Either GitRevError OsString))
+-&gt; Q (Either EnvError OsString) -&gt; Q (Either GitRevError OsString)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Either EnvError OsString -&gt; Either EnvError OsString)
+-&gt; Q (Either EnvError OsString) -&gt; Q (Either EnvError OsString)
+forall a b. (a -&gt; b) -&gt; Q a -&gt; Q b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Either EnvError OsString
+-&gt; (OsString -&gt; Either EnvError OsString)
+-&gt; Either EnvError OsString
+forall a b.
+Either EnvError a -&gt; (a -&gt; Either EnvError b) -&gt; Either EnvError b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">OsString -&gt; OsString -&gt; Either EnvError OsString
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#displayUnixTime"><span class="hs-identifier hs-var">displayUnixTime</span></a></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680041"><span class="hs-identifier hs-var">dateVar</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">OsString -&gt; Q (Either EnvError OsString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#envValQ"><span class="hs-identifier hs-var">GRT.envValQ</span></a></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680041"><span class="hs-identifier hs-var">dateVar</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>  </span><span id="local-6989586621679680046"><span class="annot"><span class="annottext">Either GitRevError OsString
+</span><a href="#local-6989586621679680046"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Either EnvError OsString -&gt; Either GitRevError OsString
+</span><a href="#local-6989586621679680047"><span class="hs-identifier hs-var">validateHash</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">40</span></span><span> </span><span class="annot"><span class="annottext">(Either EnvError OsString -&gt; Either GitRevError OsString)
+-&gt; Q (Either EnvError OsString) -&gt; Q (Either GitRevError OsString)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Q (Either EnvError OsString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#envValQ"><span class="hs-identifier hs-var">GRT.envValQ</span></a></span><span> </span><span class="annot"><span class="">[osstr|SHRUN_HASH|]</span></span><span>
+</span><span id="line-84"></span><span>  </span><span id="local-6989586621679680049"><span class="annot"><span class="annottext">Either GitRevError OsString
+</span><a href="#local-6989586621679680049"><span class="hs-identifier hs-var">sh</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Either EnvError OsString -&gt; Either GitRevError OsString
+</span><a href="#local-6989586621679680047"><span class="hs-identifier hs-var">validateHash</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">7</span></span><span> </span><span class="annot"><span class="annottext">(Either EnvError OsString -&gt; Either GitRevError OsString)
+-&gt; Q (Either EnvError OsString) -&gt; Q (Either GitRevError OsString)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Q (Either EnvError OsString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#envValQ"><span class="hs-identifier hs-var">GRT.envValQ</span></a></span><span> </span><span class="annot"><span class="">[osstr|SHRUN_SHORT_HASH|]</span></span><span>
+</span><span id="line-85"></span><span>  </span><span class="hs-identifier">pure</span><span> </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">(OsString
+ -&gt; OsString -&gt; OsString -&gt; (OsString, OsString, OsString))
+-&gt; Either GitRevError OsString
+-&gt; Either GitRevError OsString
+-&gt; Either GitRevError OsString
+-&gt; Either GitRevError (OsString, OsString, OsString)
+forall (f :: Type -&gt; Type) a b c d.
+Applicative f =&gt;
+(a -&gt; b -&gt; c -&gt; d) -&gt; f a -&gt; f b -&gt; f c -&gt; f d
+</span><span class="hs-identifier hs-var">liftA3</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Either GitRevError OsString
+</span><a href="#local-6989586621679680042"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">Either GitRevError OsString
+</span><a href="#local-6989586621679680046"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Either GitRevError OsString
+</span><a href="#local-6989586621679680049"><span class="hs-identifier hs-var">sh</span></a></span><span>
+</span><span id="line-86"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-87"></span><span>    </span><span class="annot"><a href="#local-6989586621679680047"><span class="hs-identifier hs-type">validateHash</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#EnvError"><span class="hs-identifier hs-type">EnvError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevError"><span class="hs-identifier hs-type">GitRevError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span>
+</span><span id="line-88"></span><span>    </span><span id="local-6989586621679680047"><span class="annot"><span class="annottext">validateHash :: Int -&gt; Either EnvError OsString -&gt; Either GitRevError OsString
+</span><a href="#local-6989586621679680047"><span class="hs-identifier hs-var hs-var">validateHash</span></a></span></span><span> </span><span id="local-6989586621679680050"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680050"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either EnvError (Either Text OsString)
+-&gt; Either GitRevError OsString
+forall {c}. Either EnvError (Either Text c) -&gt; Either GitRevError c
+</span><a href="#local-6989586621679680051"><span class="hs-identifier hs-var">joinErrors</span></a></span><span> </span><span class="annot"><span class="annottext">(Either EnvError (Either Text OsString)
+ -&gt; Either GitRevError OsString)
+-&gt; (Either EnvError OsString
+    -&gt; Either EnvError (Either Text OsString))
+-&gt; Either EnvError OsString
+-&gt; Either GitRevError OsString
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(OsString -&gt; Either Text OsString)
+-&gt; Either EnvError OsString
+-&gt; Either EnvError (Either Text OsString)
+forall a b. (a -&gt; b) -&gt; Either EnvError a -&gt; Either EnvError b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; OsString -&gt; Either Text OsString
+</span><a href="#local-6989586621679680052"><span class="hs-identifier hs-var">validateHash'</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680050"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span>    </span><span id="local-6989586621679680051"><span class="annot"><span class="annottext">joinErrors :: Either EnvError (Either Text c) -&gt; Either GitRevError c
+</span><a href="#local-6989586621679680051"><span class="hs-identifier hs-var hs-var">joinErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(EnvError -&gt; GitRevError)
+-&gt; (Text -&gt; GitRevError)
+-&gt; Either EnvError (Either Text c)
+-&gt; Either GitRevError c
+forall (p :: Type -&gt; Type -&gt; Type) a1 a2 b c.
+(Bifunctor p, forall a. Monad (p a)) =&gt;
+(a1 -&gt; b) -&gt; (a2 -&gt; b) -&gt; p a1 (p a2 c) -&gt; p b c
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.Common.html#joinFirst"><span class="hs-identifier hs-var">GRT.joinFirst</span></a></span><span> </span><span class="annot"><span class="annottext">EnvError -&gt; GitRevError
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevErrorEnv"><span class="hs-identifier hs-var">GitRevErrorEnv</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; GitRevError
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Utils.OsString.html#GitRevErrorText"><span class="hs-identifier hs-var">GitRevErrorText</span></a></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span>    </span><span class="annot"><a href="#local-6989586621679680052"><span class="hs-identifier hs-type">validateHash'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span>
+</span><span id="line-93"></span><span>    </span><span id="local-6989586621679680052"><span class="annot"><span class="annottext">validateHash' :: Int -&gt; OsString -&gt; Either Text OsString
+</span><a href="#local-6989586621679680052"><span class="hs-identifier hs-var hs-var">validateHash'</span></a></span></span><span> </span><span id="local-6989586621679680057"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680057"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679680058"><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680058"><span class="hs-identifier hs-var">str</span></a></span></span><span>
+</span><span id="line-94"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680059"><span class="hs-identifier hs-var">strLen</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680057"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680059"><span class="hs-identifier hs-var">strLen</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680062"><span class="hs-identifier hs-var">dirtyLen</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-95"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Either Text OsString
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span>
+</span><span id="line-96"></span><span>            </span><span class="annot"><span class="annottext">(Text -&gt; Either Text OsString) -&gt; Text -&gt; Either Text OsString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-97"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+Item [Text]
+</span><span class="hs-string">&quot;Expected hash length &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-98"></span><span>                </span><span class="annot"><span class="annottext">Int -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680057"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>                </span><span class="annot"><span class="annottext">Text
+Item [Text]
+</span><span class="hs-string">&quot; or &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-100"></span><span>                </span><span class="annot"><span class="annottext">Int -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680062"><span class="hs-identifier hs-var">dirtyLen</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-101"></span><span>                </span><span class="annot"><span class="annottext">Text
+Item [Text]
+</span><span class="hs-string">&quot;, received &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-102"></span><span>                </span><span class="annot"><span class="annottext">Int -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680059"><span class="hs-identifier hs-var">strLen</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-103"></span><span>                </span><span class="annot"><span class="annottext">Text
+Item [Text]
+</span><span class="hs-string">&quot;: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-104"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">OsString -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#decodeLenient"><span class="hs-identifier hs-var">FS.OsString.decodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680058"><span class="hs-identifier hs-var">str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-106"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Bool
+</span><a href="#local-6989586621679680066"><span class="hs-identifier hs-var">hasInvalidChar</span></a></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680058"><span class="hs-identifier hs-var">str</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-107"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Either Text OsString
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span>
+</span><span id="line-108"></span><span>            </span><span class="annot"><span class="annottext">(Text -&gt; Either Text OsString) -&gt; Text -&gt; Either Text OsString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Invalid char in hash: &quot;</span></span><span>
+</span><span id="line-109"></span><span>            </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">OsString -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#decodeLenient"><span class="hs-identifier hs-var">FS.OsString.decodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680058"><span class="hs-identifier hs-var">str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Either Text OsString
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680058"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-111"></span><span>      </span><span class="hs-keyword">where</span><span>
+</span><span id="line-112"></span><span>        </span><span id="local-6989586621679680059"><span class="annot"><span class="annottext">strLen :: Int
+</span><a href="#local-6989586621679680059"><span class="hs-identifier hs-var hs-var">strLen</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Int
+</span><span class="hs-identifier hs-var">OsString.length</span></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680058"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-113"></span><span>        </span><span id="local-6989586621679680062"><span class="annot"><span class="annottext">dirtyLen :: Int
+</span><a href="#local-6989586621679680062"><span class="hs-identifier hs-var hs-var">dirtyLen</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679680057"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">6</span></span><span>
+</span><span id="line-114"></span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><a href="#local-6989586621679680066"><span class="hs-identifier hs-type">hasInvalidChar</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-116"></span><span>    </span><span id="local-6989586621679680066"><span class="annot"><span class="annottext">hasInvalidChar :: OsString -&gt; Bool
+</span><a href="#local-6989586621679680066"><span class="hs-identifier hs-var hs-var">hasInvalidChar</span></a></span></span><span> </span><span id="local-6989586621679680069"><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680069"><span class="hs-identifier hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-117"></span><span>      </span><span class="hs-comment">-- We allow dirty hashes to have invalid chars, due to the '-dirty'</span><span>
+</span><span id="line-118"></span><span>      </span><span class="hs-comment">-- suffix.</span><span>
+</span><span id="line-119"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679680070"><span class="annot"><span class="annottext">hasNonHexChar :: Bool
+</span><a href="#local-6989586621679680070"><span class="hs-identifier hs-var hs-var">hasNonHexChar</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-120"></span><span>            </span><span class="annot"><span class="annottext">(OsChar -&gt; Bool) -&gt; OsString -&gt; Bool
+</span><span class="hs-identifier hs-var">OsString.any</span></span><span>
+</span><span id="line-121"></span><span>              </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool) -&gt; (OsChar -&gt; Bool) -&gt; OsChar -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679680073"><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679680073"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsChar -&gt; OsString -&gt; Bool
+</span><span class="hs-identifier hs-var">OsString.elem</span></span><span> </span><span class="annot"><span class="annottext">OsChar
+</span><a href="#local-6989586621679680073"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="">[osstr|0123456789abcdefABCDEF|]</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-122"></span><span>              </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680069"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-123"></span><span>          </span><span id="local-6989586621679680075"><span class="annot"><span class="annottext">isDirty :: Bool
+</span><a href="#local-6989586621679680075"><span class="hs-identifier hs-var hs-var">isDirty</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="">[osstr|-dirty|]</span></span><span> </span><span class="annot"><span class="annottext">OsString -&gt; OsString -&gt; Bool
+</span><span class="hs-operator hs-var">`OsString.isSuffixOf`</span></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680069"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-124"></span><span>       </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679680070"><span class="hs-identifier hs-var">hasNonHexChar</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679680075"><span class="hs-identifier hs-var">isDirty</span></a></span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#displayUnixTime"><span class="hs-identifier hs-type">displayUnixTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#EnvError"><span class="hs-identifier hs-type">EnvError</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsString</span></span><span>
+</span><span id="line-127"></span><span id="displayUnixTime"><span class="annot"><span class="annottext">displayUnixTime :: OsString -&gt; OsString -&gt; Either EnvError OsString
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#displayUnixTime"><span class="hs-identifier hs-var hs-var">displayUnixTime</span></a></span></span><span> </span><span id="local-6989586621679680077"><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680077"><span class="hs-identifier hs-var">var</span></a></span></span><span> </span><span id="local-6989586621679680078"><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680078"><span class="hs-identifier hs-var">unixTimeOsStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-128"></span><span>  </span><span id="local-6989586621679680079"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680079"><span class="hs-identifier hs-var">unixTimeStr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-129"></span><span>    </span><span class="annot"><span class="annottext">(EncodingException -&gt; EnvError)
+-&gt; Either EncodingException String -&gt; Either EnvError String
+forall a b c. (a -&gt; b) -&gt; Either a c -&gt; Either b c
+forall (p :: Type -&gt; Type -&gt; Type) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; EncodingException -&gt; EnvError
+forall e. Exception e =&gt; String -&gt; e -&gt; EnvError
+</span><a href="#local-6989586621679680081"><span class="hs-identifier hs-var">mapEx</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error decoding to String: &quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>      </span><span class="annot"><span class="annottext">(Either EncodingException String -&gt; Either EnvError String)
+-&gt; Either EncodingException String -&gt; Either EnvError String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Either EncodingException String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#decode"><span class="hs-identifier hs-var">FS.OsString.decode</span></a></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680078"><span class="hs-identifier hs-var">unixTimeOsStr</span></a></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span>  </span><span id="local-6989586621679680083"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679680083"><span class="hs-identifier hs-var">unixSeconds</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-133"></span><span>    </span><span class="annot"><span class="annottext">(String -&gt; EnvError)
+-&gt; Either String Integer -&gt; Either EnvError Integer
+forall a b c. (a -&gt; b) -&gt; Either a c -&gt; Either b c
+forall (p :: Type -&gt; Type -&gt; Type) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679680084"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680084"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; EnvError
+</span><a href="#local-6989586621679680085"><span class="hs-identifier hs-var">mapEnvError</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; EnvError) -&gt; String -&gt; EnvError
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error reading seconds: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680084"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-134"></span><span>      </span><span class="annot"><span class="annottext">(Either String Integer -&gt; Either EnvError Integer)
+-&gt; Either String Integer -&gt; Either EnvError Integer
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">forall a. Read a =&gt; String -&gt; Either String a
+</span><span class="hs-identifier hs-var">TR.readEither</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680079"><span class="hs-identifier hs-var">unixTimeStr</span></a></span><span>
+</span><span id="line-135"></span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679680087"><span class="annot"><span class="annottext">posixTime :: POSIXTime
+</span><a href="#local-6989586621679680087"><span class="hs-identifier hs-var hs-var">posixTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">POSIXTime</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679680083"><span class="hs-identifier hs-var">unixSeconds</span></a></span><span>
+</span><span id="line-137"></span><span>      </span><span id="local-6989586621679680088"><span class="annot"><span class="annottext">utcTime :: UTCTime
+</span><a href="#local-6989586621679680088"><span class="hs-identifier hs-var hs-var">utcTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">POSIXTime -&gt; UTCTime
+</span><span class="hs-identifier hs-var">PosixTime.posixSecondsToUTCTime</span></span><span> </span><span class="annot"><span class="annottext">POSIXTime
+</span><a href="#local-6989586621679680087"><span class="hs-identifier hs-var">posixTime</span></a></span><span>
+</span><span id="line-138"></span><span>      </span><span id="local-6989586621679680090"><span class="annot"><span class="annottext">utcFormatted :: String
+</span><a href="#local-6989586621679680090"><span class="hs-identifier hs-var hs-var">utcFormatted</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeLocale -&gt; String -&gt; UTCTime -&gt; String
+forall t. FormatTime t =&gt; TimeLocale -&gt; String -&gt; t -&gt; String
+</span><span class="hs-identifier hs-var">Fmt.formatTime</span></span><span> </span><span class="annot"><span class="annottext">TimeLocale
+</span><span class="hs-identifier hs-var">Fmt.defaultTimeLocale</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;%Y-%m-%d&quot;</span></span><span> </span><span class="annot"><span class="annottext">UTCTime
+</span><a href="#local-6989586621679680088"><span class="hs-identifier hs-var">utcTime</span></a></span><span>
+</span><span id="line-139"></span><span>
+</span><span id="line-140"></span><span>  </span><span class="annot"><span class="annottext">(EncodingException -&gt; EnvError)
+-&gt; Either EncodingException OsString -&gt; Either EnvError OsString
+forall a b c. (a -&gt; b) -&gt; Either a c -&gt; Either b c
+forall (p :: Type -&gt; Type -&gt; Type) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; EncodingException -&gt; EnvError
+forall e. Exception e =&gt; String -&gt; e -&gt; EnvError
+</span><a href="#local-6989586621679680081"><span class="hs-identifier hs-var">mapEx</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error endecoding to OsString: &quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-141"></span><span>    </span><span class="annot"><span class="annottext">(Either EncodingException OsString -&gt; Either EnvError OsString)
+-&gt; Either EncodingException OsString -&gt; Either EnvError OsString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Either EncodingException OsString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#encode"><span class="hs-identifier hs-var">FS.OsString.encode</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680090"><span class="hs-identifier hs-var">utcFormatted</span></a></span><span>
+</span><span id="line-142"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-143"></span><span>    </span><span class="annot"><a href="#local-6989586621679680081"><span class="hs-identifier hs-type">mapEx</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679679883"><span class="annot"><a href="#local-6989586621679679883"><span class="hs-identifier hs-type">e</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="#local-6989586621679679883"><span class="hs-identifier hs-type">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679679883"><span class="hs-identifier hs-type">e</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#EnvError"><span class="hs-identifier hs-type">EnvError</span></a></span><span>
+</span><span id="line-144"></span><span>    </span><span id="local-6989586621679680081"><span class="annot"><span class="annottext">mapEx :: forall e. Exception e =&gt; String -&gt; e -&gt; EnvError
+</span><a href="#local-6989586621679680081"><span class="hs-identifier hs-var hs-var">mapEx</span></a></span></span><span> </span><span id="local-6989586621679680098"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680098"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; EnvError
+</span><a href="#local-6989586621679680085"><span class="hs-identifier hs-var">mapEnvError</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; EnvError) -&gt; (e -&gt; String) -&gt; e -&gt; EnvError
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680098"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(String -&gt; String) -&gt; (e -&gt; String) -&gt; e -&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">e -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span>
+</span><span id="line-145"></span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><a href="#local-6989586621679680085"><span class="hs-identifier hs-type">mapEnvError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#EnvError"><span class="hs-identifier hs-type">EnvError</span></a></span><span>
+</span><span id="line-147"></span><span>    </span><span id="local-6989586621679680085"><span class="annot"><span class="annottext">mapEnvError :: String -&gt; EnvError
+</span><a href="#local-6989586621679680085"><span class="hs-identifier hs-var hs-var">mapEnvError</span></a></span></span><span> </span><span id="local-6989586621679680100"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680100"><span class="hs-identifier hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-148"></span><span>      </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#MkEnvError"><span class="hs-identifier hs-type">MkEnvError</span></a></span><span>
+</span><span id="line-149"></span><span>        </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">OsString
+var :: OsString
+var :: OsString
+</span><a href="#local-6989586621679680077"><span class="hs-identifier hs-var hs-var">var</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-150"></span><span>          </span><span class="annot"><span class="annottext">value :: Maybe OsString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#value"><span class="hs-identifier hs-var">value</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsString -&gt; Maybe OsString
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">OsString
+</span><a href="#local-6989586621679680078"><span class="hs-identifier hs-var">unixTimeOsStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-151"></span><span>          </span><span class="annot"><span class="annottext">reason :: OsString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/gitrev-typed-0.1-79487267dab1041d39a5f92799c191215866b033283de91c873b2c2b9088a05a/share/doc/html/src/Development.GitRev.Internal.Environment.OsString.html#reason"><span class="hs-identifier hs-var">reason</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; OsString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/fs-utils-0.1-05c47742f94a89397e2fbed12d712c795209cb03ff26b334b58d0ad2f36917d0/share/doc/html/src/FileSystem.OsString.html#encodeLenient"><span class="hs-identifier hs-var">FS.OsString.encodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679680100"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-152"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#defaultToml"><span class="hs-identifier hs-type">defaultToml</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-155"></span><span id="defaultToml"><span class="annot"><span class="annottext">defaultToml :: Code Q Text
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#defaultToml"><span class="hs-identifier hs-var hs-var">defaultToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Text -&gt; Code Q Text
+forall a. (HasCallStack, Lift a) =&gt; IO a -&gt; Code Q a
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#liftIOToTH"><span class="hs-identifier hs-var">liftIOToTH</span></a></span><span> </span><span class="annot"><span class="annottext">(IO Text -&gt; Code Q Text) -&gt; IO Text -&gt; Code Q Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-156"></span><span>  </span><span id="local-6989586621679680106"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679680106"><span class="hs-identifier hs-var">contents</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">OsString -&gt; IO Text
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadFileReader m, MonadThrow m) =&gt;
+OsString -&gt; m Text
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-fs-0.1-5f0324ed43ddd91cfa592ae84fb08af30d6af359e42af1b8f6259f5dd5c3769c/share/doc/html/src/Effects.FileSystem.FileReader.html#readFileUtf8ThrowM"><span class="hs-identifier hs-var">readFileUtf8ThrowM</span></a></span><span> </span><span class="annot"><span class="">[ospPathSep|examples/config.toml|]</span></span><span>
+</span><span id="line-157"></span><span>  </span><span class="annot"><span class="annottext">Text -&gt; IO Text
+forall a. a -&gt; IO a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span>
+</span><span id="line-158"></span><span>    </span><span class="annot"><span class="annottext">(Text -&gt; IO Text) -&gt; (Text -&gt; Text) -&gt; Text -&gt; IO Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><span class="hs-identifier hs-var">T.unlines</span></span><span>
+</span><span id="line-159"></span><span>    </span><span class="annot"><span class="annottext">([Text] -&gt; Text) -&gt; (Text -&gt; [Text]) -&gt; Text -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; [Text] -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679680109"><span class="hs-identifier hs-var">prependComment</span></a></span><span>
+</span><span id="line-160"></span><span>    </span><span class="annot"><span class="annottext">([Text] -&gt; [Text]) -&gt; (Text -&gt; [Text]) -&gt; Text -&gt; [Text]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text]
+</span><span class="hs-identifier hs-var">T.lines</span></span><span>
+</span><span id="line-161"></span><span>    </span><span class="annot"><span class="annottext">(Text -&gt; [Text]) -&gt; (Text -&gt; Text) -&gt; Text -&gt; [Text]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679680111"><span class="hs-identifier hs-var">replaceSys</span></a></span><span>
+</span><span id="line-162"></span><span>    </span><span class="annot"><span class="annottext">(Text -&gt; IO Text) -&gt; Text -&gt; IO Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679680106"><span class="hs-identifier hs-var">contents</span></a></span><span>
+</span><span id="line-163"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-164"></span><span>    </span><span id="local-6989586621679680109"><span class="annot"><span class="annottext">prependComment :: Text -&gt; Text
+</span><a href="#local-6989586621679680109"><span class="hs-identifier hs-var hs-var">prependComment</span></a></span></span><span> </span><span id="local-6989586621679680114"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679680114"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-165"></span><span>      </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><span class="hs-identifier hs-var">T.null</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679680114"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-166"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679680114"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-167"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;# &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679680114"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span>    </span><span id="local-6989586621679680111"><span class="annot"><span class="annottext">replaceSys :: Text -&gt; Text
+</span><a href="#local-6989586621679680111"><span class="hs-identifier hs-var hs-var">replaceSys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-170"></span><span>      </span><span class="annot"><span class="annottext">HasCallStack =&gt; Text -&gt; Text -&gt; Text -&gt; Text
+Text -&gt; Text -&gt; Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.replace</span></span><span>
+</span><span id="line-171"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;system = \&quot;notify-send\&quot;&quot;</span></span><span>
+</span><span id="line-172"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;system = \&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="Shrun.Configuration.Data.Notify.System.html#defNotifySystemStr"><span class="hs-identifier hs-var">System.defNotifySystemStr</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;\&quot;&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-173"></span><span>
+</span><span id="line-174"></span><span class="annot"><span class="hs-comment">-- | Binds an IO action to TH.</span></span><span>
+</span><span id="line-175"></span><span id="local-6989586621679679893"><span id="local-6989586621679679894"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#bindIOToTH"><span class="hs-identifier hs-type">bindIOToTH</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Lift</span></span><span> </span><span class="annot"><a href="#local-6989586621679679893"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679679894"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679679893"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679679894"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><a href="#local-6989586621679679893"><span class="hs-identifier hs-type">b</span></a></span></span></span><span>
+</span><span id="line-176"></span><span id="bindIOToTH"><span class="annot"><span class="annottext">bindIOToTH :: forall b a.
+(HasCallStack, Lift b) =&gt;
+(HasCallStack =&gt; a -&gt; IO b) -&gt; a -&gt; Code Q b
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#bindIOToTH"><span class="hs-identifier hs-var hs-var">bindIOToTH</span></a></span></span><span> </span><span id="local-6989586621679680135"><span class="annot"><span class="annottext">HasCallStack =&gt; a -&gt; IO b
+</span><a href="#local-6989586621679680135"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679680136"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679680136"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q b -&gt; (b -&gt; Code Q b) -&gt; Code Q b
+forall (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+m a -&gt; (a -&gt; Code m b) -&gt; Code m b
+</span><span class="hs-identifier hs-var">TH.bindCode</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO b -&gt; Q b
+forall a. IO a -&gt; Q a
+</span><span class="hs-identifier hs-var">TH.runIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; IO b
+HasCallStack =&gt; a -&gt; IO b
+</span><a href="#local-6989586621679680135"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679680136"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">b -&gt; Code Q b
+forall t (m :: Type -&gt; Type). (Lift t, Quote m) =&gt; t -&gt; Code m t
+forall (m :: Type -&gt; Type). Quote m =&gt; b -&gt; Code m b
+</span><span class="hs-identifier hs-var">liftTyped</span></span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span class="annot"><span class="hs-comment">-- | Lifts an IO action to TH.</span></span><span>
+</span><span id="line-179"></span><span id="local-6989586621679679890"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.TH.html#liftIOToTH"><span class="hs-identifier hs-type">liftIOToTH</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Lift</span></span><span> </span><span class="annot"><a href="#local-6989586621679679890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679679890"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="annot"><a href="#local-6989586621679679890"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-180"></span><span id="liftIOToTH"><span class="annot"><span class="annottext">liftIOToTH :: forall a. (HasCallStack, Lift a) =&gt; IO a -&gt; Code Q a
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#liftIOToTH"><span class="hs-identifier hs-var hs-var">liftIOToTH</span></a></span></span><span> </span><span id="local-6989586621679680144"><span class="annot"><span class="annottext">IO a
+</span><a href="#local-6989586621679680144"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(HasCallStack =&gt; () -&gt; IO a) -&gt; () -&gt; Code Q a
+forall b a.
+(HasCallStack, Lift b) =&gt;
+(HasCallStack =&gt; a -&gt; IO b) -&gt; a -&gt; Code Q b
+</span><a href="Shrun.Configuration.Args.Parsing.TH.html#bindIOToTH"><span class="hs-identifier hs-var">bindIOToTH</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO a -&gt; () -&gt; IO a
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">IO a
+</span><a href="#local-6989586621679680144"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-181"></span></pre></body></html>

@@ -1,0 +1,1114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Command.html"><span class="hs-identifier">Shrun.Command</span></a></span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Primary</span></span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Command.html#runCommands"><span class="hs-identifier">runCommands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Misc</span></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Command.html#PredecessorResult"><span class="hs-identifier">PredecessorResult</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Strict.html"><span class="hs-identifier">Data.HashMap.Strict</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-async-0.1-682ce338abd193db8cf15a22cde3d704acee63ba1e0647de9524d66fed5977b8/share/doc/html/src/Effects.Concurrent.Async.html"><span class="hs-identifier">Effects.Concurrent.Async</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Async</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html"><span class="hs-identifier">Shrun.Command.Types</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Command.Types.html#CommandStatus"><span class="hs-identifier">CommandStatus</span></a></span><span>
+</span><span id="line-16"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html#CommandFailure"><span class="hs-identifier">CommandFailure</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>        </span><span class="annot"><a href="Shrun.Command.Types.html#CommandRunning"><span class="hs-identifier">CommandRunning</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>        </span><span class="annot"><a href="Shrun.Command.Types.html#CommandSuccess"><span class="hs-identifier">CommandSuccess</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>        </span><span class="annot"><a href="Shrun.Command.Types.html#CommandWaiting"><span class="hs-identifier">CommandWaiting</span></a></span><span>
+</span><span id="line-20"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Shrun.Command.Types.html#TCommandStatusMap"><span class="hs-identifier">TCommandStatusMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html"><span class="hs-identifier">Shrun.Command.Types</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Command.Types</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#CommandGraph"><span class="hs-identifier">CommandGraph</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier">EdgeLabel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeAnd"><span class="hs-identifier">EdgeAnd</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeAny"><span class="hs-identifier">EdgeAny</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeOr"><span class="hs-identifier">EdgeOr</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier">Vertex</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Graph</span></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html"><span class="hs-identifier">Shrun.Configuration.Env.Types</span></a></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier">HasCommands</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getCommandDepGraph"><span class="hs-identifier">getCommandDepGraph</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getCommandStatusMap"><span class="hs-identifier">getCommandStatusMap</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommonLogging"><span class="hs-identifier">HasCommonLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier">getCommonLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasLogging"><span class="hs-identifier">HasLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnsafeUnlinedText"><span class="hs-identifier">UnsafeUnlinedText</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.html"><span class="hs-identifier">Shrun.Logging</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Logging</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Formatting.html"><span class="hs-identifier">Shrun.Logging.Formatting</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Formatting</span></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html"><span class="hs-identifier">Shrun.Logging.MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier">withRegion</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier">Log</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier">MkLog</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier">cmd</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier">lvl</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier">mode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier">msg</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier">LogLevel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier">LevelError</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelWarn"><span class="hs-identifier">LevelWarn</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogMessage"><span class="hs-identifier">LogMessage</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#UnsafeLogMessage"><span class="hs-identifier">UnsafeLogMessage</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html"><span class="hs-identifier">Shrun.Logging.Types.Internal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier">LogModeFinish</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="annot"><span class="hs-comment">-- | Responsible for scheduling commands.</span></span><span>
+</span><span id="line-48"></span><span id="local-6989586621679698902"><span id="local-6989586621679698904"><span class="annot"><a href="Shrun.Command.html#runCommands"><span class="hs-identifier hs-type">runCommands</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier hs-type">HasCommands</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698902"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasLogging"><span class="hs-identifier hs-type">HasLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698902"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-async-0.1-682ce338abd193db8cf15a22cde3d704acee63ba1e0647de9524d66fed5977b8/share/doc/html/src/Effects.Concurrent.Async.html#MonadAsync"><span class="hs-identifier hs-type">MonadAsync</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#MonadAtomic"><span class="hs-identifier hs-type">MonadAtomic</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-evaluate-0.1-772758cdc5885cbb3b920d589184bdc597d7e605029264c7ce241fd8286d7ad8/share/doc/html/src/Effects.Evaluate.html#MonadEvaluate"><span class="hs-identifier hs-type">MonadEvaluate</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-thread-0.1-56f71fe3e12668c11857b130b4795ec700db5e8f59c958d41c3f35b51314bcab/share/doc/html/src/Effects.Concurrent.Thread.html#MonadMVar"><span class="hs-identifier hs-type">MonadMVar</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679698902"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadThrow</span></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-time-0.1-f92abde35ffd6e17b0f1742d08fa87fff34080c3da1cbf70166e9b455eb792d7/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-61"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Individual command runner.</span></span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-63"></span><span>  </span><span class="annot"><a href="#local-6989586621679698904"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-64"></span><span id="runCommands"><span class="annot"><span class="annottext">runCommands :: forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAsync m,
+ MonadAtomic m, MonadEvaluate m, MonadMVar m, MonadReader env m,
+ MonadRegionLogger m, MonadThrow m, MonadTime m) =&gt;
+(HasCallStack =&gt; CommandP1 -&gt; m ()) -&gt; m ()
+</span><a href="Shrun.Command.html#runCommands"><span class="hs-identifier hs-var hs-var">runCommands</span></a></span></span><span> </span><span id="local-6989586621679699194"><span class="annot"><span class="annottext">HasCallStack =&gt; CommandP1 -&gt; m ()
+</span><a href="#local-6989586621679699194"><span class="hs-identifier hs-var">runner</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-65"></span><span>  </span><span id="local-6989586621679699195"><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699195"><span class="hs-identifier hs-var">cdg</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; CommandGraph) -&gt; m CommandGraph
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; CommandGraph
+forall env. HasCommands env =&gt; env -&gt; CommandGraph
+</span><a href="Shrun.Configuration.Env.Types.html#getCommandDepGraph"><span class="hs-identifier hs-var">getCommandDepGraph</span></a></span><span>
+</span><span id="line-66"></span><span>  </span><span id="local-6989586621679699197"><span class="annot"><span class="annottext">TCommandStatusMap
+</span><a href="#local-6989586621679699197"><span class="hs-identifier hs-var">commandStatusMap</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; TCommandStatusMap) -&gt; m TCommandStatusMap
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; TCommandStatusMap
+forall env. HasCommands env =&gt; env -&gt; TCommandStatusMap
+</span><a href="Shrun.Configuration.Env.Types.html#getCommandStatusMap"><span class="hs-identifier hs-var">getCommandStatusMap</span></a></span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679699198"><span class="annot"><span class="annottext">roots :: NESeq Vertex
+</span><a href="#local-6989586621679699198"><span class="hs-identifier hs-var hs-var">roots</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699195"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+-&gt; Optic' A_Lens NoIx CommandGraph (NESeq Vertex) -&gt; NESeq Vertex
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx CommandGraph (NESeq Vertex)
+</span><span class="">#roots</span></span><span>
+</span><span id="line-68"></span><span>  </span><span id="local-6989586621679699200"><span class="annot"><span class="annottext">HashMap Vertex (MVar ())
+</span><a href="#local-6989586621679699200"><span class="hs-identifier hs-var">vtxSemMap</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">CommandGraph -&gt; m (HashMap Vertex (MVar ()))
+forall (m :: Type -&gt; Type).
+MonadMVar m =&gt;
+CommandGraph -&gt; m (HashMap Vertex (MVar ()))
+</span><a href="Shrun.Command.html#mkVertexSemMap"><span class="hs-identifier hs-var">mkVertexSemMap</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699195"><span class="hs-identifier hs-var">cdg</span></a></span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><span class="annottext">(Vertex -&gt; m ()) -&gt; NESeq Vertex -&gt; m ()
+forall (m :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(MonadAsync m, Foldable f) =&gt;
+(a -&gt; m b) -&gt; f a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-async-0.1-682ce338abd193db8cf15a22cde3d704acee63ba1e0647de9524d66fed5977b8/share/doc/html/src/Effects.Concurrent.Async.html#mapConcurrently_"><span class="hs-identifier hs-var">Async.mapConcurrently_</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(HasCallStack =&gt; CommandP1 -&gt; m ())
+-&gt; CommandGraph
+-&gt; TCommandStatusMap
+-&gt; HashMap Vertex (MVar ())
+-&gt; Vertex
+-&gt; m ()
+forall (m :: Type -&gt; Type) env.
+(HasCallStack, HasCommands env, HasLogging env m, MonadAsync m,
+ MonadAtomic m, MonadEvaluate m, MonadMVar m, MonadReader env m,
+ MonadRegionLogger m, MonadThrow m, MonadTime m) =&gt;
+(HasCallStack =&gt; CommandP1 -&gt; m ())
+-&gt; CommandGraph
+-&gt; TCommandStatusMap
+-&gt; HashMap Vertex (MVar ())
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#runCommand"><span class="hs-identifier hs-var">runCommand</span></a></span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; CommandP1 -&gt; m ()
+CommandP1 -&gt; m ()
+</span><a href="#local-6989586621679699194"><span class="hs-identifier hs-var">runner</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699195"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">TCommandStatusMap
+</span><a href="#local-6989586621679699197"><span class="hs-identifier hs-var">commandStatusMap</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Vertex (MVar ())
+</span><a href="#local-6989586621679699200"><span class="hs-identifier hs-var">vtxSemMap</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">NESeq Vertex
+</span><a href="#local-6989586621679699198"><span class="hs-identifier hs-var">roots</span></a></span><span>
+</span><span id="line-70"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Command.html#runCommands"><span class="hs-pragma hs-type">runCommands</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- | Builds a map for each Vertex -&gt; MVar. This ensures that we only start</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- each command at most once.</span><span>
+</span><span id="line-74"></span><span id="local-6989586621679698970"><span class="annot"><a href="Shrun.Command.html#mkVertexSemMap"><span class="hs-identifier hs-type">mkVertexSemMap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-thread-0.1-56f71fe3e12668c11857b130b4795ec700db5e8f59c958d41c3f35b51314bcab/share/doc/html/src/Effects.Concurrent.Thread.html#MonadMVar"><span class="hs-identifier hs-type">MonadMVar</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698970"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#CommandGraph"><span class="hs-identifier hs-type">CommandGraph</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679698970"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Internal.html#HashMap"><span class="hs-identifier hs-type">HashMap</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MVar</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
+</span><span id="line-75"></span><span id="mkVertexSemMap"><span class="annot"><span class="annottext">mkVertexSemMap :: forall (m :: Type -&gt; Type).
+MonadMVar m =&gt;
+CommandGraph -&gt; m (HashMap Vertex (MVar ()))
+</span><a href="Shrun.Command.html#mkVertexSemMap"><span class="hs-identifier hs-var hs-var">mkVertexSemMap</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-76"></span><span>  </span><span class="annot"><span class="annottext">([(Vertex, MVar ())] -&gt; HashMap Vertex (MVar ()))
+-&gt; m [(Vertex, MVar ())] -&gt; m (HashMap Vertex (MVar ()))
+forall a b. (a -&gt; b) -&gt; m a -&gt; m b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">[(Vertex, MVar ())] -&gt; HashMap Vertex (MVar ())
+forall k v. Hashable k =&gt; [(k, v)] -&gt; HashMap k v
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Internal.Strict.html#fromList"><span class="hs-identifier hs-var">Map.fromList</span></a></span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="annottext">(m [(Vertex, MVar ())] -&gt; m (HashMap Vertex (MVar ())))
+-&gt; (CommandGraph -&gt; m [(Vertex, MVar ())])
+-&gt; CommandGraph
+-&gt; m (HashMap Vertex (MVar ()))
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Vertex -&gt; m (Vertex, MVar ()))
+-&gt; [Vertex] -&gt; m [(Vertex, MVar ())]
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Traversable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f (t b)
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+(a -&gt; f b) -&gt; [a] -&gt; f [b]
+</span><span class="hs-identifier hs-var">traverse</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679699226"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699226"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699226"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(MVar () -&gt; (Vertex, MVar ()))
+-&gt; m (MVar ()) -&gt; m (Vertex, MVar ())
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">() -&gt; m (MVar ())
+forall a. a -&gt; m (MVar a)
+forall (m :: Type -&gt; Type) a. MonadMVar m =&gt; a -&gt; m (MVar a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-thread-0.1-56f71fe3e12668c11857b130b4795ec700db5e8f59c958d41c3f35b51314bcab/share/doc/html/src/Effects.Concurrent.Thread.html#newMVar%27"><span class="hs-identifier hs-var">newMVar'</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="annottext">([Vertex] -&gt; m [(Vertex, MVar ())])
+-&gt; (CommandGraph -&gt; [Vertex])
+-&gt; CommandGraph
+-&gt; m [(Vertex, MVar ())]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandGraph -&gt; [Vertex]
+</span><a href="Shrun.Configuration.Data.Graph.html#vertices"><span class="hs-identifier hs-var">Graph.vertices</span></a></span><span>
+</span><span id="line-79"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Command.html#mkVertexSemMap"><span class="hs-pragma hs-type">mkVertexSemMap</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Shrun.Command.html#runCommand"><span class="hs-identifier hs-type">runCommand</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679698976"><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679698975"><span class="annot"><a href="#local-6989586621679698975"><span class="hs-identifier hs-type">env</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier hs-type">HasCommands</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698975"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-85"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasLogging"><span class="hs-identifier hs-type">HasLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698975"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-86"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-async-0.1-682ce338abd193db8cf15a22cde3d704acee63ba1e0647de9524d66fed5977b8/share/doc/html/src/Effects.Concurrent.Async.html#MonadAsync"><span class="hs-identifier hs-type">MonadAsync</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-87"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#MonadAtomic"><span class="hs-identifier hs-type">MonadAtomic</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-88"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-evaluate-0.1-772758cdc5885cbb3b920d589184bdc597d7e605029264c7ce241fd8286d7ad8/share/doc/html/src/Effects.Evaluate.html#MonadEvaluate"><span class="hs-identifier hs-type">MonadEvaluate</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-89"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-thread-0.1-56f71fe3e12668c11857b130b4795ec700db5e8f59c958d41c3f35b51314bcab/share/doc/html/src/Effects.Concurrent.Thread.html#MonadMVar"><span class="hs-identifier hs-type">MonadMVar</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-90"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679698975"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-91"></span><span>    </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-92"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadThrow</span></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-time-0.1-f92abde35ffd6e17b0f1742d08fa87fff34080c3da1cbf70166e9b455eb792d7/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-95"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Individual command runner.</span></span><span>
+</span><span id="line-96"></span><span>  </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Command.Types.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-97"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Command dependency graph.</span></span><span>
+</span><span id="line-98"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#CommandGraph"><span class="hs-identifier hs-type">CommandGraph</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-99"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Command status ref.</span></span><span>
+</span><span id="line-100"></span><span>  </span><span class="annot"><a href="Shrun.Command.Types.html#TCommandStatusMap"><span class="hs-identifier hs-type">TCommandStatusMap</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-101"></span><span>  </span><span class="hs-comment">-- | Vertex semaphore map, for preventing the same command being kicked off</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-comment">-- by multiple commands.</span><span>
+</span><span id="line-103"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Internal.html#HashMap"><span class="hs-identifier hs-type">HashMap</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MVar</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-104"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Vertex to run.</span></span><span>
+</span><span id="line-105"></span><span>  </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-106"></span><span>  </span><span class="annot"><a href="#local-6989586621679698976"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span id="runCommand"><span class="annot"><span class="annottext">runCommand :: forall (m :: Type -&gt; Type) env.
+(HasCallStack, HasCommands env, HasLogging env m, MonadAsync m,
+ MonadAtomic m, MonadEvaluate m, MonadMVar m, MonadReader env m,
+ MonadRegionLogger m, MonadThrow m, MonadTime m) =&gt;
+(HasCallStack =&gt; CommandP1 -&gt; m ())
+-&gt; CommandGraph
+-&gt; TCommandStatusMap
+-&gt; HashMap Vertex (MVar ())
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#runCommand"><span class="hs-identifier hs-var hs-var">runCommand</span></a></span></span><span> </span><span id="local-6989586621679699365"><span class="annot"><span class="annottext">HasCallStack =&gt; CommandP1 -&gt; m ()
+</span><a href="#local-6989586621679699365"><span class="hs-identifier hs-var">runner</span></a></span></span><span> </span><span id="local-6989586621679699366"><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span></span><span> </span><span id="local-6989586621679699367"><span class="annot"><span class="annottext">TCommandStatusMap
+</span><a href="#local-6989586621679699367"><span class="hs-identifier hs-var">commandStatusMap</span></a></span></span><span> </span><span id="local-6989586621679699368"><span class="annot"><span class="annottext">HashMap Vertex (MVar ())
+</span><a href="#local-6989586621679699368"><span class="hs-identifier hs-var">vtxSemMap</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Vertex -&gt; Vertex -&gt; m ()
+</span><a href="#local-6989586621679699369"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-109"></span><span>    </span><span id="local-6989586621679699369"><span class="annot"><span class="annottext">go :: Maybe Vertex -&gt; Vertex -&gt; m ()
+</span><a href="#local-6989586621679699369"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span id="local-6989586621679699370"><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699370"><span class="hs-identifier hs-var">prevVertex</span></a></span></span><span> </span><span id="local-6989586621679699371"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-comment">-- Check that all predecessor edges have been satisfied.</span><span>
+</span><span id="line-111"></span><span>      </span><span id="local-6989586621679699372"><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="#local-6989586621679699372"><span class="hs-identifier hs-var">status</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">CommandGraph -&gt; TCommandStatusMap -&gt; Vertex -&gt; m PredecessorResult
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadAtomic m, MonadThrow m) =&gt;
+CommandGraph -&gt; TCommandStatusMap -&gt; Vertex -&gt; m PredecessorResult
+</span><a href="Shrun.Command.html#getPredecessorsStatus"><span class="hs-identifier hs-var">getPredecessorsStatus</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">TCommandStatusMap
+</span><a href="#local-6989586621679699367"><span class="hs-identifier hs-var">commandStatusMap</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-112"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="#local-6989586621679699372"><span class="hs-identifier hs-var">status</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-113"></span><span>        </span><span class="annot"><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-type">PredecessorUnfinished</span></a></span><span> </span><span id="local-6989586621679699375"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699375"><span class="hs-identifier hs-var">depV</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-114"></span><span>          </span><span class="annot"><span class="annottext">(LogLevel -&gt; m ()) -&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCommonLogging env, MonadReader env m) =&gt;
+(LogLevel -&gt; m ()) -&gt; m ()
+</span><a href="Shrun.Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">((LogLevel -&gt; m ()) -&gt; m ()) -&gt; (LogLevel -&gt; m ()) -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679699377"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699377"><span class="hs-identifier hs-var">lvl</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-115"></span><span>            </span><span class="annot"><span class="annottext">CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadEvaluate m, MonadReader env m, MonadRegionLogger m,
+ MonadTime m) =&gt;
+CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-var">logCommandAction</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699377"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699370"><span class="hs-identifier hs-var">prevVertex</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+forall {a}. (Monoid a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="#local-6989586621679699379"><span class="hs-identifier hs-var">debugMsg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex -&gt; Maybe Vertex
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699375"><span class="hs-identifier hs-var">depV</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-116"></span><span>        </span><span class="annot"><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-type">PredecessorFailure</span></a></span><span> </span><span id="local-6989586621679699381"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679699381"><span class="hs-identifier hs-var">failExpected</span></a></span></span><span> </span><span id="local-6989586621679699382"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699382"><span class="hs-identifier hs-var">depV</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-117"></span><span>          </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679699381"><span class="hs-identifier hs-var">failExpected</span></a></span><span>
+</span><span id="line-118"></span><span>            </span><span class="hs-keyword">then</span><span>
+</span><span id="line-119"></span><span>              </span><span class="annot"><span class="annottext">CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadEvaluate m, MonadReader env m, MonadRegionLogger m,
+ MonadTime m) =&gt;
+CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-var">logCommandAction</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelWarn"><span class="hs-identifier hs-var">LevelWarn</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699370"><span class="hs-identifier hs-var">prevVertex</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+forall {a}. (Monoid a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="#local-6989586621679699383"><span class="hs-identifier hs-var">failOkMsg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex -&gt; Maybe Vertex
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699382"><span class="hs-identifier hs-var">depV</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-120"></span><span>            </span><span class="hs-keyword">else</span><span>
+</span><span id="line-121"></span><span>              </span><span class="annot"><span class="annottext">CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadEvaluate m, MonadReader env m, MonadRegionLogger m,
+ MonadTime m) =&gt;
+CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-var">logCommandAction</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier hs-var">LevelError</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699370"><span class="hs-identifier hs-var">prevVertex</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+forall {a}. (Monoid a, IsString a) =&gt; a -&gt; a -&gt; a
+</span><a href="#local-6989586621679699384"><span class="hs-identifier hs-var">errMsg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex -&gt; Maybe Vertex
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699382"><span class="hs-identifier hs-var">depV</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-122"></span><span>        </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-123"></span><span>          </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; HashMap Vertex (MVar ()) -&gt; Maybe (MVar ())
+forall k v. Hashable k =&gt; k -&gt; HashMap k v -&gt; Maybe v
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Internal.html#lookup"><span class="hs-identifier hs-var">Map.lookup</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Vertex (MVar ())
+</span><a href="#local-6989586621679699368"><span class="hs-identifier hs-var">vtxSemMap</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-124"></span><span>            </span><span class="annot"><span class="annottext">Maybe (MVar ())
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-125"></span><span>              </span><span class="annot"><span class="annottext">Text -&gt; m ()
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadThrow m) =&gt;
+Text -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/exception-utils-0.1-d67a5d32da235495b559a168825b01aa427536573ca45e939cbf34daf336de3e/share/doc/html/src/Control.Exception.Utils.html#throwText"><span class="hs-identifier hs-var">throwText</span></a></span><span>
+</span><span id="line-126"></span><span>                </span><span class="annot"><span class="annottext">(Text -&gt; m ()) -&gt; Text -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-127"></span><span>                  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Could not find vertex &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-128"></span><span>                    </span><span class="annot"><span class="annottext">Vertex -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-129"></span><span>                    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot; in vertex map &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-130"></span><span>                    </span><span class="annot"><span class="annottext">Text -&gt; [Text] -&gt; Text
+</span><span class="hs-identifier hs-var">T.intercalate</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;, &quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">(Vertex -&gt; Text) -&gt; [Vertex] -&gt; [Text]
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">HashMap Vertex (MVar ()) -&gt; [Vertex]
+forall k v. HashMap k v -&gt; [k]
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Internal.html#keys"><span class="hs-identifier hs-var">Map.keys</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Vertex (MVar ())
+</span><a href="#local-6989586621679699368"><span class="hs-identifier hs-var">vtxSemMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>                  </span><span class="hs-special">]</span><span>
+</span><span id="line-132"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679699391"><span class="annot"><span class="annottext">MVar ()
+</span><a href="#local-6989586621679699391"><span class="hs-identifier hs-var">mvar</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-133"></span><span>              </span><span class="hs-comment">-- NOTE: [Command Race]</span><span>
+</span><span id="line-134"></span><span>              </span><span class="hs-comment">--</span><span>
+</span><span id="line-135"></span><span>              </span><span class="hs-comment">-- Suppose we have the following dep graph:</span><span>
+</span><span id="line-136"></span><span>              </span><span class="hs-comment">--</span><span>
+</span><span id="line-137"></span><span>              </span><span class="hs-comment">--   1 -&gt; 3, 2 -&gt; 3</span><span>
+</span><span id="line-138"></span><span>              </span><span class="hs-comment">--</span><span>
+</span><span id="line-139"></span><span>              </span><span class="hs-comment">-- and commmands 1 and 2 take the same amount of time. If both</span><span>
+</span><span id="line-140"></span><span>              </span><span class="hs-comment">-- threads finish 'runner' and call 'mapConcurrently' at the</span><span>
+</span><span id="line-141"></span><span>              </span><span class="hs-comment">-- same time, then we will have two threads corresponding to</span><span>
+</span><span id="line-142"></span><span>              </span><span class="hs-comment">-- 3, and each will notice that all dependent tasks have finished</span><span>
+</span><span id="line-143"></span><span>              </span><span class="hs-comment">-- successfully, hence start the task. That is obviously not</span><span>
+</span><span id="line-144"></span><span>              </span><span class="hs-comment">-- what we want!</span><span>
+</span><span id="line-145"></span><span>              </span><span class="hs-comment">--</span><span>
+</span><span id="line-146"></span><span>              </span><span class="hs-comment">-- Normally, our logic blocks multiple sends like this by</span><span>
+</span><span id="line-147"></span><span>              </span><span class="hs-comment">-- abandoning the attempt if any attempts are still running.</span><span>
+</span><span id="line-148"></span><span>              </span><span class="hs-comment">-- When both finish simultaneously, however, this won't work.</span><span>
+</span><span id="line-149"></span><span>              </span><span class="hs-comment">--</span><span>
+</span><span id="line-150"></span><span>              </span><span class="hs-comment">-- Hence we have a map Vertex -&gt; MVar, and the task can only</span><span>
+</span><span id="line-151"></span><span>              </span><span class="hs-comment">-- start if it can retrieve the MVar. If the MVar is empty,</span><span>
+</span><span id="line-152"></span><span>              </span><span class="hs-comment">-- another thread must have started it.</span><span>
+</span><span id="line-153"></span><span>              </span><span class="hs-comment">--</span><span>
+</span><span id="line-154"></span><span>              </span><span class="hs-comment">-- We never restore the MVar (because a command should only</span><span>
+</span><span id="line-155"></span><span>              </span><span class="hs-comment">-- be run at most once), so the only sensible thing we can do</span><span>
+</span><span id="line-156"></span><span>              </span><span class="hs-comment">-- is exit.</span><span>
+</span><span id="line-157"></span><span>              </span><span class="annot"><span class="annottext">MVar () -&gt; m (Maybe ())
+forall a. MVar a -&gt; m (Maybe a)
+forall (m :: Type -&gt; Type) a. MonadMVar m =&gt; MVar a -&gt; m (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-thread-0.1-56f71fe3e12668c11857b130b4795ec700db5e8f59c958d41c3f35b51314bcab/share/doc/html/src/Effects.Concurrent.Thread.html#tryTakeMVar%27"><span class="hs-identifier hs-var">tryTakeMVar'</span></a></span><span> </span><span class="annot"><span class="annottext">MVar ()
+</span><a href="#local-6989586621679699391"><span class="hs-identifier hs-var">mvar</span></a></span><span> </span><span class="annot"><span class="annottext">m (Maybe ()) -&gt; (Maybe () -&gt; m ()) -&gt; m ()
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-158"></span><span>                </span><span class="annot"><span class="annottext">Maybe ()
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-159"></span><span>                  </span><span class="hs-comment">-- No MVar, print a message and leave.</span><span>
+</span><span id="line-160"></span><span>                  </span><span class="annot"><span class="annottext">(LogLevel -&gt; m ()) -&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCommonLogging env, MonadReader env m) =&gt;
+(LogLevel -&gt; m ()) -&gt; m ()
+</span><a href="Shrun.Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">((LogLevel -&gt; m ()) -&gt; m ()) -&gt; (LogLevel -&gt; m ()) -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679699393"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699393"><span class="hs-identifier hs-var">lvl</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-161"></span><span>                    </span><span class="annot"><span class="annottext">CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadEvaluate m, MonadReader env m, MonadRegionLogger m,
+ MonadTime m) =&gt;
+CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-var">logCommandAction</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699393"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699370"><span class="hs-identifier hs-var">prevVertex</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+forall {a} {p}. (Monoid a, IsString a) =&gt; p -&gt; a -&gt; a
+</span><a href="#local-6989586621679699394"><span class="hs-identifier hs-var">alreadyRunningMsg</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-162"></span><span>                </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-163"></span><span>                  </span><span class="hs-comment">-- We are not blocked. Run the command and kick off all</span><span>
+</span><span id="line-164"></span><span>                  </span><span class="hs-comment">-- successors.</span><span>
+</span><span id="line-165"></span><span>                  </span><span id="local-6989586621679699395"><span class="annot"><span class="annottext">Context CommandP1 EdgeLabel
+</span><a href="#local-6989586621679699395"><span class="hs-identifier hs-var">ctx</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">CommandGraph -&gt; Vertex -&gt; m (Context CommandP1 EdgeLabel)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadEvaluate m) =&gt;
+CommandGraph -&gt; Vertex -&gt; m (Context CommandP1 EdgeLabel)
+</span><a href="Shrun.Configuration.Data.Graph.html#context"><span class="hs-identifier hs-var">Graph.context</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-166"></span><span>                  </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679699397"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679699397"><span class="hs-identifier hs-var">cmd</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Context CommandP1 EdgeLabel -&gt; (Vertex, CommandP1)
+forall a b. Context a b -&gt; LVertex a
+</span><a href="Shrun.Configuration.Data.Graph.html#ctxLabVertex"><span class="hs-identifier hs-var">Graph.ctxLabVertex</span></a></span><span> </span><span class="annot"><span class="annottext">Context CommandP1 EdgeLabel
+</span><a href="#local-6989586621679699395"><span class="hs-identifier hs-var">ctx</span></a></span><span>
+</span><span id="line-167"></span><span>                      </span><span id="local-6989586621679699399"><span class="annot"><span class="annottext">outNodes :: [Vertex]
+</span><a href="#local-6989586621679699399"><span class="hs-identifier hs-var hs-var">outNodes</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Context CommandP1 EdgeLabel -&gt; [Vertex]
+forall a b. Context a b -&gt; [Vertex]
+</span><a href="Shrun.Configuration.Data.Graph.html#ctxOutVertices"><span class="hs-identifier hs-var">Graph.ctxOutVertices</span></a></span><span> </span><span class="annot"><span class="annottext">Context CommandP1 EdgeLabel
+</span><a href="#local-6989586621679699395"><span class="hs-identifier hs-var">ctx</span></a></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span>                  </span><span class="annot"><span class="annottext">(LogLevel -&gt; m ()) -&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCommonLogging env, MonadReader env m) =&gt;
+(LogLevel -&gt; m ()) -&gt; m ()
+</span><a href="Shrun.Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">((LogLevel -&gt; m ()) -&gt; m ()) -&gt; (LogLevel -&gt; m ()) -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679699401"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699401"><span class="hs-identifier hs-var">lvl</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-170"></span><span>                    </span><span class="annot"><span class="annottext">CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadEvaluate m, MonadReader env m, MonadRegionLogger m,
+ MonadTime m) =&gt;
+CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-var">logCommandAction</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699366"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699401"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699370"><span class="hs-identifier hs-var">prevVertex</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+forall {a} {p}. (Monoid a, IsString a) =&gt; p -&gt; a -&gt; a
+</span><a href="#local-6989586621679699402"><span class="hs-identifier hs-var">startMsg</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-171"></span><span>
+</span><span id="line-172"></span><span>                  </span><span class="annot"><span class="annottext">HasCallStack =&gt; CommandP1 -&gt; m ()
+CommandP1 -&gt; m ()
+</span><a href="#local-6989586621679699365"><span class="hs-identifier hs-var">runner</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679699397"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-173"></span><span>                  </span><span class="annot"><span class="annottext">(Vertex -&gt; m ()) -&gt; [Vertex] -&gt; m ()
+forall (m :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(MonadAsync m, Foldable f) =&gt;
+(a -&gt; m b) -&gt; f a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-async-0.1-682ce338abd193db8cf15a22cde3d704acee63ba1e0647de9524d66fed5977b8/share/doc/html/src/Effects.Concurrent.Async.html#mapConcurrently_"><span class="hs-identifier hs-var">Async.mapConcurrently_</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Vertex -&gt; Vertex -&gt; m ()
+</span><a href="#local-6989586621679699369"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vertex -&gt; Maybe Vertex
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699371"><span class="hs-identifier hs-var">vertex</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Vertex]
+</span><a href="#local-6989586621679699399"><span class="hs-identifier hs-var">outNodes</span></a></span><span>
+</span><span id="line-174"></span><span>
+</span><span id="line-175"></span><span>    </span><span id="local-6989586621679699379"><span class="annot"><span class="annottext">debugMsg :: a -&gt; a -&gt; a
+</span><a href="#local-6989586621679699379"><span class="hs-identifier hs-var hs-var">debugMsg</span></a></span></span><span> </span><span id="local-6989586621679699412"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699412"><span class="hs-identifier hs-var">depCmdTxt</span></a></span></span><span> </span><span id="local-6989586621679699413"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699413"><span class="hs-identifier hs-var">cmdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-176"></span><span>      </span><span class="annot"><span class="annottext">[a] -&gt; a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-177"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Command '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-178"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699413"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-179"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;' is blocked due to dependency pending: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-180"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699412"><span class="hs-identifier hs-var">depCmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-181"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;'.&quot;</span></span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span>    </span><span id="local-6989586621679699384"><span class="annot"><span class="annottext">errMsg :: a -&gt; a -&gt; a
+</span><a href="#local-6989586621679699384"><span class="hs-identifier hs-var hs-var">errMsg</span></a></span></span><span> </span><span id="local-6989586621679699422"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699422"><span class="hs-identifier hs-var">depCmdTxt</span></a></span></span><span> </span><span id="local-6989586621679699423"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699423"><span class="hs-identifier hs-var">cmdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-185"></span><span>      </span><span class="annot"><span class="annottext">[a] -&gt; a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-186"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Not starting '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-187"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699423"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-188"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;' due to dependency failure: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-189"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699422"><span class="hs-identifier hs-var">depCmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-190"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;'.&quot;</span></span><span>
+</span><span id="line-191"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-192"></span><span>
+</span><span id="line-193"></span><span>    </span><span id="local-6989586621679699383"><span class="annot"><span class="annottext">failOkMsg :: a -&gt; a -&gt; a
+</span><a href="#local-6989586621679699383"><span class="hs-identifier hs-var hs-var">failOkMsg</span></a></span></span><span> </span><span id="local-6989586621679699432"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699432"><span class="hs-identifier hs-var">depCmdTxt</span></a></span></span><span> </span><span id="local-6989586621679699433"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699433"><span class="hs-identifier hs-var">cmdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-194"></span><span>      </span><span class="annot"><span class="annottext">[a] -&gt; a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-195"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Not starting '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-196"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699433"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-197"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;' due to dependency success: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-198"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699432"><span class="hs-identifier hs-var">depCmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-199"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;'.&quot;</span></span><span>
+</span><span id="line-200"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-201"></span><span>
+</span><span id="line-202"></span><span>    </span><span id="local-6989586621679699402"><span class="annot"><span class="annottext">startMsg :: p -&gt; a -&gt; a
+</span><a href="#local-6989586621679699402"><span class="hs-identifier hs-var hs-var">startMsg</span></a></span></span><span> </span><span class="annot"><span class="annottext">p
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679699441"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699441"><span class="hs-identifier hs-var">cmdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-203"></span><span>      </span><span class="annot"><span class="annottext">[a] -&gt; a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-204"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Starting '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-205"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699441"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-206"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;'.&quot;</span></span><span>
+</span><span id="line-207"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-208"></span><span>
+</span><span id="line-209"></span><span>    </span><span id="local-6989586621679699394"><span class="annot"><span class="annottext">alreadyRunningMsg :: p -&gt; a -&gt; a
+</span><a href="#local-6989586621679699394"><span class="hs-identifier hs-var hs-var">alreadyRunningMsg</span></a></span></span><span> </span><span class="annot"><span class="annottext">p
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679699449"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699449"><span class="hs-identifier hs-var">cmdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-210"></span><span>      </span><span class="annot"><span class="annottext">[a] -&gt; a
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-211"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Command '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-212"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679699449"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-213"></span><span>          </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;' is already running.&quot;</span></span><span>
+</span><span id="line-214"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-215"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Command.html#runCommand"><span class="hs-pragma hs-type">runCommand</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-216"></span><span>
+</span><span id="line-217"></span><span class="hs-comment">-- | Given a vertex v, 'PredecessorResult' represents the status of all of</span><span>
+</span><span id="line-218"></span><span class="hs-comment">-- its predecessors. Note that this refers to the status of the</span><span>
+</span><span id="line-219"></span><span class="hs-comment">-- 'edge condition', /not/ the predecessor command itself. For instance,</span><span>
+</span><span id="line-220"></span><span class="hs-comment">-- if we have 'cmd1 | cmd2' and cmd1 fails, that is considered</span><span>
+</span><span id="line-221"></span><span class="hs-comment">-- PredecessorSuccess.</span><span>
+</span><span id="line-222"></span><span class="hs-comment">--</span><span>
+</span><span id="line-223"></span><span class="hs-comment">-- The algebra is left-biased for identical constructors, otherwise takes the</span><span>
+</span><span id="line-224"></span><span class="hs-comment">-- greatest in</span><span>
+</span><span id="line-225"></span><span class="hs-comment">--</span><span>
+</span><span id="line-226"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-227"></span><span class="hs-comment">--   PredecessorSuccess &lt; PredecessorFailure &lt; PredecessorUnfinished</span><span>
+</span><span id="line-228"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-229"></span><span class="hs-comment">--</span><span>
+</span><span id="line-230"></span><span class="hs-comment">-- We have unfinished higher than failed as we only need to consider the</span><span>
+</span><span id="line-231"></span><span class="hs-comment">-- overall success/failed status once, when everything has finished. This also</span><span>
+</span><span id="line-232"></span><span class="hs-comment">-- makes logging simpler, as we only print non-debug messages for</span><span>
+</span><span id="line-233"></span><span class="hs-comment">-- failure, and having unfinished first means we do not have multiple commands</span><span>
+</span><span id="line-234"></span><span class="hs-comment">-- all printing the same &quot;cannot start command ... due to other failure&quot;</span><span>
+</span><span id="line-235"></span><span class="hs-comment">-- log.</span><span>
+</span><span id="line-236"></span><span class="hs-keyword">data</span><span> </span><span id="PredecessorResult"><span class="annot"><a href="Shrun.Command.html#PredecessorResult"><span class="hs-identifier hs-var">PredecessorResult</span></a></span></span><span>
+</span><span id="line-237"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Some predecessor unfinished.</span></span><span>
+</span><span id="line-238"></span><span>    </span><span id="PredecessorUnfinished"><span class="annot"><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-var">PredecessorUnfinished</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span>
+</span><span id="line-239"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | All predecessors finished and expectations matched. Note that this</span><span>
+</span><span id="line-240"></span><span>    </span><span class="hs-comment">-- does /not/ necessarily imply all predecessor /commands/ finished</span><span>
+</span><span id="line-241"></span><span>    </span><span class="hs-comment">-- successfully.</span><span>
+</span><span id="line-242"></span><span>    </span><span id="PredecessorSuccess"><span class="annot"><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span></span><span>
+</span><span id="line-243"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Some predecessor finished but did not match the expectation. The</span><span>
+</span><span id="line-244"></span><span>    </span><span class="hs-comment">-- boolean is True iff failure was expected.</span><span>
+</span><span id="line-245"></span><span>    </span><span id="PredecessorFailure"><span class="annot"><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-var">PredecessorFailure</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span>
+</span><span id="line-246"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679699451"><span id="local-6989586621679699461"><span class="annot"><span class="annottext">PredecessorResult -&gt; PredecessorResult -&gt; Bool
+(PredecessorResult -&gt; PredecessorResult -&gt; Bool)
+-&gt; (PredecessorResult -&gt; PredecessorResult -&gt; Bool)
+-&gt; Eq PredecessorResult
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PredecessorResult -&gt; PredecessorResult -&gt; Bool
+== :: PredecessorResult -&gt; PredecessorResult -&gt; Bool
+$c/= :: PredecessorResult -&gt; PredecessorResult -&gt; Bool
+/= :: PredecessorResult -&gt; PredecessorResult -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679699466"><span id="local-6989586621679699475"><span id="local-6989586621679699479"><span class="annot"><span class="annottext">Vertex -&gt; PredecessorResult -&gt; ShowS
+[PredecessorResult] -&gt; ShowS
+PredecessorResult -&gt; String
+(Vertex -&gt; PredecessorResult -&gt; ShowS)
+-&gt; (PredecessorResult -&gt; String)
+-&gt; ([PredecessorResult] -&gt; ShowS)
+-&gt; Show PredecessorResult
+forall a.
+(Vertex -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Vertex -&gt; PredecessorResult -&gt; ShowS
+showsPrec :: Vertex -&gt; PredecessorResult -&gt; ShowS
+$cshow :: PredecessorResult -&gt; String
+show :: PredecessorResult -&gt; String
+$cshowList :: [PredecessorResult] -&gt; ShowS
+showList :: [PredecessorResult] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-247"></span><span>
+</span><span id="line-248"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679699485"><span id="local-6989586621679699489"><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="annot"><a href="Shrun.Command.html#PredecessorResult"><span class="hs-identifier hs-type">PredecessorResult</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-249"></span><span>  </span><span class="annot"><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-type">PredecessorUnfinished</span></a></span><span> </span><span id="local-6989586621679699494"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699494"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span id="local-6989586621679699495"><span class="annot"><span class="annottext">&lt;&gt; :: PredecessorResult -&gt; PredecessorResult -&gt; PredecessorResult
+</span><span class="hs-operator hs-var hs-var hs-var">&lt;&gt;</span></span></span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-var">PredecessorUnfinished</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699494"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-250"></span><span>  </span><span class="annot"><span class="annottext">PredecessorResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-type">PredecessorUnfinished</span></a></span><span> </span><span id="local-6989586621679699496"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699496"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-var">PredecessorUnfinished</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699496"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-251"></span><span>  </span><span class="annot"><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-type">PredecessorFailure</span></a></span><span> </span><span id="local-6989586621679699497"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679699497"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679699498"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699498"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-var">PredecessorFailure</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679699497"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699498"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-252"></span><span>  </span><span class="annot"><span class="annottext">PredecessorResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-type">PredecessorFailure</span></a></span><span> </span><span id="local-6989586621679699499"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679699499"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679699500"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699500"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-var">PredecessorFailure</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679699499"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699500"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-253"></span><span>  </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span>
+</span><span id="line-254"></span><span>
+</span><span id="line-255"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679699505"><span id="local-6989586621679699509"><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="Shrun.Command.html#PredecessorResult"><span class="hs-identifier hs-type">PredecessorResult</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-256"></span><span>  </span><span id="local-6989586621679699512"><span class="annot"><span class="annottext">mempty :: PredecessorResult
+</span><span class="hs-identifier hs-var hs-var hs-var">mempty</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span>
+</span><span id="line-257"></span><span>
+</span><span id="line-258"></span><span class="hs-comment">-- | Get result of all predecessor nodes. We only progress if all have finished</span><span>
+</span><span id="line-259"></span><span class="hs-comment">-- and each result matches the expectation (e.g. CommandSuccess and EdgeSucces).</span><span>
+</span><span id="line-260"></span><span class="annot"><a href="Shrun.Command.html#getPredecessorsStatus"><span class="hs-identifier hs-type">getPredecessorsStatus</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-261"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679699001"><span class="annot"><a href="#local-6989586621679699001"><span class="hs-identifier hs-type">m</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-262"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-263"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#MonadAtomic"><span class="hs-identifier hs-type">MonadAtomic</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699001"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-264"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadThrow</span></span><span> </span><span class="annot"><a href="#local-6989586621679699001"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-265"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-266"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#CommandGraph"><span class="hs-identifier hs-type">CommandGraph</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-267"></span><span>  </span><span class="annot"><a href="Shrun.Command.Types.html#TCommandStatusMap"><span class="hs-identifier hs-type">TCommandStatusMap</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-268"></span><span>  </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-269"></span><span>  </span><span class="annot"><a href="#local-6989586621679699001"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Command.html#PredecessorResult"><span class="hs-identifier hs-type">PredecessorResult</span></a></span><span>
+</span><span id="line-270"></span><span id="getPredecessorsStatus"><span class="annot"><span class="annottext">getPredecessorsStatus :: forall (m :: Type -&gt; Type).
+(HasCallStack, MonadAtomic m, MonadThrow m) =&gt;
+CommandGraph -&gt; TCommandStatusMap -&gt; Vertex -&gt; m PredecessorResult
+</span><a href="Shrun.Command.html#getPredecessorsStatus"><span class="hs-identifier hs-var hs-var">getPredecessorsStatus</span></a></span></span><span> </span><span id="local-6989586621679699559"><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699559"><span class="hs-identifier hs-var">cdg</span></a></span></span><span> </span><span id="local-6989586621679699560"><span class="annot"><span class="annottext">TCommandStatusMap
+</span><a href="#local-6989586621679699560"><span class="hs-identifier hs-var">commandStatusMap</span></a></span></span><span> </span><span id="local-6989586621679699561"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699561"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-271"></span><span>  </span><span class="hs-comment">-- Do all the processing in one transaction. STM inherits its type's monoid</span><span>
+</span><span id="line-272"></span><span>  </span><span class="hs-comment">-- instance, so this satisfies:</span><span>
+</span><span id="line-273"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-274"></span><span>  </span><span class="hs-comment">-- 1. Result is fail-fast (Err is a hard stop).</span><span>
+</span><span id="line-275"></span><span>  </span><span class="hs-comment">-- 2. If there are no predecessors we have mempty which is</span><span>
+</span><span id="line-276"></span><span>  </span><span class="hs-comment">--    @Ok PredecessorSuccess@.</span><span>
+</span><span id="line-277"></span><span>  </span><span class="hs-comment">-- 3. Otherwise, results are combined via PredecessorResult's Semigroup,</span><span>
+</span><span id="line-278"></span><span>  </span><span class="hs-comment">--    which is what we want.</span><span>
+</span><span id="line-279"></span><span>  </span><span class="annot"><span class="annottext">STM (Result Text PredecessorResult)
+-&gt; m (Result Text PredecessorResult)
+forall a. HasCallStack =&gt; STM a -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadAtomic m, HasCallStack) =&gt;
+STM a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#atomically"><span class="hs-identifier hs-var">atomically</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((Vertex, EdgeLabel) -&gt; STM (Result Text PredecessorResult))
+-&gt; [(Vertex, EdgeLabel)] -&gt; STM (Result Text PredecessorResult)
+forall m a. Monoid m =&gt; (a -&gt; m) -&gt; [a] -&gt; m
+forall (t :: Type -&gt; Type) m a.
+(Foldable t, Monoid m) =&gt;
+(a -&gt; m) -&gt; t a -&gt; m
+</span><span class="hs-identifier hs-var">foldMap</span></span><span> </span><span class="annot"><span class="annottext">(Vertex, EdgeLabel) -&gt; STM (Result Text PredecessorResult)
+</span><a href="#local-6989586621679699564"><span class="hs-identifier hs-var">toResult</span></a></span><span> </span><span class="annot"><span class="annottext">[(Vertex, EdgeLabel)]
+</span><a href="#local-6989586621679699565"><span class="hs-identifier hs-var">predecessors</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (Result Text PredecessorResult)
+-&gt; (Result Text PredecessorResult -&gt; m PredecessorResult)
+-&gt; m PredecessorResult
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-280"></span><span>    </span><span class="annot"><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-type">Err</span></a></span><span> </span><span id="local-6989586621679699567"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679699567"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; m PredecessorResult
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadThrow m) =&gt;
+Text -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/exception-utils-0.1-d67a5d32da235495b559a168825b01aa427536573ca45e939cbf34daf336de3e/share/doc/html/src/Control.Exception.Utils.html#throwText"><span class="hs-identifier hs-var">throwText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679699567"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-281"></span><span>    </span><span class="annot"><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-type">Ok</span></a></span><span> </span><span id="local-6989586621679699569"><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="#local-6989586621679699569"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PredecessorResult -&gt; m PredecessorResult
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="#local-6989586621679699569"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-282"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-283"></span><span>    </span><span id="local-6989586621679699565"><span class="annot"><span class="annottext">predecessors :: [(Vertex, EdgeLabel)]
+</span><a href="#local-6989586621679699565"><span class="hs-identifier hs-var hs-var">predecessors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandGraph -&gt; Vertex -&gt; [(Vertex, EdgeLabel)]
+</span><a href="Shrun.Configuration.Data.Graph.html#labInVertices"><span class="hs-identifier hs-var">Graph.labInVertices</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699559"><span class="hs-identifier hs-var">cdg</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699561"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-284"></span><span>
+</span><span id="line-285"></span><span>    </span><span class="annot"><a href="#local-6989586621679699564"><span class="hs-identifier hs-type">toResult</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Tuple2</span></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeLabel"><span class="hs-identifier hs-type">EdgeLabel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">STM</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Result.html#Result"><span class="hs-identifier hs-type">Result</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><a href="Shrun.Command.html#PredecessorResult"><span class="hs-identifier hs-type">PredecessorResult</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-286"></span><span>    </span><span id="local-6989586621679699564"><span class="annot"><span class="annottext">toResult :: (Vertex, EdgeLabel) -&gt; STM (Result Text PredecessorResult)
+</span><a href="#local-6989586621679699564"><span class="hs-identifier hs-var hs-var">toResult</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679699571"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699571"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679699572"><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679699572"><span class="hs-identifier hs-var">lbl</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-287"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679699573"><span class="annot"><span class="annottext">idx :: CommandIndex
+</span><a href="#local-6989586621679699573"><span class="hs-identifier hs-var hs-var">idx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Vertex -&gt; CommandIndex
+Vertex -&gt; CommandIndex
+</span><a href="Shrun.Command.Types.Internal.html#fromVertex"><span class="hs-identifier hs-var">Command.Types.fromVertex</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699571"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-288"></span><span>       </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">CommandIndex
+-&gt; HashMap CommandIndex (CommandP1, TVar CommandStatus)
+-&gt; Maybe (CommandP1, TVar CommandStatus)
+forall k v. Hashable k =&gt; k -&gt; HashMap k v -&gt; Maybe v
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashMap.Internal.html#lookup"><span class="hs-identifier hs-var">Map.lookup</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679699573"><span class="hs-identifier hs-var">idx</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TCommandStatusMap
+</span><a href="#local-6989586621679699560"><span class="hs-identifier hs-var">commandStatusMap</span></a></span><span> </span><span class="annot"><span class="annottext">TCommandStatusMap
+-&gt; Optic'
+     An_Iso
+     NoIx
+     TCommandStatusMap
+     (HashMap CommandIndex (CommandP1, TVar CommandStatus))
+-&gt; HashMap CommandIndex (CommandP1, TVar CommandStatus)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  An_Iso
+  NoIx
+  TCommandStatusMap
+  (HashMap CommandIndex (CommandP1, TVar CommandStatus))
+</span><span class="">#unCommandStatusMap</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-289"></span><span>            </span><span class="annot"><span class="annottext">Maybe (CommandP1, TVar CommandStatus)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-290"></span><span>              </span><span class="annot"><span class="annottext">Result Text PredecessorResult
+-&gt; STM (Result Text PredecessorResult)
+forall a. a -&gt; STM a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span>
+</span><span id="line-291"></span><span>                </span><span class="annot"><span class="annottext">(Result Text PredecessorResult
+ -&gt; STM (Result Text PredecessorResult))
+-&gt; (Text -&gt; Result Text PredecessorResult)
+-&gt; Text
+-&gt; STM (Result Text PredecessorResult)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Result Text PredecessorResult
+forall e a. e -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Err"><span class="hs-identifier hs-var">Err</span></a></span><span>
+</span><span id="line-292"></span><span>                </span><span class="annot"><span class="annottext">(Text -&gt; STM (Result Text PredecessorResult))
+-&gt; Text -&gt; STM (Result Text PredecessorResult)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-293"></span><span>                  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Failed searching for command index &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-294"></span><span>                    </span><span class="annot"><span class="annottext">CommandIndex -&gt; Text
+forall a. Pretty a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#prettyToText"><span class="hs-identifier hs-var">prettyToText</span></a></span><span> </span><span class="annot"><span class="annottext">CommandIndex
+</span><a href="#local-6989586621679699573"><span class="hs-identifier hs-var">idx</span></a></span><span>
+</span><span id="line-295"></span><span>                  </span><span class="hs-special">]</span><span>
+</span><span id="line-296"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandP1
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679699576"><span class="annot"><span class="annottext">TVar CommandStatus
+</span><a href="#local-6989586621679699576"><span class="hs-identifier hs-var">statusVar</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-297"></span><span>              </span><span id="local-6989586621679699577"><span class="annot"><span class="annottext">CommandStatus
+</span><a href="#local-6989586621679699577"><span class="hs-identifier hs-var">status</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">TVar CommandStatus -&gt; STM CommandStatus
+forall a. TVar a -&gt; STM a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#readTVar%27"><span class="hs-identifier hs-var">readTVar'</span></a></span><span> </span><span class="annot"><span class="annottext">TVar CommandStatus
+</span><a href="#local-6989586621679699576"><span class="hs-identifier hs-var">statusVar</span></a></span><span>
+</span><span id="line-298"></span><span>              </span><span class="annot"><span class="annottext">Result Text PredecessorResult
+-&gt; STM (Result Text PredecessorResult)
+forall a. a -&gt; STM a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Result Text PredecessorResult
+ -&gt; STM (Result Text PredecessorResult))
+-&gt; (PredecessorResult -&gt; Result Text PredecessorResult)
+-&gt; PredecessorResult
+-&gt; STM (Result Text PredecessorResult)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">PredecessorResult -&gt; Result Text PredecessorResult
+forall e a. a -&gt; Result e a
+</span><a href="Shrun.Data.Result.html#Ok"><span class="hs-identifier hs-var">Ok</span></a></span><span> </span><span class="annot"><span class="annottext">(PredecessorResult -&gt; STM (Result Text PredecessorResult))
+-&gt; PredecessorResult -&gt; STM (Result Text PredecessorResult)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="#local-6989586621679699577"><span class="hs-identifier hs-var">status</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="#local-6989586621679699572"><span class="hs-identifier hs-var">lbl</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-299"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandWaiting"><span class="hs-identifier hs-var">CommandWaiting</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-var">PredecessorUnfinished</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699571"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-300"></span><span>                </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Command.Types.html#CommandRunning"><span class="hs-identifier hs-type">CommandRunning</span></a></span><span> </span><span class="annot"><span class="annottext">(Maybe Pid, [Pid])
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorUnfinished"><span class="hs-identifier hs-var">PredecessorUnfinished</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699571"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-301"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandSuccess"><span class="hs-identifier hs-var">CommandSuccess</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeAnd"><span class="hs-identifier hs-var">EdgeAnd</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span>
+</span><span id="line-302"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandSuccess"><span class="hs-identifier hs-var">CommandSuccess</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeOr"><span class="hs-identifier hs-var">EdgeOr</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-var">PredecessorFailure</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699571"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-303"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandSuccess"><span class="hs-identifier hs-var">CommandSuccess</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeAny"><span class="hs-identifier hs-var">EdgeAny</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span>
+</span><span id="line-304"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandFailure"><span class="hs-identifier hs-var">CommandFailure</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeAnd"><span class="hs-identifier hs-var">EdgeAnd</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Vertex -&gt; PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorFailure"><span class="hs-identifier hs-var">PredecessorFailure</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699571"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-305"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandFailure"><span class="hs-identifier hs-var">CommandFailure</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeOr"><span class="hs-identifier hs-var">EdgeOr</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span>
+</span><span id="line-306"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandStatus
+</span><a href="Shrun.Command.Types.html#CommandFailure"><span class="hs-identifier hs-var">CommandFailure</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">EdgeLabel
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeAny"><span class="hs-identifier hs-var">EdgeAny</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PredecessorResult
+</span><a href="Shrun.Command.html#PredecessorSuccess"><span class="hs-identifier hs-var">PredecessorSuccess</span></a></span><span>
+</span><span id="line-307"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Command.html#getPredecessorsStatus"><span class="hs-pragma hs-type">getPredecessorsStatus</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-308"></span><span>
+</span><span id="line-309"></span><span id="local-6989586621679699009"><span id="local-6989586621679699010"><span class="annot"><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-type">logCommandAction</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-310"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-311"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier hs-type">HasCommands</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699009"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-312"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasLogging"><span class="hs-identifier hs-type">HasLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699009"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-313"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-stm-0.1-71c637b0893ddb6ef0e94503d35d78f1513a160176d7eadc2a8b50f93a1f715d/share/doc/html/src/Effects.Concurrent.STM.html#MonadAtomic"><span class="hs-identifier hs-type">MonadAtomic</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-314"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-evaluate-0.1-772758cdc5885cbb3b920d589184bdc597d7e605029264c7ce241fd8286d7ad8/share/doc/html/src/Effects.Evaluate.html#MonadEvaluate"><span class="hs-identifier hs-type">MonadEvaluate</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-315"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679699009"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-316"></span><span>    </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-317"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/effects-time-0.1-f92abde35ffd6e17b0f1742d08fa87fff34080c3da1cbf70166e9b455eb792d7/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-318"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-319"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Dependency graph</span></span><span>
+</span><span id="line-320"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#CommandGraph"><span class="hs-identifier hs-type">CommandGraph</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-321"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Log level</span></span><span>
+</span><span id="line-322"></span><span>  </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-type">LogLevel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-323"></span><span>  </span><span class="hs-comment">-- | The predecessor vertex that started this one. Note that this may</span><span>
+</span><span id="line-324"></span><span>  </span><span class="hs-comment">-- not be the same as mDepVertex.</span><span>
+</span><span id="line-325"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-326"></span><span>  </span><span class="hs-comment">-- | Function to construct log message. Parameters are the dep vertex</span><span>
+</span><span id="line-327"></span><span>  </span><span class="hs-comment">-- text and this vertex text.</span><span>
+</span><span id="line-328"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-329"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Some predecessor vertex that has some problem.</span></span><span>
+</span><span id="line-330"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-331"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Command vertex that will not be run.</span></span><span>
+</span><span id="line-332"></span><span>  </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-333"></span><span>  </span><span class="annot"><a href="#local-6989586621679699010"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-334"></span><span id="logCommandAction"><span class="annot"><span class="annottext">logCommandAction :: forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadEvaluate m, MonadReader env m, MonadRegionLogger m,
+ MonadTime m) =&gt;
+CommandGraph
+-&gt; LogLevel
+-&gt; Maybe Vertex
+-&gt; (UnlinedText -&gt; UnlinedText -&gt; UnlinedText)
+-&gt; Maybe Vertex
+-&gt; Vertex
+-&gt; m ()
+</span><a href="Shrun.Command.html#logCommandAction"><span class="hs-identifier hs-var hs-var">logCommandAction</span></a></span></span><span> </span><span id="local-6989586621679699650"><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699650"><span class="hs-identifier hs-var">cdg</span></a></span></span><span> </span><span id="local-6989586621679699651"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679699651"><span class="hs-identifier hs-var">lvl</span></a></span></span><span> </span><span id="local-6989586621679699652"><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699652"><span class="hs-identifier hs-var">mPrevVertex</span></a></span></span><span> </span><span id="local-6989586621679699653"><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+</span><a href="#local-6989586621679699653"><span class="hs-identifier hs-var">msgFn</span></a></span></span><span> </span><span id="local-6989586621679699654"><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699654"><span class="hs-identifier hs-var">mDepVertex</span></a></span></span><span> </span><span id="local-6989586621679699655"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699655"><span class="hs-identifier hs-var">vertex</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-335"></span><span>  </span><span id="local-6989586621679699656"><span class="annot"><span class="annottext">CommonLoggingEnv
+</span><a href="#local-6989586621679699656"><span class="hs-identifier hs-var">commonLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; CommonLoggingEnv) -&gt; m CommonLoggingEnv
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; CommonLoggingEnv
+forall env. HasCommonLogging env =&gt; env -&gt; CommonLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier hs-var">getCommonLogging</span></a></span><span>
+</span><span id="line-336"></span><span>  </span><span id="local-6989586621679699657"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679699657"><span class="hs-identifier hs-var">thisCmd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; m CommandP1
+</span><a href="#local-6989586621679699658"><span class="hs-identifier hs-var">nodeToCommand</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699655"><span class="hs-identifier hs-var">vertex</span></a></span><span>
+</span><span id="line-337"></span><span>  </span><span id="local-6989586621679699659"><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679699659"><span class="hs-identifier hs-var">prevCmd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Maybe Vertex -&gt; (Vertex -&gt; m CommandP1) -&gt; m (Maybe CommandP1)
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Traversable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f (t b)
+</span><span class="hs-identifier hs-var">for</span></span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699652"><span class="hs-identifier hs-var">mPrevVertex</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; m CommandP1
+</span><a href="#local-6989586621679699658"><span class="hs-identifier hs-var">nodeToCommand</span></a></span><span>
+</span><span id="line-338"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679699661"><span class="annot"><span class="annottext">keyHide :: KeyHideSwitch
+</span><a href="#local-6989586621679699661"><span class="hs-identifier hs-var hs-var">keyHide</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommonLoggingEnv
+</span><a href="#local-6989586621679699656"><span class="hs-identifier hs-var">commonLogging</span></a></span><span> </span><span class="annot"><span class="annottext">CommonLoggingEnv
+-&gt; Optic' A_Lens NoIx CommonLoggingEnv KeyHideSwitch
+-&gt; KeyHideSwitch
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx CommonLoggingEnv KeyHideSwitch
+</span><span class="">#keyHide</span></span><span>
+</span><span id="line-339"></span><span>
+</span><span id="line-340"></span><span>  </span><span id="local-6989586621679699662"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679699662"><span class="hs-identifier hs-var">depCmdTxt</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><a href="#local-6989586621679699654"><span class="hs-identifier hs-var">mDepVertex</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-341"></span><span>    </span><span class="annot"><span class="annottext">Maybe Vertex
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; m UnlinedText
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-342"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679699663"><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699663"><span class="hs-identifier hs-var">depVertex</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-343"></span><span>      </span><span id="local-6989586621679699664"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679699664"><span class="hs-identifier hs-var">depCmd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Vertex -&gt; m CommandP1
+</span><a href="#local-6989586621679699658"><span class="hs-identifier hs-var">nodeToCommand</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699663"><span class="hs-identifier hs-var">depVertex</span></a></span><span>
+</span><span id="line-344"></span><span>      </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-345"></span><span>        </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">[UnlinedText] -&gt; UnlinedText
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-346"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><span class="hs-string">&quot;(&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-347"></span><span>            </span><span class="annot"><span class="annottext">Vertex -&gt; UnlinedText
+</span><a href="#local-6989586621679699665"><span class="hs-identifier hs-var">vToUnlined</span></a></span><span> </span><span class="annot"><span class="annottext">Vertex
+</span><a href="#local-6989586621679699663"><span class="hs-identifier hs-var">depVertex</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-348"></span><span>            </span><span class="annot"><span class="annottext">UnlinedText
+</span><span class="hs-string">&quot;) &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-349"></span><span>            </span><span class="annot"><span class="annottext">CommandP1 -&gt; KeyHideSwitch -&gt; UnlinedText
+</span><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier hs-var">Formatting.displayCmd</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679699664"><span class="hs-identifier hs-var">depCmd</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679699661"><span class="hs-identifier hs-var">keyHide</span></a></span><span>
+</span><span id="line-350"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-351"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679699667"><span class="annot"><span class="annottext">cmdTxt :: UnlinedText
+</span><a href="#local-6989586621679699667"><span class="hs-identifier hs-var hs-var">cmdTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; KeyHideSwitch -&gt; UnlinedText
+</span><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier hs-var">Formatting.displayCmd</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679699657"><span class="hs-identifier hs-var">thisCmd</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679699661"><span class="hs-identifier hs-var">keyHide</span></a></span><span>
+</span><span id="line-352"></span><span>      </span><span id="local-6989586621679699668"><span class="annot"><span class="annottext">errMsg :: UnlinedText
+</span><a href="#local-6989586621679699668"><span class="hs-identifier hs-var hs-var">errMsg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; UnlinedText -&gt; UnlinedText
+</span><a href="#local-6989586621679699653"><span class="hs-identifier hs-var">msgFn</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679699662"><span class="hs-identifier hs-var">depCmdTxt</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679699667"><span class="hs-identifier hs-var">cmdTxt</span></a></span><span>
+</span><span id="line-353"></span><span>
+</span><span id="line-354"></span><span>      </span><span id="local-6989586621679699669"><span class="annot"><span class="annottext">log :: Log
+</span><a href="#local-6989586621679699669"><span class="hs-identifier hs-var hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-355"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span>
+</span><span id="line-356"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">cmd :: Maybe CommandP1
+</span><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679699659"><span class="hs-identifier hs-var">prevCmd</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-357"></span><span>            </span><span class="annot"><span class="annottext">msg :: LogMessage
+</span><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier hs-var">msg</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">UnlinedText -&gt; LogMessage
+forall a b. Coercible a b =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">coerce</span></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679699668"><span class="hs-identifier hs-var">errMsg</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-358"></span><span>            </span><span class="annot"><span class="annottext">LogLevel
+lvl :: LogLevel
+lvl :: LogLevel
+</span><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier hs-var hs-var">lvl</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-359"></span><span>            </span><span class="annot"><span class="annottext">mode :: LogMode
+</span><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier hs-var">LogModeFinish</span></a></span><span>
+</span><span id="line-360"></span><span>          </span><span class="hs-special">}</span><span>
+</span><span id="line-361"></span><span>
+</span><span id="line-362"></span><span>  </span><span class="annot"><span class="annottext">RegionLayout -&gt; (Region m -&gt; m ()) -&gt; m ()
+forall a. HasCallStack =&gt; RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadRegionLogger m, HasCallStack) =&gt;
+RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var">withRegion</span></a></span><span> </span><span class="annot"><span class="annottext">RegionLayout
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/concurrent-output-1.10.21-9968ece8a2edfbfa680e92c43fbd2ae858402a67efb4fe0ef150461ae4ea4c79/share/doc/html/src/System.Console.Regions.html#Linear"><span class="hs-identifier hs-var">Linear</span></a></span><span> </span><span class="annot"><span class="annottext">((Region m -&gt; m ()) -&gt; m ()) -&gt; (Region m -&gt; m ()) -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679699671"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679699671"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Region m -&gt; Log -&gt; m ()
+forall (m :: Type -&gt; Type) env.
+(HasCallStack, HasCommands env, HasLogging env m, MonadAtomic m,
+ MonadReader env m, MonadTime m) =&gt;
+Region m -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#putRegionLog"><span class="hs-identifier hs-var">Logging.putRegionLog</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679699671"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679699669"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-363"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-364"></span><span>    </span><span id="local-6989586621679699658"><span class="annot"><span class="annottext">nodeToCommand :: Vertex -&gt; m CommandP1
+</span><a href="#local-6989586621679699658"><span class="hs-identifier hs-var hs-var">nodeToCommand</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((Vertex, CommandP1) -&gt; CommandP1)
+-&gt; m (Vertex, CommandP1) -&gt; m CommandP1
+forall a b. (a -&gt; b) -&gt; m a -&gt; m b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Vertex, CommandP1) CommandP1
+-&gt; (Vertex, CommandP1) -&gt; CommandP1
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Vertex, CommandP1) CommandP1
+forall s t a b. Field2 s t a b =&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Data.Tuple.Optics.html#_2"><span class="hs-identifier hs-var">_2</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(m (Vertex, CommandP1) -&gt; m CommandP1)
+-&gt; (Vertex -&gt; m (Vertex, CommandP1)) -&gt; Vertex -&gt; m CommandP1
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandGraph -&gt; Vertex -&gt; m (Vertex, CommandP1)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadEvaluate m) =&gt;
+CommandGraph -&gt; Vertex -&gt; m (Vertex, CommandP1)
+</span><a href="Shrun.Configuration.Data.Graph.html#labVertex"><span class="hs-identifier hs-var">Graph.labVertex</span></a></span><span> </span><span class="annot"><span class="annottext">CommandGraph
+</span><a href="#local-6989586621679699650"><span class="hs-identifier hs-var">cdg</span></a></span><span>
+</span><span id="line-365"></span><span>
+</span><span id="line-366"></span><span>    </span><span class="hs-comment">-- Convert back to CommandIndex to match user-supplied value.</span><span>
+</span><span id="line-367"></span><span>    </span><span class="annot"><a href="#local-6989586621679699665"><span class="hs-identifier hs-type">vToUnlined</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Command.Types.Internal.html#Vertex"><span class="hs-identifier hs-type">Vertex</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span>
+</span><span id="line-368"></span><span>    </span><span id="local-6989586621679699665"><span class="annot"><span class="annottext">vToUnlined :: Vertex -&gt; UnlinedText
+</span><a href="#local-6989586621679699665"><span class="hs-identifier hs-var hs-var">vToUnlined</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-369"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; UnlinedText
+forall a. IsString a =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">fromString</span></span><span>
+</span><span id="line-370"></span><span>        </span><span class="annot"><span class="annottext">(String -&gt; UnlinedText)
+-&gt; (Vertex -&gt; String) -&gt; Vertex -&gt; UnlinedText
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span>
+</span><span id="line-371"></span><span>        </span><span class="annot"><span class="annottext">(Text -&gt; String) -&gt; (Vertex -&gt; Text) -&gt; Vertex -&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandIndex -&gt; Text
+forall a. Pretty a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#prettyToText"><span class="hs-identifier hs-var">prettyToText</span></a></span><span>
+</span><span id="line-372"></span><span>        </span><span class="annot"><span class="annottext">(CommandIndex -&gt; Text)
+-&gt; (Vertex -&gt; CommandIndex) -&gt; Vertex -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Vertex -&gt; CommandIndex
+Vertex -&gt; CommandIndex
+</span><a href="Shrun.Command.Types.Internal.html#fromVertex"><span class="hs-identifier hs-var">Command.Types.fromVertex</span></a></span><span>
+</span><span id="line-373"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Command.html#logCommandAction"><span class="hs-pragma hs-type">logCommandAction</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-374"></span></pre></body></html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.html"><span class="hs-identifier">Shrun.Configuration.Args</span></a></span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier">Args</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Args.html#defaultArgs"><span class="hs-identifier">defaultArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier">Args</span></a></span><span>
+</span><span id="line-9"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier">MkArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#commands"><span class="hs-identifier">commands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#configPaths"><span class="hs-identifier">configPaths</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#coreConfig"><span class="hs-identifier">coreConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#dryRun"><span class="hs-identifier">dryRun</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#edges"><span class="hs-identifier">edges</span></a></span><span>
+</span><span id="line-15"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span id="local-6989586621679704145"><span class="annot"><a href="Shrun.Configuration.Args.html#defaultArgs"><span class="hs-identifier hs-type">defaultArgs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679704145"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-21"></span><span id="defaultArgs"><span class="annot"><span class="annottext">defaultArgs :: forall m. NESeq Text -&gt; Args m
+</span><a href="Shrun.Configuration.Args.html#defaultArgs"><span class="hs-identifier hs-var hs-var">defaultArgs</span></a></span></span><span> </span><span id="local-6989586621679704170"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679704170"><span class="hs-identifier hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-22"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">configPaths :: Seq (WithDisabled OsPath)
+</span><a href="Shrun.Configuration.Args.Parsing.html#configPaths"><span class="hs-identifier hs-var">configPaths</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq (WithDisabled OsPath)
+forall a. Seq a
+</span><span class="hs-identifier hs-var">Empty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>      </span><span class="annot"><span class="annottext">coreConfig :: CoreConfigArgs m
+</span><a href="Shrun.Configuration.Args.Parsing.html#coreConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CoreConfigArgs m
+forall a. Default a =&gt; a
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var">def</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>      </span><span class="annot"><span class="annottext">NESeq Text
+commands :: NESeq Text
+commands :: NESeq Text
+</span><a href="Shrun.Configuration.Args.Parsing.html#commands"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>      </span><span class="annot"><span class="annottext">edges :: Maybe (WithDisabled EdgeArgs)
+</span><a href="Shrun.Configuration.Args.Parsing.html#edges"><span class="hs-identifier hs-var">edges</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled EdgeArgs)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>      </span><span class="annot"><span class="annottext">dryRun :: Bool
+</span><a href="Shrun.Configuration.Args.Parsing.html#dryRun"><span class="hs-identifier hs-var">dryRun</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-29"></span></pre></body></html>

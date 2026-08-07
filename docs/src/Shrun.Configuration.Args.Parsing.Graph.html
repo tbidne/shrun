@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedLists #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph</span></a></span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#edgesParser"><span class="hs-identifier">edgesParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseEdges"><span class="hs-identifier">parseEdges</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ReadM"><span class="hs-identifier">ReadM</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html"><span class="hs-identifier">Options.Applicative.Help.Chunk</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Chunk</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Pretty.html"><span class="hs-identifier">Options.Applicative.Help.Pretty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Pretty</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Edges</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Edges</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Sequential.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Sequential</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Sequential</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Utils</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier">MParser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier">EdgeArgs</span></a></span><span>
+</span><span id="line-21"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgsList"><span class="hs-identifier">EdgeArgsList</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgsSequential"><span class="hs-identifier">EdgeArgsSequential</span></a></span><span>
+</span><span id="line-23"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edges"><span class="hs-identifier">Edges</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#MkEdges"><span class="hs-identifier">MkEdges</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.html"><span class="hs-identifier">Text.Megaparsec</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">MP</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#edgesParser"><span class="hs-identifier hs-type">edgesParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span id="edgesParser"><span class="annot"><span class="annottext">edgesParser :: Parser (Maybe (WithDisabled EdgeArgs))
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#edgesParser"><span class="hs-identifier hs-var hs-var">edgesParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-32"></span><span>  </span><span class="annot"><span class="annottext">ReadM EdgeArgs
+-&gt; [Mod OptionFields (WithDisabled EdgeArgs)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled EdgeArgs))
+forall a.
+ReadM a
+-&gt; [Mod OptionFields (WithDisabled a)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled a))
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mWithDisabledParser"><span class="hs-identifier hs-var">Utils.mWithDisabledParser</span></a></span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="annottext">ReadM EdgeArgs
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#readEdges"><span class="hs-identifier hs-var">readEdges</span></a></span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="annottext">[Mod OptionFields (WithDisabled EdgeArgs)]
+</span><a href="#local-6989586621679700625"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;EDGES_STR&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;&amp;&amp;&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;||&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;;;&quot;</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-37"></span><span>    </span><span id="local-6989586621679700625"><span class="annot"><span class="annottext">opts :: [Mod OptionFields (WithDisabled EdgeArgs)]
+</span><a href="#local-6989586621679700625"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-38"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled EdgeArgs)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;edges&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="annottext">Item [Mod OptionFields (WithDisabled EdgeArgs)]
+Mod OptionFields (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679700627"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-40"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span>    </span><span id="local-6989586621679700627"><span class="annot"><span class="annottext">helpTxt :: Mod OptionFields (WithDisabled EdgeArgs)
+</span><a href="#local-6989586621679700627"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-43"></span><span>      </span><span class="annot"><span class="annottext">Maybe Doc -&gt; Mod OptionFields (WithDisabled EdgeArgs)
+forall (f :: Type -&gt; Type) a. Maybe Doc -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#helpDoc"><span class="hs-identifier hs-var">OA.helpDoc</span></a></span><span>
+</span><span id="line-44"></span><span>        </span><span class="annot"><span class="annottext">(Maybe Doc -&gt; Mod OptionFields (WithDisabled EdgeArgs))
+-&gt; ([Chunk Doc] -&gt; Maybe Doc)
+-&gt; [Chunk Doc]
+-&gt; Mod OptionFields (WithDisabled EdgeArgs)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Chunk Doc -&gt; Maybe Doc
+forall a. Chunk a -&gt; Maybe a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#unChunk"><span class="hs-identifier hs-var">Chunk.unChunk</span></a></span><span>
+</span><span id="line-45"></span><span>        </span><span class="annot"><span class="annottext">(Chunk Doc -&gt; Maybe Doc)
+-&gt; ([Chunk Doc] -&gt; Chunk Doc) -&gt; [Chunk Doc] -&gt; Maybe Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Doc -&gt; Doc) -&gt; Chunk Doc -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; Chunk a -&gt; Chunk b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Doc -&gt; Doc -&gt; Doc
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Doc
+forall ann. Doc ann
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/prettyprinter-1.7.1-184c8de802fa4cbcd1080287bdcd9b668d917d8585034cb958ced026bc840912/share/doc/html/src/Prettyprinter.Internal.html#line"><span class="hs-identifier hs-var">Pretty.line</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>        </span><span class="annot"><span class="annottext">(Chunk Doc -&gt; Chunk Doc)
+-&gt; ([Chunk Doc] -&gt; Chunk Doc) -&gt; [Chunk Doc] -&gt; Chunk Doc
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[Chunk Doc] -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#vsepChunks"><span class="hs-identifier hs-var">Chunk.vsepChunks</span></a></span><span>
+</span><span id="line-47"></span><span>        </span><span class="annot"><span class="annottext">([Chunk Doc] -&gt; Mod OptionFields (WithDisabled EdgeArgs))
+-&gt; [Chunk Doc] -&gt; Mod OptionFields (WithDisabled EdgeArgs)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Item [Chunk Doc]
+Chunk Doc
+</span><a href="#local-6989586621679700633"><span class="hs-identifier hs-var">items</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>            </span><span class="annot"><span class="annottext">Item [Chunk Doc]
+Chunk Doc
+</span><a href="#local-6989586621679700634"><span class="hs-identifier hs-var">outro</span></a></span><span>
+</span><span id="line-49"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679700633"><span class="annot"><span class="annottext">items :: Chunk Doc
+</span><a href="#local-6989586621679700633"><span class="hs-identifier hs-var hs-var">items</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-52"></span><span>      </span><span class="annot"><span class="annottext">NESeq String -&gt; Chunk Doc
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#itemizeHelper"><span class="hs-identifier hs-var">Utils.itemizeHelper</span></a></span><span>
+</span><span id="line-53"></span><span>        </span><span class="annot"><span class="annottext">(NESeq String -&gt; Chunk Doc) -&gt; NESeq String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679700636"><span class="hs-identifier hs-var">intro</span></a></span><span>
+</span><span id="line-54"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Seq String -&gt; NESeq String
+forall a. a -&gt; Seq a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-var">:&lt;||</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679700638"><span class="hs-identifier hs-var">andEdges</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679700639"><span class="hs-identifier hs-var">orEdges</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679700640"><span class="hs-identifier hs-var">anyEdges</span></a></span><span>
+</span><span id="line-57"></span><span>             </span><span class="hs-special">]</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span>    </span><span id="local-6989586621679700636"><span class="annot"><span class="annottext">intro :: String
+</span><a href="#local-6989586621679700636"><span class="hs-identifier hs-var hs-var">intro</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-61"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Comma-separated list, specifying command dependencies, based on &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;their left-to-right order. There are three edge types:&quot;</span></span><span>
+</span><span id="line-63"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span>    </span><span id="local-6989586621679700638"><span class="annot"><span class="annottext">andEdges :: String
+</span><a href="#local-6989586621679700638"><span class="hs-identifier hs-var hs-var">andEdges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;and: '1 &amp; 2', runs cmd2 iff cmd1 succeeds.&quot;</span></span><span>
+</span><span id="line-66"></span><span>    </span><span id="local-6989586621679700639"><span class="annot"><span class="annottext">orEdges :: String
+</span><a href="#local-6989586621679700639"><span class="hs-identifier hs-var hs-var">orEdges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;or: '1 | 2', runs cmd2 iff cmd1 fails.&quot;</span></span><span>
+</span><span id="line-67"></span><span>    </span><span id="local-6989586621679700640"><span class="annot"><span class="annottext">anyEdges :: String
+</span><a href="#local-6989586621679700640"><span class="hs-identifier hs-var hs-var">anyEdges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;any: '1 ; 2', runs cmd2 iff cmd1 finishes.&quot;</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span>    </span><span id="local-6989586621679700634"><span class="annot"><span class="annottext">outro :: Chunk Doc
+</span><a href="#local-6989586621679700634"><span class="hs-identifier hs-var hs-var">outro</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-70"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; Chunk Doc
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Help.Chunk.html#paragraph"><span class="hs-identifier hs-var">Chunk.paragraph</span></a></span><span>
+</span><span id="line-71"></span><span>        </span><span class="annot"><span class="annottext">(String -&gt; Chunk Doc) -&gt; String -&gt; Chunk Doc
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-72"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;The literals are equivalent to placing edges between all &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>            </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;commands e.g. '&amp;&amp;' puts an 'and'-edge between all commands.&quot;</span></span><span>
+</span><span id="line-74"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#readEdges"><span class="hs-identifier hs-type">readEdges</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#ReadM"><span class="hs-identifier hs-type">ReadM</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span>
+</span><span id="line-77"></span><span id="readEdges"><span class="annot"><span class="annottext">readEdges :: ReadM EdgeArgs
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#readEdges"><span class="hs-identifier hs-var hs-var">readEdges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-78"></span><span>  </span><span id="local-6989586621679700657"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700657"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span>
+</span><span id="line-79"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either String EdgeArgs
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseEdges"><span class="hs-identifier hs-var">parseEdges</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700657"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679700659"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679700659"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; ReadM EdgeArgs
+forall a. String -&gt; ReadM a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679700659"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-81"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679700660"><span class="annot"><span class="annottext">EdgeArgs
+</span><a href="#local-6989586621679700660"><span class="hs-identifier hs-var">cga</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">EdgeArgs -&gt; ReadM EdgeArgs
+forall a. a -&gt; ReadM a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">EdgeArgs
+</span><a href="#local-6989586621679700660"><span class="hs-identifier hs-var">cga</span></a></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseEdges"><span class="hs-identifier hs-type">parseEdges</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span>
+</span><span id="line-84"></span><span id="parseEdges"><span class="annot"><span class="annottext">parseEdges :: Text -&gt; Either String EdgeArgs
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseEdges"><span class="hs-identifier hs-var hs-var">parseEdges</span></a></span></span><span> </span><span id="local-6989586621679700661"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700661"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-85"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679700662"><span class="annot"><span class="annottext">stripped :: Text
+</span><a href="#local-6989586621679700662"><span class="hs-identifier hs-var hs-var">stripped</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.stripStart</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700661"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-86"></span><span>  </span><span class="annot"><span class="annottext">Bool -&gt; Either String () -&gt; Either String ()
+forall (f :: Type -&gt; Type). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><span class="hs-identifier hs-var">T.null</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700662"><span class="hs-identifier hs-var">stripped</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Either String () -&gt; Either String ())
+-&gt; Either String () -&gt; Either String ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-87"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; Either String ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Either String ()) -&gt; String -&gt; Either String ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Received empty input: '&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700661"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'&quot;</span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span>  </span><span class="annot"><span class="annottext">(ParseErrorBundle Text FatalError -&gt; String)
+-&gt; Either (ParseErrorBundle Text FatalError) EdgeArgs
+-&gt; Either String EdgeArgs
+forall a b c. (a -&gt; b) -&gt; Either a c -&gt; Either b c
+forall (p :: Type -&gt; Type -&gt; Type) a b c.
+Bifunctor p =&gt;
+(a -&gt; b) -&gt; p a c -&gt; p b c
+</span><span class="hs-identifier hs-var">first</span></span><span> </span><span class="annot"><span class="annottext">ParseErrorBundle Text FatalError -&gt; String
+forall s e.
+(VisualStream s, TraversableStream s, ShowErrorComponent e) =&gt;
+ParseErrorBundle s e -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Error.html#errorBundlePretty"><span class="hs-identifier hs-var">MP.errorBundlePretty</span></a></span><span>
+</span><span id="line-90"></span><span>    </span><span class="annot"><span class="annottext">(Either (ParseErrorBundle Text FatalError) EdgeArgs
+ -&gt; Either String EdgeArgs)
+-&gt; Either (ParseErrorBundle Text FatalError) EdgeArgs
+-&gt; Either String EdgeArgs
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeArgs
+-&gt; String
+-&gt; Text
+-&gt; Either (ParseErrorBundle Text FatalError) EdgeArgs
+forall e s a.
+Parsec e s a -&gt; String -&gt; s -&gt; Either (ParseErrorBundle s e) a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.html#parse"><span class="hs-identifier hs-var">MP.parse</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeArgs
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#parser"><span class="hs-identifier hs-var">parser</span></a></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeArgs
+-&gt; ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity EdgeArgs
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Applicative f =&gt; f a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;*</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+forall e s (m :: Type -&gt; Type). MonadParsec e s m =&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#eof"><span class="hs-identifier hs-var">MP.eof</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679700662"><span class="hs-identifier hs-var">stripped</span></a></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#parser"><span class="hs-identifier hs-type">parser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeArgs"><span class="hs-identifier hs-type">EdgeArgs</span></a></span><span>
+</span><span id="line-93"></span><span id="parser"><span class="annot"><span class="annottext">parser :: ParsecT FatalError Text Identity EdgeArgs
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#parser"><span class="hs-identifier hs-var hs-var">parser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><span class="annottext">forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a.
+(Foldable t, Alternative f) =&gt;
+t (f a) -&gt; f a
+</span><span class="hs-identifier hs-var">asum</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">List</span></span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">EdgeSequential -&gt; EdgeArgs
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeArgsSequential"><span class="hs-identifier hs-var">EdgeArgsSequential</span></a></span><span> </span><span class="annot"><span class="annottext">(EdgeSequential -&gt; EdgeArgs)
+-&gt; ParsecT FatalError Text Identity EdgeSequential
+-&gt; ParsecT FatalError Text Identity EdgeArgs
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity EdgeSequential
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Sequential.html#parseSequential"><span class="hs-identifier hs-var">Sequential.parseSequential</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-96"></span><span>      </span><span class="annot"><span class="annottext">Edges -&gt; EdgeArgs
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeArgsList"><span class="hs-identifier hs-var">EdgeArgsList</span></a></span><span> </span><span class="annot"><span class="annottext">(Edges -&gt; EdgeArgs)
+-&gt; ParsecT FatalError Text Identity Edges
+-&gt; ParsecT FatalError Text Identity EdgeArgs
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity Edges
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseMultiEdges"><span class="hs-identifier hs-var">parseMultiEdges</span></a></span><span>
+</span><span id="line-97"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseMultiEdges"><span class="hs-identifier hs-type">parseMultiEdges</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#Edges"><span class="hs-identifier hs-type">Edges</span></a></span><span>
+</span><span id="line-100"></span><span id="parseMultiEdges"><span class="annot"><span class="annottext">parseMultiEdges :: ParsecT FatalError Text Identity Edges
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.html#parseMultiEdges"><span class="hs-identifier hs-var hs-var">parseMultiEdges</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-101"></span><span>  </span><span id="local-6989586621679700677"><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679700677"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity (NESeq Edge)
+</span><a href="#local-6989586621679700678"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-102"></span><span>  </span><span id="local-6989586621679700679"><span class="annot"><span class="annottext">[NESeq Edge]
+</span><a href="#local-6989586621679700679"><span class="hs-identifier hs-var">es</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity (NESeq Edge)
+-&gt; ParsecT FatalError Text Identity [NESeq Edge]
+forall (m :: Type -&gt; Type) a. MonadPlus m =&gt; m a -&gt; m [a]
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/parser-combinators-1.3.0-dc26084297cc8c272ed1cd4b403df714f8d6b90b509cab55996c048122862751/share/doc/html/src/Control.Monad.Combinators.html#many"><span class="hs-identifier hs-var">MP.many</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#parseComma"><span class="hs-identifier hs-var">Utils.parseComma</span></a></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity ()
+-&gt; ParsecT FatalError Text Identity (NESeq Edge)
+-&gt; ParsecT FatalError Text Identity (NESeq Edge)
+forall a b.
+ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity b
+forall (f :: Type -&gt; Type) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity (NESeq Edge)
+</span><a href="#local-6989586621679700678"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-identifier">pure</span><span> </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">Seq Edge -&gt; Edges
+</span><a href="Shrun.Configuration.Data.Graph.html#MkEdges"><span class="hs-identifier hs-var">MkEdges</span></a></span><span> </span><span class="annot"><span class="annottext">(Seq Edge -&gt; Edges)
+-&gt; (NESeq Edge -&gt; Seq Edge) -&gt; NESeq Edge -&gt; Edges
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; Seq Edge
+forall a. NESeq a -&gt; Seq a
+</span><a href="Shrun.Prelude.html#neseqToSeq"><span class="hs-identifier hs-var">neseqToSeq</span></a></span><span> </span><span class="annot"><span class="annottext">(NESeq Edge -&gt; Edges) -&gt; NESeq Edge -&gt; Edges
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty (NESeq Edge) -&gt; NESeq Edge
+forall m. Semigroup m =&gt; NonEmpty m -&gt; m
+forall (t :: Type -&gt; Type) m.
+(Foldable1 t, Semigroup m) =&gt;
+t m -&gt; m
+</span><span class="hs-identifier hs-var">fold1</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NESeq Edge
+</span><a href="#local-6989586621679700677"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Edge -&gt; [NESeq Edge] -&gt; NonEmpty (NESeq Edge)
+forall a. a -&gt; [a] -&gt; NonEmpty a
+</span><span class="hs-operator hs-var">:|</span></span><span> </span><span class="annot"><span class="annottext">[NESeq Edge]
+</span><a href="#local-6989586621679700679"><span class="hs-identifier hs-var">es</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-105"></span><span>    </span><span id="local-6989586621679700678"><span class="annot"><span class="annottext">p :: ParsecT FatalError Text Identity (NESeq Edge)
+</span><a href="#local-6989586621679700678"><span class="hs-identifier hs-var hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ParsecT FatalError Text Identity (NESeq Edge)
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Edges.html#parseEdges"><span class="hs-identifier hs-var">Edges.parseEdges</span></a></span><span>
+</span><span id="line-106"></span></pre></body></html>

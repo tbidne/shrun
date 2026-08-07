@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Sequential.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Sequential</span></a></span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Sequential.html#parseSequential"><span class="hs-identifier">parseSequential</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Utils</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier">MParser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Graph.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html"><span class="hs-identifier">Shrun.Configuration.Data.Graph</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeSequential"><span class="hs-identifier">EdgeSequential</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeSequentialAnd"><span class="hs-identifier">EdgeSequentialAnd</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeSequentialAny"><span class="hs-identifier">EdgeSequentialAny</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeSequentialOr"><span class="hs-identifier">EdgeSequentialOr</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.html"><span class="hs-identifier">Text.Megaparsec</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">MP</span></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Sequential.html#parseSequential"><span class="hs-identifier hs-type">parseSequential</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#MParser"><span class="hs-identifier hs-type">MParser</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Graph.html#EdgeSequential"><span class="hs-identifier hs-type">EdgeSequential</span></a></span><span>
+</span><span id="line-15"></span><span id="parseSequential"><span class="annot"><span class="annottext">parseSequential :: MParser EdgeSequential
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Sequential.html#parseSequential"><span class="hs-identifier hs-var hs-var">parseSequential</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MParser EdgeSequential -&gt; MParser EdgeSequential
+forall a.
+String
+-&gt; ParsecT FatalError Text Identity a
+-&gt; ParsecT FatalError Text Identity a
+forall e s (m :: Type -&gt; Type) a.
+MonadParsec e s m =&gt;
+String -&gt; m a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/megaparsec-9.7.0-9ba80ba99e73143965833cef2530920a0813dc63b721d88d49caa1f840000dc0/share/doc/html/src/Text.Megaparsec.Class.html#label"><span class="hs-identifier hs-var">MP.label</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679676815"><span class="hs-keyword hs-var">label</span></a></span><span> </span><span class="annot"><span class="annottext">(MParser EdgeSequential -&gt; MParser EdgeSequential)
+-&gt; MParser EdgeSequential -&gt; MParser EdgeSequential
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-16"></span><span>  </span><span class="annot"><span class="annottext">[MParser EdgeSequential] -&gt; MParser EdgeSequential
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a.
+(Foldable t, Alternative f) =&gt;
+t (f a) -&gt; f a
+</span><span class="hs-identifier hs-var">asum</span></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">EdgeSequential
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeSequentialAnd"><span class="hs-identifier hs-var">EdgeSequentialAnd</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeSequential
+-&gt; ParsecT FatalError Text Identity Text -&gt; MParser EdgeSequential
+forall a b.
+a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ParsecT FatalError Text Identity Text
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#string"><span class="hs-identifier hs-var">Utils.string</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&amp;&amp;&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><span class="annottext">EdgeSequential
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeSequentialOr"><span class="hs-identifier hs-var">EdgeSequentialOr</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeSequential
+-&gt; ParsecT FatalError Text Identity Text -&gt; MParser EdgeSequential
+forall a b.
+a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ParsecT FatalError Text Identity Text
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#string"><span class="hs-identifier hs-var">Utils.string</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;||&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>      </span><span class="annot"><span class="annottext">EdgeSequential
+</span><a href="Shrun.Configuration.Data.Graph.html#EdgeSequentialAny"><span class="hs-identifier hs-var">EdgeSequentialAny</span></a></span><span> </span><span class="annot"><span class="annottext">EdgeSequential
+-&gt; ParsecT FatalError Text Identity Text -&gt; MParser EdgeSequential
+forall a b.
+a
+-&gt; ParsecT FatalError Text Identity b
+-&gt; ParsecT FatalError Text Identity a
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; ParsecT FatalError Text Identity Text
+</span><a href="Shrun.Configuration.Args.Parsing.Graph.Utils.html#string"><span class="hs-identifier hs-var">Utils.string</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;;;&quot;</span></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">]</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>    </span><span id="local-6989586621679676815"><span class="annot"><span class="annottext">label :: String
+</span><a href="#local-6989586621679676815"><span class="hs-keyword hs-var hs-var">label</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;sequential literals (\&quot;&amp;&amp;\&quot;, \&quot;||\&quot;, \&quot;;;\&quot;)&quot;</span></span><span>
+</span><span id="line-23"></span></pre></body></html>

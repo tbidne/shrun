@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedLists #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | CLI parsing for CoreConfigArgs</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Core</span></a></span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html#coreParser"><span class="hs-identifier">coreParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommandLogging.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.CommandLogging</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">CommandLogging</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.CommonLogging</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">CommonLogging</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.ConsoleLogging.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.ConsoleLogging</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ConsoleLogging</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.FileLogging</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FileLogging</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Notify.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Notify</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Notify</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/scientific-0.3.8.0-f5c3b7882901edaf1c3c8c2527cbb4a2d8e94113bc5d014e6b140bddf2d83939/share/doc/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier">CoreConfigArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigP"><span class="hs-identifier">CoreConfigP</span></a></span><span>
+</span><span id="line-20"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier">MkCoreConfigP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#commandLogging"><span class="hs-identifier">commandLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#commonLogging"><span class="hs-identifier">commonLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#consoleLogging"><span class="hs-identifier">consoleLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#fileLogging"><span class="hs-identifier">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#init"><span class="hs-identifier">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#legendKeysCache"><span class="hs-identifier">legendKeysCache</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#notifications"><span class="hs-identifier">notifications</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#timeout"><span class="hs-identifier">timeout</span></a></span><span>
+</span><span id="line-29"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html"><span class="hs-identifier">Shrun.Configuration.Data.Core.Timeout</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html#Timeout"><span class="hs-identifier">Timeout</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html"><span class="hs-identifier">Shrun.Configuration.Data.Core.Timeout</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Timeout</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html"><span class="hs-identifier">Shrun.Configuration.Data.LegendKeysCache</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier">LegendKeysCache</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html"><span class="hs-identifier">Shrun.Configuration.Data.LegendKeysCache</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">LKS</span></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ShrunUtils</span></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span id="local-6989586621679703247"><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html#coreParser"><span class="hs-identifier hs-type">coreParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier hs-type">CoreConfigArgs</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679703247"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-40"></span><span id="coreParser"><span class="annot"><span class="annottext">coreParser :: forall m. Parser (CoreConfigArgs m)
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#coreParser"><span class="hs-identifier hs-var hs-var">coreParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-41"></span><span>  </span><span id="local-6989586621679703367"><span class="annot"><span class="annottext">Maybe (WithDisabled Text)
+</span><a href="#local-6989586621679703367"><span class="hs-identifier hs-var">init</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe (WithDisabled Text))
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#initParser"><span class="hs-identifier hs-var">initParser</span></a></span><span>
+</span><span id="line-42"></span><span>  </span><span id="local-6989586621679703369"><span class="annot"><span class="annottext">Maybe LegendKeysCache
+</span><a href="#local-6989586621679703369"><span class="hs-identifier hs-var">legendKeysCache</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe LegendKeysCache)
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#legendKeysCacheParser"><span class="hs-identifier hs-var">legendKeysCacheParser</span></a></span><span>
+</span><span id="line-43"></span><span>  </span><span id="local-6989586621679703371"><span class="annot"><span class="annottext">Maybe (WithDisabled Timeout)
+</span><a href="#local-6989586621679703371"><span class="hs-identifier hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe (WithDisabled Timeout))
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#timeoutParser"><span class="hs-identifier hs-var">timeoutParser</span></a></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span>  </span><span id="local-6989586621679703373"><span class="annot"><span class="annottext">CommonLoggingArgs
+</span><a href="#local-6989586621679703373"><span class="hs-identifier hs-var">commonLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; Parser CommonLoggingArgs -&gt; Parser CommonLoggingArgs
+forall a. String -&gt; Parser a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#parserOptionGroup"><span class="hs-identifier hs-var">OA.parserOptionGroup</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Common Logging options:&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser CommonLoggingArgs
+</span><a href="Shrun.Configuration.Args.Parsing.CommonLogging.html#commonLoggingParser"><span class="hs-identifier hs-var">CommonLogging.commonLoggingParser</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span id="local-6989586621679703376"><span class="annot"><span class="annottext">CommandLoggingArgs
+</span><a href="#local-6989586621679703376"><span class="hs-identifier hs-var">commandLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-48"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; Parser CommandLoggingArgs -&gt; Parser CommandLoggingArgs
+forall a. String -&gt; Parser a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#parserOptionGroup"><span class="hs-identifier hs-var">OA.parserOptionGroup</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Command Logging options:&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser CommandLoggingArgs
+</span><a href="Shrun.Configuration.Args.Parsing.CommandLogging.html#commandLoggingParser"><span class="hs-identifier hs-var">CommandLogging.commandLoggingParser</span></a></span><span>
+</span><span id="line-49"></span><span>  </span><span id="local-6989586621679703378"><span class="annot"><span class="annottext">ConsoleLoggingArgs
+</span><a href="#local-6989586621679703378"><span class="hs-identifier hs-var">consoleLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; Parser ConsoleLoggingArgs -&gt; Parser ConsoleLoggingArgs
+forall a. String -&gt; Parser a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#parserOptionGroup"><span class="hs-identifier hs-var">OA.parserOptionGroup</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Console Logging options:&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser ConsoleLoggingArgs
+</span><a href="Shrun.Configuration.Args.Parsing.ConsoleLogging.html#consoleLoggingParser"><span class="hs-identifier hs-var">ConsoleLogging.consoleLoggingParser</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span id="local-6989586621679703380"><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679703380"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; Parser FileLoggingArgs -&gt; Parser FileLoggingArgs
+forall a. String -&gt; Parser a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#parserOptionGroup"><span class="hs-identifier hs-var">OA.parserOptionGroup</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;File Logging options:&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser FileLoggingArgs
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLoggingParser"><span class="hs-identifier hs-var">FileLogging.fileLoggingParser</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span>  </span><span id="local-6989586621679703382"><span class="annot"><span class="annottext">NotifyArgs m
+</span><a href="#local-6989586621679703382"><span class="hs-identifier hs-var">notifications</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser (NotifyArgs m) -&gt; Parser (NotifyArgs m)
+forall a. String -&gt; Parser a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#parserOptionGroup"><span class="hs-identifier hs-var">OA.parserOptionGroup</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Notifications options:&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser (NotifyArgs m)
+forall r. Parser (NotifyArgs r)
+</span><a href="Shrun.Configuration.Args.Parsing.Notify.html#notifyParser"><span class="hs-identifier hs-var">Notify.notifyParser</span></a></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier hs-type">MkCoreConfigP</span></a></span><span>
+</span><span id="line-58"></span><span>      </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled Timeout)
+TimeoutF 'ConfigPhaseArgs
+timeout :: TimeoutF 'ConfigPhaseArgs
+timeout :: Maybe (WithDisabled Timeout)
+</span><a href="Shrun.Configuration.Data.Core.html#timeout"><span class="hs-identifier hs-var hs-var">timeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>        </span><span class="annot"><span class="annottext">Maybe (WithDisabled Text)
+ConfigPhaseDisabledMaybeF 'ConfigPhaseArgs Text
+init :: ConfigPhaseDisabledMaybeF 'ConfigPhaseArgs Text
+init :: Maybe (WithDisabled Text)
+</span><a href="Shrun.Configuration.Data.Core.html#init"><span class="hs-identifier hs-var hs-var">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>        </span><span class="annot"><span class="annottext">Maybe LegendKeysCache
+LegendKeysCacheF 'ConfigPhaseArgs
+legendKeysCache :: LegendKeysCacheF 'ConfigPhaseArgs
+legendKeysCache :: Maybe LegendKeysCache
+</span><a href="Shrun.Configuration.Data.Core.html#legendKeysCache"><span class="hs-identifier hs-var hs-var">legendKeysCache</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>        </span><span class="annot"><span class="annottext">CommonLoggingArgs
+TomlOptF 'ConfigPhaseArgs CommonLoggingArgs
+commonLogging :: TomlOptF 'ConfigPhaseArgs CommonLoggingArgs
+commonLogging :: CommonLoggingArgs
+</span><a href="Shrun.Configuration.Data.Core.html#commonLogging"><span class="hs-identifier hs-var hs-var">commonLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>        </span><span class="annot"><span class="annottext">ConsoleLoggingArgs
+TomlOptF 'ConfigPhaseArgs ConsoleLoggingArgs
+consoleLogging :: TomlOptF 'ConfigPhaseArgs ConsoleLoggingArgs
+consoleLogging :: ConsoleLoggingArgs
+</span><a href="Shrun.Configuration.Data.Core.html#consoleLogging"><span class="hs-identifier hs-var hs-var">consoleLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>        </span><span class="annot"><span class="annottext">CommandLoggingArgs
+TomlOptF 'ConfigPhaseArgs CommandLoggingArgs
+commandLogging :: TomlOptF 'ConfigPhaseArgs CommandLoggingArgs
+commandLogging :: CommandLoggingArgs
+</span><a href="Shrun.Configuration.Data.Core.html#commandLogging"><span class="hs-identifier hs-var hs-var">commandLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>        </span><span class="annot"><span class="annottext">FileLoggingArgs
+ArgsOnlyDetF 'ConfigPhaseArgs FileLoggingArgs
+fileLogging :: ArgsOnlyDetF 'ConfigPhaseArgs FileLoggingArgs
+fileLogging :: FileLoggingArgs
+</span><a href="Shrun.Configuration.Data.Core.html#fileLogging"><span class="hs-identifier hs-var hs-var">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>        </span><span class="annot"><span class="annottext">NotifyArgs m
+ArgsOnlyDetF 'ConfigPhaseArgs (NotifyArgs m)
+notifications :: ArgsOnlyDetF 'ConfigPhaseArgs (NotifyArgs m)
+notifications :: NotifyArgs m
+</span><a href="Shrun.Configuration.Data.Core.html#notifications"><span class="hs-identifier hs-var hs-var">notifications</span></a></span><span>
+</span><span id="line-66"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html#timeoutParser"><span class="hs-identifier hs-type">timeoutParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html#Timeout"><span class="hs-identifier hs-type">Timeout</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span id="timeoutParser"><span class="annot"><span class="annottext">timeoutParser :: Parser (Maybe (WithDisabled Timeout))
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#timeoutParser"><span class="hs-identifier hs-var hs-var">timeoutParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-70"></span><span>  </span><span class="annot"><span class="annottext">ReadM Timeout
+-&gt; [Mod OptionFields (WithDisabled Timeout)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled Timeout))
+forall a.
+ReadM a
+-&gt; [Mod OptionFields (WithDisabled a)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled a))
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mWithDisabledParser"><span class="hs-identifier hs-var">Utils.mWithDisabledParser</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Natural -&gt; ReadM Text -&gt; ReadM Timeout
+forall (f :: Type -&gt; Type).
+(Alternative f, MonadFail f) =&gt;
+f Natural -&gt; f Text -&gt; f Timeout
+</span><a href="Shrun.Configuration.Data.Core.Timeout.html#parseTimeout"><span class="hs-identifier hs-var">Timeout.parseTimeout</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Natural
+forall a. Read a =&gt; ReadM a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#autoStripUnderscores"><span class="hs-identifier hs-var">Utils.autoStripUnderscores</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">[Mod OptionFields (WithDisabled Timeout)]
+</span><a href="#local-6989586621679703388"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-73"></span><span>    </span><span class="annot"><span class="annottext">(Bool, [String])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.Core.Timeout.html#timeoutMeta"><span class="hs-identifier hs-var">Timeout.timeoutMeta</span></a></span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-75"></span><span>    </span><span id="local-6989586621679703388"><span class="annot"><span class="annottext">opts :: [Mod OptionFields (WithDisabled Timeout)]
+</span><a href="#local-6989586621679703388"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-76"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled Timeout)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;timeout&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>        </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields (WithDisabled Timeout)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'t'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled Timeout)
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703393"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-79"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-80"></span><span>    </span><span id="local-6989586621679703393"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679703393"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-82"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Non-negative integer setting a timeout. Can either be a raw number &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-83"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;(interpreted as seconds), or a \&quot;time string\&quot; e.g. 1d2h3m4s or &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;2h3s. Defaults to no timeout.&quot;</span></span><span>
+</span><span id="line-85"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html#initParser"><span class="hs-identifier hs-type">initParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span id="initParser"><span class="annot"><span class="annottext">initParser :: Parser (Maybe (WithDisabled Text))
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#initParser"><span class="hs-identifier hs-var hs-var">initParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-89"></span><span>  </span><span class="annot"><span class="annottext">ReadM Text
+-&gt; [Mod OptionFields (WithDisabled Text)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled Text))
+forall a.
+ReadM a
+-&gt; [Mod OptionFields (WithDisabled a)]
+-&gt; (Bool, [String])
+-&gt; Parser (Maybe (WithDisabled a))
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mWithDisabledParser"><span class="hs-identifier hs-var">Utils.mWithDisabledParser</span></a></span><span>
+</span><span id="line-90"></span><span>    </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span>
+</span><span id="line-91"></span><span>    </span><span class="annot"><span class="annottext">[Mod OptionFields (WithDisabled Text)]
+</span><a href="#local-6989586621679703401"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;STRING&quot;</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-94"></span><span>    </span><span id="local-6989586621679703401"><span class="annot"><span class="annottext">opts :: [Mod OptionFields (WithDisabled Text)]
+</span><a href="#local-6989586621679703401"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-95"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled Text)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;init&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-96"></span><span>        </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields (WithDisabled Text)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'i'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-97"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (WithDisabled Text)
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703402"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-98"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-99"></span><span>    </span><span id="local-6989586621679703402"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679703402"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-100"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-101"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;If given, init is run before each command. That is, &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-102"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;'shrun --init \&quot;. ~/.bashrc\&quot; foo bar' is equivalent &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-103"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;to 'shrun \&quot;. ~/.bashrc &amp;&amp; foo\&quot; \&quot;. ~/.bashrc &amp;&amp; bar\&quot;'.&quot;</span></span><span>
+</span><span id="line-104"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Core.html#legendKeysCacheParser"><span class="hs-identifier hs-type">legendKeysCacheParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.LegendKeysCache.html#LegendKeysCache"><span class="hs-identifier hs-type">LegendKeysCache</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span id="legendKeysCacheParser"><span class="annot"><span class="annottext">legendKeysCacheParser :: Parser (Maybe LegendKeysCache)
+</span><a href="Shrun.Configuration.Args.Parsing.Core.html#legendKeysCacheParser"><span class="hs-identifier hs-var hs-var">legendKeysCacheParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-108"></span><span>  </span><span class="annot"><span class="annottext">Parser LegendKeysCache -&gt; Parser (Maybe LegendKeysCache)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-109"></span><span>    </span><span class="annot"><span class="annottext">(Parser LegendKeysCache -&gt; Parser (Maybe LegendKeysCache))
+-&gt; Parser LegendKeysCache -&gt; Parser (Maybe LegendKeysCache)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM LegendKeysCache
+-&gt; Mod OptionFields LegendKeysCache -&gt; Parser LegendKeysCache
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM LegendKeysCache
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m LegendKeysCache
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#parseLegendKeysCache"><span class="hs-identifier hs-var">LKS.parseLegendKeysCache</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>      </span><span class="annot"><span class="annottext">Mod OptionFields LegendKeysCache
+</span><a href="#local-6989586621679703412"><span class="hs-identifier hs-var">opts</span></a></span><span>
+</span><span id="line-112"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-113"></span><span>    </span><span id="local-6989586621679703412"><span class="annot"><span class="annottext">opts :: Mod OptionFields LegendKeysCache
+</span><a href="#local-6989586621679703412"><span class="hs-identifier hs-var hs-var">opts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-114"></span><span>      </span><span class="annot"><span class="annottext">[Mod OptionFields LegendKeysCache]
+-&gt; Mod OptionFields LegendKeysCache
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-115"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields LegendKeysCache
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;legend-keys-cache&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-116"></span><span>          </span><span class="annot"><span class="annottext">[String] -&gt; Mod OptionFields LegendKeysCache
+forall (f :: Type -&gt; Type) a. HasCompleter f =&gt; [String] -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#completeWith"><span class="hs-identifier hs-var">OA.completeWith</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;add&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;clear&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;write&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;off&quot;</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-117"></span><span>          </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields LegendKeysCache
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optparse-applicative-0.19.0.0-b5813fa65fc2298d66afe4542ca40aef625fa75228ba3ac0964c018f3e226052/share/doc/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Bool, [String]) -&gt; String
+forall a. (IsString a, Monoid a) =&gt; (Bool, [a]) -&gt; a
+</span><a href="Shrun.Utils.html#mkMetaStr"><span class="hs-identifier hs-var">ShrunUtils.mkMetaStr</span></a></span><span> </span><span class="annot"><span class="annottext">(Bool, [String])
+forall a. IsString a =&gt; (Bool, [a])
+</span><a href="Shrun.Configuration.Data.LegendKeysCache.html#lksMeta"><span class="hs-identifier hs-var">LKS.lksMeta</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-118"></span><span>          </span><span class="annot"><span class="annottext">Item [Mod OptionFields LegendKeysCache]
+Mod OptionFields LegendKeysCache
+</span><a href="#local-6989586621679703417"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-119"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span>    </span><span id="local-6989586621679703417"><span class="annot"><span class="annottext">helpTxt :: Mod OptionFields LegendKeysCache
+</span><a href="#local-6989586621679703417"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-122"></span><span>      </span><span class="annot"><span class="annottext">NESeq String -&gt; Mod OptionFields LegendKeysCache
+forall a. NESeq String -&gt; Mod OptionFields a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#itemize"><span class="hs-identifier hs-var">Utils.itemize</span></a></span><span>
+</span><span id="line-123"></span><span>        </span><span class="annot"><span class="annottext">(NESeq String -&gt; Mod OptionFields LegendKeysCache)
+-&gt; NESeq String -&gt; Mod OptionFields LegendKeysCache
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679703419"><span class="hs-identifier hs-var">intro</span></a></span><span>
+</span><span id="line-124"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Seq String -&gt; NESeq String
+forall a. a -&gt; Seq a -&gt; NESeq a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/nonempty-containers-0.3.5.0-1cf516447d1f9938e7069a68b6f66d5c4e4a17d3edcb9034f63950ec7ad584b5/share/doc/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-var">:&lt;||</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679703421"><span class="hs-identifier hs-var">add</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-125"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679703422"><span class="hs-identifier hs-var">clear</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-126"></span><span>               </span><span class="annot"><span class="annottext">String
+Item (Seq String)
+</span><a href="#local-6989586621679703423"><span class="hs-identifier hs-var">write</span></a></span><span>
+</span><span id="line-127"></span><span>             </span><span class="hs-special">]</span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span>    </span><span id="local-6989586621679703419"><span class="annot"><span class="annottext">intro :: String
+</span><a href="#local-6989586621679703419"><span class="hs-identifier hs-var hs-var">intro</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-130"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-131"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;Shrun allows saving legend keys from the current config file so &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-132"></span><span>          </span><span class="annot"><span class="annottext">String
+Item [String]
+</span><span class="hs-string">&quot;that we can get tab-completions on the next run.&quot;</span></span><span>
+</span><span id="line-133"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span>    </span><span id="local-6989586621679703421"><span class="annot"><span class="annottext">add :: String
+</span><a href="#local-6989586621679703421"><span class="hs-identifier hs-var hs-var">add</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;add: The default. Combines keys from this run with the prior run(s).&quot;</span></span><span>
+</span><span id="line-136"></span><span>    </span><span id="local-6989586621679703423"><span class="annot"><span class="annottext">write :: String
+</span><a href="#local-6989586621679703423"><span class="hs-identifier hs-var hs-var">write</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;write: Saves keys from this run only.&quot;</span></span><span>
+</span><span id="line-137"></span><span>    </span><span id="local-6989586621679703422"><span class="annot"><span class="annottext">clear :: String
+</span><a href="#local-6989586621679703422"><span class="hs-identifier hs-var hs-var">clear</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;clear: Deletes the keys cache, if it exists.&quot;</span></span><span>
+</span><span id="line-138"></span></pre></body></html>

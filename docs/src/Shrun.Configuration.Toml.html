@@ -1,0 +1,494 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.html"><span class="hs-identifier">Shrun.Configuration.Toml</span></a></span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier">Toml</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.html#mergeTomls"><span class="hs-identifier">mergeTomls</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">HSet</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigP"><span class="hs-identifier">CoreConfigP</span></a></span><span>
+</span><span id="line-12"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier">MkCoreConfigP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#commandLogging"><span class="hs-identifier">commandLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#commonLogging"><span class="hs-identifier">commonLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#consoleLogging"><span class="hs-identifier">consoleLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#fileLogging"><span class="hs-identifier">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#init"><span class="hs-identifier">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#legendKeysCache"><span class="hs-identifier">legendKeysCache</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#notifications"><span class="hs-identifier">notifications</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#timeout"><span class="hs-identifier">timeout</span></a></span><span>
+</span><span id="line-21"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigToml"><span class="hs-identifier">CoreConfigToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html"><span class="hs-identifier">Shrun.Configuration.Data.Core.Timeout</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html#Timeout"><span class="hs-identifier">Timeout</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html"><span class="hs-identifier">Shrun.Configuration.Toml.Legend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier">KeyVal</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="annot"><span class="hs-comment">-- | Holds toml config.</span></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">data</span><span> </span><span id="Toml"><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-var">Toml</span></a></span></span><span> </span><span id="local-6989586621679700988"><span class="annot"><a href="#local-6989586621679700988"><span class="hs-identifier hs-type">notifyEnv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkToml"><span class="annot"><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-var">MkToml</span></a></span></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Core config.</span></span><span>
+</span><span id="line-32"></span><span>    </span><span id="coreConfig"><span class="annot"><span class="annottext">forall notifyEnv. Toml notifyEnv -&gt; CoreConfigToml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#coreConfig"><span class="hs-identifier hs-var hs-var">coreConfig</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigToml"><span class="hs-identifier hs-type">CoreConfigToml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679700988"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Legend.</span></span><span>
+</span><span id="line-34"></span><span>    </span><span id="legend"><span class="annot"><span class="annottext">forall notifyEnv. Toml notifyEnv -&gt; Maybe (Seq KeyVal)
+</span><a href="Shrun.Configuration.Toml.html#legend"><span class="hs-identifier hs-var hs-var">legend</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679701164"><span id="local-6989586621679701171"><span class="annot"><span class="annottext">Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool
+(Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool)
+-&gt; (Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool)
+-&gt; Eq (Toml notifyEnv)
+forall notifyEnv. Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: forall notifyEnv. Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool
+== :: Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool
+$c/= :: forall notifyEnv. Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool
+/= :: Toml notifyEnv -&gt; Toml notifyEnv -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679701179"><span id="local-6989586621679701188"><span id="local-6989586621679701192"><span class="annot"><span class="annottext">Int -&gt; Toml notifyEnv -&gt; ShowS
+[Toml notifyEnv] -&gt; ShowS
+Toml notifyEnv -&gt; String
+(Int -&gt; Toml notifyEnv -&gt; ShowS)
+-&gt; (Toml notifyEnv -&gt; String)
+-&gt; ([Toml notifyEnv] -&gt; ShowS)
+-&gt; Show (Toml notifyEnv)
+forall notifyEnv. Int -&gt; Toml notifyEnv -&gt; ShowS
+forall notifyEnv. [Toml notifyEnv] -&gt; ShowS
+forall notifyEnv. Toml notifyEnv -&gt; String
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: forall notifyEnv. Int -&gt; Toml notifyEnv -&gt; ShowS
+showsPrec :: Int -&gt; Toml notifyEnv -&gt; ShowS
+$cshow :: forall notifyEnv. Toml notifyEnv -&gt; String
+show :: Toml notifyEnv -&gt; String
+$cshowList :: forall notifyEnv. [Toml notifyEnv] -&gt; ShowS
+showList :: [Toml notifyEnv] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-39"></span><span>  </span><span id="local-6989586621679701022"><span id="local-6989586621679701023"><span id="local-6989586621679701024"><span id="local-6989586621679701025"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679701022"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679701023"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigToml"><span class="hs-identifier hs-type">CoreConfigToml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701024"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679701025"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigToml"><span class="hs-identifier hs-type">CoreConfigToml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701024"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-40"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;coreConfig&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679701022"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701024"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701024"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679701023"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701025"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-42"></span><span>  </span><span id="local-6989586621679701208"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Toml notifyEnv) (Toml notifyEnv) a b
+</span><a href="#local-6989586621679701208"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Toml notifyEnv) (Toml notifyEnv) a b
+-&gt; Lens (Toml notifyEnv) (Toml notifyEnv) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Toml notifyEnv) (Toml notifyEnv) a b
+ -&gt; Lens (Toml notifyEnv) (Toml notifyEnv) a b)
+-&gt; LensVL (Toml notifyEnv) (Toml notifyEnv) a b
+-&gt; Lens (Toml notifyEnv) (Toml notifyEnv) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679701213"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679701213"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-type">MkToml</span></a></span><span> </span><span id="local-6989586621679701214"><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+</span><a href="#local-6989586621679701214"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679701215"><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701215"><span class="hs-identifier hs-var">a2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">(CoreConfigToml notifyEnv -&gt; Toml notifyEnv)
+-&gt; f (CoreConfigToml notifyEnv) -&gt; f (Toml notifyEnv)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679701216"><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+</span><a href="#local-6989586621679701216"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CoreConfigToml notifyEnv -&gt; Maybe (Seq KeyVal) -&gt; Toml notifyEnv
+forall notifyEnv.
+CoreConfigToml notifyEnv -&gt; Maybe (Seq KeyVal) -&gt; Toml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-var">MkToml</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+</span><a href="#local-6989586621679701216"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701215"><span class="hs-identifier hs-var">a2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679701213"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+CoreConfigToml notifyEnv
+</span><a href="#local-6989586621679701214"><span class="hs-identifier hs-var">a1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-47"></span><span>  </span><span id="local-6989586621679701047"><span id="local-6989586621679701048"><span id="local-6989586621679701049"><span id="local-6989586621679701050"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679701047"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679701048"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679701049"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-48"></span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;legend&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679701047"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701050"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701050"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679701048"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701049"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-50"></span><span>  </span><span id="local-6989586621679701225"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Toml notifyEnv) (Toml notifyEnv) a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL (Toml notifyEnv) (Toml notifyEnv) a b
+-&gt; Lens (Toml notifyEnv) (Toml notifyEnv) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL (Toml notifyEnv) (Toml notifyEnv) a b
+ -&gt; Lens (Toml notifyEnv) (Toml notifyEnv) a b)
+-&gt; LensVL (Toml notifyEnv) (Toml notifyEnv) a b
+-&gt; Lens (Toml notifyEnv) (Toml notifyEnv) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679701228"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679701228"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-type">MkToml</span></a></span><span> </span><span id="local-6989586621679701229"><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+</span><a href="#local-6989586621679701229"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679701230"><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701230"><span class="hs-identifier hs-var">a2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">(Maybe (Seq KeyVal) -&gt; Toml notifyEnv)
+-&gt; f (Maybe (Seq KeyVal)) -&gt; f (Toml notifyEnv)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679701231"><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701231"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CoreConfigToml notifyEnv -&gt; Maybe (Seq KeyVal) -&gt; Toml notifyEnv
+forall notifyEnv.
+CoreConfigToml notifyEnv -&gt; Maybe (Seq KeyVal) -&gt; Toml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-var">MkToml</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+</span><a href="#local-6989586621679701229"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701231"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679701228"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701230"><span class="hs-identifier hs-var">a2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679701055"><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701055"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-55"></span><span>  </span><span id="local-6989586621679701264"><span class="annot"><span class="annottext">tomlDecoder :: Decoder (Toml notifyEnv)
+</span><a href="#local-6989586621679701264"><span class="hs-identifier hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-56"></span><span>    </span><span id="local-6989586621679701266"><span class="annot"><span class="annottext">Maybe (WithDisabled Timeout)
+</span><a href="#local-6989586621679701266"><span class="hs-identifier hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe (WithDisabled Timeout))
+</span><a href="Shrun.Configuration.Toml.html#decodeTimeout"><span class="hs-identifier hs-var">decodeTimeout</span></a></span><span>
+</span><span id="line-57"></span><span>    </span><span id="local-6989586621679701268"><span class="annot"><span class="annottext">Maybe (WithDisabled Text)
+</span><a href="#local-6989586621679701268"><span class="hs-identifier hs-var">init</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe (WithDisabled Text))
+</span><a href="Shrun.Configuration.Toml.html#decodeInit"><span class="hs-identifier hs-var">decodeInit</span></a></span><span>
+</span><span id="line-58"></span><span>    </span><span id="local-6989586621679701270"><span class="annot"><span class="annottext">Maybe LegendKeysCache
+</span><a href="#local-6989586621679701270"><span class="hs-identifier hs-var">legendKeysCache</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder LegendKeysCache -&gt; Text -&gt; Decoder (Maybe LegendKeysCache)
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder LegendKeysCache
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;legend-keys-cache&quot;</span></span><span>
+</span><span id="line-59"></span><span>    </span><span id="local-6989586621679701272"><span class="annot"><span class="annottext">Maybe (CommonLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679701272"><span class="hs-identifier hs-var">commonLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (CommonLoggingP 'ConfigPhaseToml)
+-&gt; Text -&gt; Decoder (Maybe (CommonLoggingP 'ConfigPhaseToml))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (CommonLoggingP 'ConfigPhaseToml)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;common-log&quot;</span></span><span>
+</span><span id="line-60"></span><span>    </span><span id="local-6989586621679701273"><span class="annot"><span class="annottext">Maybe (CommandLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679701273"><span class="hs-identifier hs-var">commandLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (CommandLoggingP 'ConfigPhaseToml)
+-&gt; Text -&gt; Decoder (Maybe (CommandLoggingP 'ConfigPhaseToml))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (CommandLoggingP 'ConfigPhaseToml)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;command-log&quot;</span></span><span>
+</span><span id="line-61"></span><span>    </span><span id="local-6989586621679701274"><span class="annot"><span class="annottext">Maybe (ConsoleLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679701274"><span class="hs-identifier hs-var">consoleLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (ConsoleLoggingP 'ConfigPhaseToml)
+-&gt; Text -&gt; Decoder (Maybe (ConsoleLoggingP 'ConfigPhaseToml))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (ConsoleLoggingP 'ConfigPhaseToml)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;console-log&quot;</span></span><span>
+</span><span id="line-62"></span><span>    </span><span id="local-6989586621679701275"><span class="annot"><span class="annottext">Maybe (FileLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679701275"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (FileLoggingP 'ConfigPhaseToml)
+-&gt; Text -&gt; Decoder (Maybe (FileLoggingP 'ConfigPhaseToml))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (FileLoggingP 'ConfigPhaseToml)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;file-log&quot;</span></span><span>
+</span><span id="line-63"></span><span>    </span><span id="local-6989586621679701276"><span class="annot"><span class="annottext">Maybe (NotifyP 'ConfigPhaseToml notifyEnv)
+</span><a href="#local-6989586621679701276"><span class="hs-identifier hs-var">notifications</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (NotifyP 'ConfigPhaseToml notifyEnv)
+-&gt; Text -&gt; Decoder (Maybe (NotifyP 'ConfigPhaseToml notifyEnv))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (NotifyP 'ConfigPhaseToml notifyEnv)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;notify&quot;</span></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span>    </span><span id="local-6989586621679701277"><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+</span><a href="#local-6989586621679701277"><span class="hs-identifier hs-var">legend</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe (Seq KeyVal))
+</span><a href="Shrun.Configuration.Toml.html#decodeLegend"><span class="hs-identifier hs-var">decodeLegend</span></a></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-67"></span><span>      </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-type">MkToml</span></a></span><span>
+</span><span id="line-68"></span><span>        </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">coreConfig :: CoreConfigToml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#coreConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-69"></span><span>            </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier hs-type">MkCoreConfigP</span></a></span><span>
+</span><span id="line-70"></span><span>              </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">Maybe (WithDisabled Timeout)
+TimeoutF 'ConfigPhaseToml
+timeout :: TimeoutF 'ConfigPhaseToml
+timeout :: Maybe (WithDisabled Timeout)
+</span><a href="Shrun.Configuration.Data.Core.html#timeout"><span class="hs-identifier hs-var hs-var">timeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>                </span><span class="annot"><span class="annottext">Maybe LegendKeysCache
+LegendKeysCacheF 'ConfigPhaseToml
+legendKeysCache :: LegendKeysCacheF 'ConfigPhaseToml
+legendKeysCache :: Maybe LegendKeysCache
+</span><a href="Shrun.Configuration.Data.Core.html#legendKeysCache"><span class="hs-identifier hs-var hs-var">legendKeysCache</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-72"></span><span>                </span><span class="annot"><span class="annottext">Maybe (WithDisabled Text)
+ConfigPhaseDisabledMaybeF 'ConfigPhaseToml Text
+init :: ConfigPhaseDisabledMaybeF 'ConfigPhaseToml Text
+init :: Maybe (WithDisabled Text)
+</span><a href="Shrun.Configuration.Data.Core.html#init"><span class="hs-identifier hs-var hs-var">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>                </span><span class="annot"><span class="annottext">Maybe (CommonLoggingP 'ConfigPhaseToml)
+TomlOptF 'ConfigPhaseToml (CommonLoggingP 'ConfigPhaseToml)
+commonLogging :: TomlOptF 'ConfigPhaseToml (CommonLoggingP 'ConfigPhaseToml)
+commonLogging :: Maybe (CommonLoggingP 'ConfigPhaseToml)
+</span><a href="Shrun.Configuration.Data.Core.html#commonLogging"><span class="hs-identifier hs-var hs-var">commonLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>                </span><span class="annot"><span class="annottext">Maybe (CommandLoggingP 'ConfigPhaseToml)
+TomlOptF 'ConfigPhaseToml (CommandLoggingP 'ConfigPhaseToml)
+commandLogging :: TomlOptF 'ConfigPhaseToml (CommandLoggingP 'ConfigPhaseToml)
+commandLogging :: Maybe (CommandLoggingP 'ConfigPhaseToml)
+</span><a href="Shrun.Configuration.Data.Core.html#commandLogging"><span class="hs-identifier hs-var hs-var">commandLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-75"></span><span>                </span><span class="annot"><span class="annottext">Maybe (ConsoleLoggingP 'ConfigPhaseToml)
+TomlOptF 'ConfigPhaseToml (ConsoleLoggingP 'ConfigPhaseToml)
+consoleLogging :: TomlOptF 'ConfigPhaseToml (ConsoleLoggingP 'ConfigPhaseToml)
+consoleLogging :: Maybe (ConsoleLoggingP 'ConfigPhaseToml)
+</span><a href="Shrun.Configuration.Data.Core.html#consoleLogging"><span class="hs-identifier hs-var hs-var">consoleLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-76"></span><span>                </span><span class="annot"><span class="annottext">Maybe (FileLoggingP 'ConfigPhaseToml)
+ArgsOnlyDetF 'ConfigPhaseToml (FileLoggingP 'ConfigPhaseToml)
+fileLogging :: ArgsOnlyDetF 'ConfigPhaseToml (FileLoggingP 'ConfigPhaseToml)
+fileLogging :: Maybe (FileLoggingP 'ConfigPhaseToml)
+</span><a href="Shrun.Configuration.Data.Core.html#fileLogging"><span class="hs-identifier hs-var hs-var">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>                </span><span class="annot"><span class="annottext">Maybe (NotifyP 'ConfigPhaseToml notifyEnv)
+ArgsOnlyDetF 'ConfigPhaseToml (NotifyP 'ConfigPhaseToml notifyEnv)
+notifications :: ArgsOnlyDetF 'ConfigPhaseToml (NotifyP 'ConfigPhaseToml notifyEnv)
+notifications :: Maybe (NotifyP 'ConfigPhaseToml notifyEnv)
+</span><a href="Shrun.Configuration.Data.Core.html#notifications"><span class="hs-identifier hs-var hs-var">notifications</span></a></span><span>
+</span><span id="line-78"></span><span>              </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>          </span><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+legend :: Maybe (Seq KeyVal)
+legend :: Maybe (Seq KeyVal)
+</span><a href="Shrun.Configuration.Toml.html#legend"><span class="hs-identifier hs-var hs-var">legend</span></a></span><span>
+</span><span id="line-80"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="Shrun.Configuration.Toml.html#decodeTimeout"><span class="hs-identifier hs-type">decodeTimeout</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.Timeout.html#Timeout"><span class="hs-identifier hs-type">Timeout</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span id="decodeTimeout"><span class="annot"><span class="annottext">decodeTimeout :: Decoder (Maybe (WithDisabled Timeout))
+</span><a href="Shrun.Configuration.Toml.html#decodeTimeout"><span class="hs-identifier hs-var hs-var">decodeTimeout</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder (WithDisabled Timeout)
+-&gt; Text -&gt; Decoder (Maybe (WithDisabled Timeout))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (WithDisabled Timeout)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;timeout&quot;</span></span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="annot"><a href="Shrun.Configuration.Toml.html#decodeInit"><span class="hs-identifier hs-type">decodeInit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span id="decodeInit"><span class="annot"><span class="annottext">decodeInit :: Decoder (Maybe (WithDisabled Text))
+</span><a href="Shrun.Configuration.Toml.html#decodeInit"><span class="hs-identifier hs-var hs-var">decodeInit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder (WithDisabled Text)
+-&gt; Text -&gt; Decoder (Maybe (WithDisabled Text))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (WithDisabled Text)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;init&quot;</span></span><span>
+</span><span id="line-87"></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Shrun.Configuration.Toml.html#decodeLegend"><span class="hs-identifier hs-type">decodeLegend</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span id="decodeLegend"><span class="annot"><span class="annottext">decodeLegend :: Decoder (Maybe (Seq KeyVal))
+</span><a href="Shrun.Configuration.Toml.html#decodeLegend"><span class="hs-identifier hs-var hs-var">decodeLegend</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder (Seq KeyVal) -&gt; Text -&gt; Decoder (Maybe (Seq KeyVal))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Seq KeyVal)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/toml-reader-0.3.0.0-b9b11e177bdd46d63bc57ac7a0ad2a26ead2ba8b914105f3873006eb35dca9e8/share/doc/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;legend&quot;</span></span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- | Note that our Semigroup is /not/ commutative, hence the order matters.</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- In particular, mconcat is safe because it is foldr, hence respects the</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- input order.</span><span>
+</span><span id="line-94"></span><span id="local-6989586621679701074"><span class="annot"><a href="Shrun.Configuration.Toml.html#mergeTomls"><span class="hs-identifier hs-type">mergeTomls</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701074"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701074"><span class="hs-identifier hs-type">notifyEnv</span></a></span></span><span>
+</span><span id="line-95"></span><span id="mergeTomls"><span class="annot"><span class="annottext">mergeTomls :: forall notifyEnv. Seq (Toml notifyEnv) -&gt; Toml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#mergeTomls"><span class="hs-identifier hs-var hs-var">mergeTomls</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Toml notifyEnv] -&gt; Toml notifyEnv
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span> </span><span class="annot"><span class="annottext">([Toml notifyEnv] -&gt; Toml notifyEnv)
+-&gt; (Seq (Toml notifyEnv) -&gt; [Toml notifyEnv])
+-&gt; Seq (Toml notifyEnv)
+-&gt; Toml notifyEnv
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+forall {k} (cat :: k -&gt; k -&gt; Type) (b :: k) (c :: k) (a :: k).
+Category cat =&gt;
+cat b c -&gt; cat a b -&gt; cat a c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Seq (Toml notifyEnv) -&gt; [Toml notifyEnv]
+forall a. Seq a -&gt; [a]
+forall (t :: Type -&gt; Type) a. Foldable t =&gt; t a -&gt; [a]
+</span><span class="hs-identifier hs-var">toList</span></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- NOTE: [Toml Semigroup]</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- The Toml semigroup is used to combine multiple tomls into a single toml,</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- for further combining with CLI args. The general strategy is to take</span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- the &quot;more defined&quot; fields i.e. if an element is set on the LHS or RHS,</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- we take it. The instance is left-biased in the sense that we favor the</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- LHS when there is a conflict i.e. both elements have defined the same</span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- field.</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- This is essentially Maybe's Alternative instance semantics. In fact,</span><span>
+</span><span id="line-107"></span><span class="hs-comment">-- since every field is ultimately a Maybe (all fields are optional),</span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- most fields are indeed using Maybe's (&lt;|&gt;) and empty.</span><span>
+</span><span id="line-109"></span><span class="hs-comment">--</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- It is only &quot;non-scaler&quot; types (i.e. aggregate types like FileLogging) that</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- declare their own Semigroup/Monoid instances, in terms of their fields'</span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- Alternative instances. This way we ensure we &quot;reach down&quot; deeply into</span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- each field, when they exist.</span><span>
+</span><span id="line-114"></span><span class="hs-comment">--</span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- The LHS bias is actually designed to favor the /right-most/ element</span><span>
+</span><span id="line-116"></span><span class="hs-comment">-- in the CLI, with the potential xdg at the very left e.g.</span><span>
+</span><span id="line-117"></span><span class="hs-comment">--</span><span>
+</span><span id="line-118"></span><span class="hs-comment">--   xdg, cfg1, cfg2, ..., cfgn</span><span>
+</span><span id="line-119"></span><span class="hs-comment">--</span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- See NOTE: [Toml order] for more details.</span><span>
+</span><span id="line-121"></span><span class="hs-comment">--</span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- Also, because we want Tomls to use Alternative or Monoid instances, we</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- deliberately do not provide Default instances for non-scalar types e.g.</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- CommandLogging. Instances should exist only for *Args, as Merged does</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- not need them either.</span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679701090"><span id="local-6989586621679701289"><span id="local-6989586621679701293"><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701090"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-128"></span><span>  </span><span id="local-6989586621679701337"><span class="annot"><span class="annottext">Toml notifyEnv
+</span><a href="#local-6989586621679701337"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679701338"><span class="annot"><span class="annottext">&lt;&gt; :: Toml notifyEnv -&gt; Toml notifyEnv -&gt; Toml notifyEnv
+</span><span class="hs-operator hs-var hs-var hs-var">&lt;&gt;</span></span></span><span> </span><span id="local-6989586621679701339"><span class="annot"><span class="annottext">Toml notifyEnv
+</span><a href="#local-6989586621679701339"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-129"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-type">MkToml</span></a></span><span>
+</span><span id="line-130"></span><span>      </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">coreConfig :: CoreConfigToml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#coreConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Toml notifyEnv
+</span><a href="#local-6989586621679701337"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Toml notifyEnv
+-&gt; Optic' A_Lens NoIx (Toml notifyEnv) (CoreConfigToml notifyEnv)
+-&gt; CoreConfigToml notifyEnv
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Toml notifyEnv) (CoreConfigToml notifyEnv)
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+-&gt; CoreConfigToml notifyEnv -&gt; CoreConfigToml notifyEnv
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Toml notifyEnv
+</span><a href="#local-6989586621679701339"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Toml notifyEnv
+-&gt; Optic' A_Lens NoIx (Toml notifyEnv) (CoreConfigToml notifyEnv)
+-&gt; CoreConfigToml notifyEnv
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Toml notifyEnv) (CoreConfigToml notifyEnv)
+</span><span class="">#coreConfig</span></span><span class="hs-special">,</span><span>
+</span><span id="line-131"></span><span>        </span><span class="annot"><span class="annottext">legend :: Maybe (Seq KeyVal)
+</span><a href="Shrun.Configuration.Toml.html#legend"><span class="hs-identifier hs-var">legend</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Seq KeyVal) -&gt; Maybe (Seq KeyVal) -&gt; Maybe (Seq KeyVal)
+forall {k} {a}.
+(LabelOptic &quot;key&quot; k a a Text Text, Is k A_Getter) =&gt;
+Maybe (Seq a) -&gt; Maybe (Seq a) -&gt; Maybe (Seq a)
+</span><a href="#local-6989586621679701341"><span class="hs-identifier hs-var">unionLegend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml notifyEnv
+</span><a href="#local-6989586621679701337"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="annot"><span class="annottext">Toml notifyEnv
+-&gt; Optic' A_Lens NoIx (Toml notifyEnv) (Maybe (Seq KeyVal))
+-&gt; Maybe (Seq KeyVal)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Toml notifyEnv) (Maybe (Seq KeyVal))
+</span><span class="">#legend</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml notifyEnv
+</span><a href="#local-6989586621679701339"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Toml notifyEnv
+-&gt; Optic' A_Lens NoIx (Toml notifyEnv) (Maybe (Seq KeyVal))
+-&gt; Maybe (Seq KeyVal)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Toml notifyEnv) (Maybe (Seq KeyVal))
+</span><span class="">#legend</span></span><span class="hs-special">)</span><span>
+</span><span id="line-132"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-133"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-134"></span><span>      </span><span id="local-6989586621679701341"><span class="annot"><span class="annottext">unionLegend :: Maybe (Seq a) -&gt; Maybe (Seq a) -&gt; Maybe (Seq a)
+</span><a href="#local-6989586621679701341"><span class="hs-identifier hs-var hs-var">unionLegend</span></a></span></span><span> </span><span class="annot"><span class="annottext">Maybe (Seq a)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Seq a)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Seq a)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-135"></span><span>      </span><span class="annot"><a href="#local-6989586621679701341"><span class="hs-identifier hs-var">unionLegend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679701347"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701347"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Maybe (Seq a)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq a -&gt; Maybe (Seq a)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701347"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-136"></span><span>      </span><span class="annot"><a href="#local-6989586621679701341"><span class="hs-identifier hs-var">unionLegend</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Seq a)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679701348"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701348"><span class="hs-identifier hs-var">ys</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq a -&gt; Maybe (Seq a)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701348"><span class="hs-identifier hs-var">ys</span></a></span><span>
+</span><span id="line-137"></span><span>      </span><span class="annot"><a href="#local-6989586621679701341"><span class="hs-identifier hs-var">unionLegend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679701349"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701349"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679701350"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701350"><span class="hs-identifier hs-var">ys</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq a -&gt; Maybe (Seq a)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Seq a -&gt; Seq a -&gt; Seq a
+forall {t :: Type -&gt; Type} {k} {a}.
+(Foldable t, LabelOptic &quot;key&quot; k a a Text Text, Is k A_Getter) =&gt;
+Seq a -&gt; t a -&gt; Seq a
+</span><a href="#local-6989586621679701351"><span class="hs-identifier hs-var">uniqKeys</span></a></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701349"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701350"><span class="hs-identifier hs-var">ys</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span>      </span><span class="hs-comment">-- When combining two files' legends, we want the following behavor:</span><span>
+</span><span id="line-140"></span><span>      </span><span class="hs-comment">--</span><span>
+</span><span id="line-141"></span><span>      </span><span class="hs-comment">--   1. LHS keys override the RHS.</span><span>
+</span><span id="line-142"></span><span>      </span><span class="hs-comment">--   2. Duplicates /within the same legend/ are allowed (assuming</span><span>
+</span><span id="line-143"></span><span>      </span><span class="hs-comment">--     RHS duplicates are not overwritten).</span><span>
+</span><span id="line-144"></span><span>      </span><span class="hs-comment">--</span><span>
+</span><span id="line-145"></span><span>      </span><span class="hs-comment">-- We want 2 so that we later report an error for any found duplicates</span><span>
+</span><span id="line-146"></span><span>      </span><span class="hs-comment">-- in the same config, as this is likely an error. But duplicates across</span><span>
+</span><span id="line-147"></span><span>      </span><span class="hs-comment">-- multiple configs should merely override.</span><span>
+</span><span id="line-148"></span><span>      </span><span class="hs-comment">--</span><span>
+</span><span id="line-149"></span><span>      </span><span class="hs-comment">-- Hence we take everything from the LHS, then add everything from the</span><span>
+</span><span id="line-150"></span><span>      </span><span class="hs-comment">-- RHS that is not a duplicate.</span><span>
+</span><span id="line-151"></span><span>      </span><span id="local-6989586621679701351"><span class="annot"><span class="annottext">uniqKeys :: Seq a -&gt; t a -&gt; Seq a
+</span><a href="#local-6989586621679701351"><span class="hs-identifier hs-var hs-var">uniqKeys</span></a></span></span><span> </span><span id="local-6989586621679701367"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701367"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679701368"><span class="annot"><span class="annottext">t a
+</span><a href="#local-6989586621679701368"><span class="hs-identifier hs-var">ys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-152"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679701369"><span class="annot"><span class="annottext">lhsKeys :: HashSet Text
+</span><a href="#local-6989586621679701369"><span class="hs-identifier hs-var hs-var">lhsKeys</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; HashSet Text
+forall a. Hashable a =&gt; [a] -&gt; HashSet a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashSet.Internal.html#fromList"><span class="hs-identifier hs-var">HSet.fromList</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Seq Text -&gt; [Text]
+forall a. Seq a -&gt; [a]
+forall (t :: Type -&gt; Type) a. Foldable t =&gt; t a -&gt; [a]
+</span><span class="hs-identifier hs-var">toList</span></span><span> </span><span class="annot"><span class="annottext">(Seq Text -&gt; [Text]) -&gt; Seq Text -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Optic' k NoIx a Text -&gt; a -&gt; Text
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' k NoIx a Text
+</span><span class="">#key</span></span><span> </span><span class="annot"><span class="annottext">(a -&gt; Text) -&gt; Seq a -&gt; Seq Text
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701367"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>         </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">(Seq a -&gt; a -&gt; Seq a) -&gt; Seq a -&gt; t a -&gt; Seq a
+forall b a. (b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+forall (t :: Type -&gt; Type) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl'</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HashSet Text -&gt; Seq a -&gt; a -&gt; Seq a
+forall {k} {a}.
+(Is k A_Getter, LabelOptic &quot;key&quot; k a a Text Text) =&gt;
+HashSet Text -&gt; Seq a -&gt; a -&gt; Seq a
+</span><a href="#local-6989586621679701374"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679701369"><span class="hs-identifier hs-var">lhsKeys</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701367"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">t a
+</span><a href="#local-6989586621679701368"><span class="hs-identifier hs-var">ys</span></a></span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span>      </span><span id="local-6989586621679701374"><span class="annot"><span class="annottext">go :: HashSet Text -&gt; Seq a -&gt; a -&gt; Seq a
+</span><a href="#local-6989586621679701374"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span id="local-6989586621679701382"><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679701382"><span class="hs-identifier hs-var">lhsKeys</span></a></span></span><span> </span><span id="local-6989586621679701383"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701383"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span id="local-6989586621679701384"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679701384"><span class="hs-identifier hs-var">kv</span></a></span></span><span>
+</span><span id="line-156"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text -&gt; HashSet Text -&gt; Bool
+forall a. Hashable a =&gt; a -&gt; HashSet a -&gt; Bool
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/unordered-containers-0.2.21-d91054407e5b6cf04a96bae60ca8b01a3b055da92a63a5fb3ec0536d36d35c91/share/doc/html/src/Data.HashSet.Internal.html#member"><span class="hs-identifier hs-var">HSet.member</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679701386"><span class="hs-identifier hs-var">key</span></a></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679701382"><span class="hs-identifier hs-var">lhsKeys</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701383"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-157"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679701383"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">Seq a -&gt; a -&gt; Seq a
+forall a. Seq a -&gt; a -&gt; Seq a
+</span><span class="hs-operator hs-var">:|&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679701384"><span class="hs-identifier hs-var">kv</span></a></span><span>
+</span><span id="line-158"></span><span>        </span><span class="hs-keyword">where</span><span>
+</span><span id="line-159"></span><span>          </span><span class="annot"><a href="#local-6989586621679701386"><span class="hs-identifier hs-type">key</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-160"></span><span>          </span><span id="local-6989586621679701386"><span class="annot"><span class="annottext">key :: Text
+</span><a href="#local-6989586621679701386"><span class="hs-identifier hs-var hs-var">key</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679701384"><span class="hs-identifier hs-var">kv</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; Optic' k NoIx a Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.12.3-2625/optics-core-0.4.1.1-b71d0de78a8cbd7083f7321a493d26270c328d12656b70f03082e585a9878308/share/doc/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' k NoIx a Text
+</span><span class="">#key</span></span><span>
+</span><span id="line-161"></span><span>
+</span><span id="line-162"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679701077"><span id="local-6989586621679701392"><span id="local-6989586621679701395"><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679701077"><span class="hs-identifier hs-type">notifyEnv</span></a></span><span class="hs-special">)</span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-163"></span><span>  </span><span id="local-6989586621679701400"><span class="annot"><span class="annottext">mempty :: Toml notifyEnv
+</span><span class="hs-identifier hs-var hs-var hs-var">mempty</span></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-164"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.html#MkToml"><span class="hs-identifier hs-type">MkToml</span></a></span><span>
+</span><span id="line-165"></span><span>      </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">coreConfig :: CoreConfigToml notifyEnv
+</span><a href="Shrun.Configuration.Toml.html#coreConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CoreConfigToml notifyEnv
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-166"></span><span>        </span><span class="annot"><span class="annottext">legend :: Maybe (Seq KeyVal)
+</span><a href="Shrun.Configuration.Toml.html#legend"><span class="hs-identifier hs-var">legend</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Seq KeyVal)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-167"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-168"></span></pre></body></html>
