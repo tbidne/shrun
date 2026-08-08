@@ -302,7 +302,7 @@ expected =
     "         the same file. This allows usage with '--command-log-read-strategy",
     "         block-line-buffer'. The filename is based on --file-log. Note that",
     "         --file-log-mode applies to the generated file. Only activates with",
-    "         multiple commands.",
+    "         multiple concurrent commands.",
     "",
     "  --file-log-size-mode (delete BYTES | warn BYTES | off)",
     "         Sets a threshold for the file log size, upon which we either print a",

@@ -3,6 +3,7 @@
 module Unit.Shrun.Configuration.Data.Graph (tests) where
 
 import Data.List qualified as L
+import Data.Sequence qualified as Seq
 import Hedgehog.Gen qualified as G
 import Hedgehog.Range qualified as R
 import Shrun.Command.Types
@@ -12,7 +13,8 @@ import Shrun.Command.Types
     toVertex,
   )
 import Shrun.Configuration.Data.Graph
-  ( EdgeArgs (EdgeArgsList, EdgeArgsSequential),
+  ( CommandGraph,
+    EdgeArgs (EdgeArgsList, EdgeArgsSequential),
     EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
     EdgeSequential (EdgeSequentialAnd),
     Edges (MkEdges),
@@ -37,7 +39,9 @@ tests =
       testTrivialCycleFails,
       testEdgelessGraphProp,
       testVertexCommandIndexRel,
-      testSeqAnd
+      testSeqAnd,
+      testSequentialGraphCases,
+      testSequentialGraphProp
     ]
 
 testDuplicateEdgesFails :: TestTree
@@ -225,6 +229,48 @@ testSeqAnd = testProp desc "testSeqAnd" $ do
   where
     desc = "Creates sequenced indexes"
 
+testSequentialGraphCases :: TestTree
+testSequentialGraphCases = testCase "isSequential cases" $ do
+  g1 <- runSuccessEdgeLabels es1 cmds1
+  assertBool ("Expected true: " ++ show g1) $ CDG.isSequential g1
+
+  g2 <- runSuccessEdgeLabels es2 cmds2
+  assertBool ("Expected true: " ++ show g2) $ CDG.isSequential g2
+
+  g3 <- runSuccessEdgeLabels es3 cmds3
+  assertBool ("Expected false: " ++ show g3) $ not (CDG.isSequential g3)
+
+  g4 <- runSuccessEdgeLabels es4 cmds4
+  assertBool ("Expected false: " ++ show g4) $ not (CDG.isSequential g4)
+  where
+    es1 = []
+    cmds1 = unsafeListToNESeq $ mkCmds [1]
+
+    es2 = [(1, 2, EdgeAnd), (2, 3, EdgeOr), (3, 4, EdgeAny)]
+    cmds2 = unsafeListToNESeq $ mkCmds [1, 2, 3, 4]
+
+    es3 = []
+    cmds3 = unsafeListToNESeq $ mkCmds [1, 2]
+
+    es4 = [(1, 2, EdgeAnd), (1, 3, EdgeOr)]
+    cmds4 = unsafeListToNESeq $ mkCmds [1, 2, 3]
+
+testSequentialGraphProp :: TestTree
+testSequentialGraphProp = testProp desc "testSequentialGraphProp" $ do
+  (edges, cmds) <- forAll genCmdsEdges
+  g <-
+    tryMySync (CDG.mkGraph edges cmds) >>= \case
+      Right g -> pure g
+      Left ex -> do
+        annotate (displayException ex)
+        failure
+
+  annotateShow g
+
+  assert $ CDG.isSequential g
+  where
+    desc = "isSequential seqGraph === true"
+
 runFailure :: String -> Seq (Int, Int) -> NESeq CommandP1 -> IO ()
 runFailure expected =
   runFailureEdgeLabels expected
@@ -240,6 +286,11 @@ runFailureEdgeLabels expected edgeInts cmds =
   where
     edges = MkEdges $ (\(s, d, l) -> (mkIdx s, mkIdx d, l)) <$> edgeInts
 
+runSuccessEdgeLabels :: Seq (Int, Int, EdgeLabel) -> NESeq CommandP1 -> IO CommandGraph
+runSuccessEdgeLabels edgeInts = CDG.mkGraph (EdgeArgsList edges)
+  where
+    edges = MkEdges $ (\(s, d, l) -> (mkIdx s, mkIdx d, l)) <$> edgeInts
+
 genCmds :: Gen (NESeq CommandP1)
 genCmds =
   -- Re-index commands in order, since randomly generated ones will die during
@@ -252,6 +303,23 @@ genCmds =
 
     updateIdx :: Int -> CommandP1 -> CommandP1
     updateIdx i (MkCommandP _ a1 a2) = MkCommandP (mkIdx i) a1 a2
+
+genCmdsEdges :: Gen (Tuple2 EdgeArgs (NESeq CommandP1))
+genCmdsEdges = do
+  cmds <- genCmds
+
+  lbls <- for cmds (const genEdgeLabel)
+  let lbls' = Seq.zipWith f [1 .. length lbls - 1] (neseqToSeq lbls)
+
+  pure (EdgeArgsList (MkEdges lbls'), cmds)
+  where
+    f i lbl = (l, u, lbl)
+      where
+        l = toEnum i
+        u = l .+. toEnum 1
+
+genEdgeLabel :: Gen EdgeLabel
+genEdgeLabel = G.enumBounded
 
 mkCmds :: [Int] -> [CommandP1]
 mkCmds = fmap (\i -> MkCommandP (mkIdx i) Nothing ("cmd" <> showt i))

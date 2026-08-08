@@ -32,7 +32,6 @@ import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing)
 import Effects.System.Posix.Files (PathType (PathTypeFile))
 import Effects.System.Posix.Files qualified as PosixFiles
 import FileSystem.PathType qualified as PT
-import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -61,6 +60,8 @@ import Shrun.Configuration.Data.FileLogging.FileSizeMode
         FileSizeModeWarn
       ),
   )
+import Shrun.Configuration.Data.Graph (CommandGraph)
+import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.StripControl (FileLogStripControl)
 import Shrun.Configuration.Data.Truncation
   ( DetectResult,
@@ -522,20 +523,21 @@ mergeFileLogging ::
     MonadIORef m,
     MonadTerminal m
   ) =>
-  NESeq CommandP1 ->
+  CommandGraph ->
   IORef DetectResult ->
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
-mergeFileLogging cmds detectRef args mToml = for mPath $ \path -> do
+mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
   let toml = fromMaybe defaultToml mToml
 
   lineTrunc <-
     mergeLineTrunc False detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
-  -- Only enable multi logging if the flag is active and commands > 1.
+  -- Only enable multi-logging if the flag is active and command graph is
+  -- /not/ sequential.
   let multi =
-        if length cmds < 2
+        if Graph.isSequential cmdGraph
           then MkFileLogMultiSwitch False
           else
             args

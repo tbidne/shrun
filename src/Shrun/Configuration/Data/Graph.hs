@@ -25,6 +25,7 @@ module Shrun.Configuration.Data.Graph
     labInVertices,
     outVertices,
     vertices,
+    isSequential,
 
     -- *** Context
     context,
@@ -336,6 +337,26 @@ mkEdgelessGraph cmds =
     idxCmds = zip [1 ..] (toList cmds)
 
     roots = toV . view #index <$> cmds
+
+-- | Returns true iff the graph is sequential i.e.
+--
+-- 1 -> 2 -> ... -> n.
+isSequential :: CommandGraph -> Bool
+isSequential cg = case rs of
+  -- 1. Only 1 root, check.
+  Empty -> go r
+  -- 2. Multiple roots, false.
+  _ -> False
+  where
+    r :<|| rs = cg ^. #roots
+
+    go v = case outVertices cg v of
+      -- 1.1. Made it to the end, true.
+      [] -> True
+      -- 1.2. Exactly one successor, recurse.
+      [v'] -> go v'
+      -- 1.3. Found > 1 successors, false.
+      (_ : _ : _) -> False
 
 -- | Retrieves all labeled vertices.
 labVertices :: CommandGraph -> List (LVertex CommandP1)

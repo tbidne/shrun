@@ -40,6 +40,7 @@ import Shrun.Configuration.Data.ConsoleLogging qualified as ConsoleLogging
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
+import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Data.LegendKeysCache (LegendKeysCache)
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifications)
 import Shrun.Configuration.Data.Notify qualified as Notify
@@ -301,10 +302,11 @@ mergeCoreConfig ::
     MonadTerminal m
   ) =>
   NESeq CommandP1 ->
+  CommandGraph ->
   CoreConfigArgs r ->
   CoreConfigToml r ->
   m (CoreConfigMerged r)
-mergeCoreConfig cmds args toml = do
+mergeCoreConfig cmds cmdGraph args toml = do
   detectRef <- newIORef' DetectNotRun
 
   consoleLogging <-
@@ -315,7 +317,7 @@ mergeCoreConfig cmds args toml = do
 
   fileLogging <-
     mergeFileLogging
-      cmds
+      cmdGraph
       detectRef
       (args ^. #fileLogging)
       (toml ^. #fileLogging)
@@ -323,6 +325,7 @@ mergeCoreConfig cmds args toml = do
   let (isFileLog, isFileLogMulti) = case fileLogging of
         Nothing -> (False, False)
         Just fl -> (True, fl ^. (#multi % #unFileLogMultiSwitch))
+
   commandLogging <-
     mergeCommandLogging
       isFileLog

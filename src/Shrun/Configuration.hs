@@ -71,13 +71,14 @@ mergeConfig args toml tomlPaths = do
           pure (cmds, mempty)
       pure $ second EdgeArgsList cmdEdges
 
+  commandGraph <- Graph.mkGraph ea commands
+
   coreConfig <-
     mergeCoreConfig
       commands
+      commandGraph
       (args ^. #coreConfig)
       (toml ^. #coreConfig)
-
-  commandGraph <- Graph.mkGraph ea commands
 
   pure
     $ MkMergedConfig
