@@ -15,7 +15,6 @@ import Shrun.Configuration.Data.FileLogging
         path,
         sizeMode
       ),
-    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingArgs,
     FileLoggingP
       ( MkFileLoggingP,
@@ -28,6 +27,8 @@ import Shrun.Configuration.Data.FileLogging
         stripControl
       ),
   )
+import Shrun.Configuration.Data.FileLogging.FileLogMulti (FileLogMulti)
+import Shrun.Configuration.Data.FileLogging.FileLogMulti qualified as FileLogMulti
 import Shrun.Configuration.Data.FileLogging.FileMode (FileMode)
 import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
 import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault)
@@ -133,9 +134,18 @@ lineTruncParser =
       ]
     helpTxt = "Like --console-log-line-trunc, but for --file-log. Defaults to 'off'."
 
-multiParser :: Parser (Maybe FileLogMultiSwitch)
+multiParser :: Parser (Maybe FileLogMulti)
 multiParser =
-  Utils.switchParser MkFileLogMultiSwitch "file-log-multi" helpTxt
+  OA.optional
+    $ OA.option
+      (FileLogMulti.parseFileLogMulti OA.str)
+      ( mconcat
+          [ OA.long "file-log-multi",
+            OA.completeWith ["on", "auto", "off"],
+            Utils.mkHelp helpTxt,
+            OA.metavar (ShrunUtils.mkMetaStr FileLogMulti.fileLogMultiMeta)
+          ]
+      )
   where
     helpTxt =
       mconcat
@@ -143,7 +153,8 @@ multiParser =
           "sent to the same file. This allows usage with ",
           "'--command-log-read-strategy block-line-buffer'. The filename is ",
           "based on --file-log. Note that --file-log-mode applies to the ",
-          "generated file. Only activates with multiple concurrent commands."
+          "generated file. With 'auto', activates unless there are ",
+          "concurrent commands."
         ]
 
 fileLogStripControlParser :: Parser (Maybe FileLogStripControl)

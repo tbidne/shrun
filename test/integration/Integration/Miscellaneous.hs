@@ -75,7 +75,6 @@ import Shrun.Configuration.Data.Core
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
     FileLogInitP (MkFileLogInitP, path, sizeMode),
-    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingP
       ( MkFileLoggingP,
         commandNameTrunc,
@@ -86,6 +85,9 @@ import Shrun.Configuration.Data.FileLogging
         multi,
         stripControl
       ),
+  )
+import Shrun.Configuration.Data.FileLogging.FileLogMulti
+  ( FileLogMultiSwitch (MkFileLogMultiSwitch),
   )
 import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeRename, FileModeWrite))
 import Shrun.Configuration.Data.FileLogging.FilePathDefault

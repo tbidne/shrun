@@ -10,7 +10,6 @@ module Shrun.Configuration.Data.FileLogging
     FileLoggingMerged,
     FileLoggingEnv,
     DeleteOnSuccessSwitch (..),
-    FileLogMultiSwitch (..),
     mergeFileLogging,
     withFileLoggingEnv,
 
@@ -44,6 +43,14 @@ import Shrun.Configuration.Data.ConfigPhase
     LineTruncF,
     SwitchF,
     parseSwitch,
+  )
+import Shrun.Configuration.Data.FileLogging.FileLogMulti
+  ( FileLogMulti
+      ( FileLogMultiAuto,
+        FileLogMultiOff,
+        FileLogMultiOn
+      ),
+    FileLogMultiSwitch (MkFileLogMultiSwitch),
   )
 import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeRename))
 import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
@@ -102,31 +109,6 @@ instance
     b
   where
   labelOptic = iso (\(MkDeleteOnSuccessSwitch b) -> b) MkDeleteOnSuccessSwitch
-  {-# INLINE labelOptic #-}
-
--- | Switch for logging to multiple files.
-newtype FileLogMultiSwitch = MkFileLogMultiSwitch Bool
-  deriving stock (Eq, Show)
-  deriving newtype (Bounded, Enum)
-  deriving (Pretty) via PrettySwitch
-
-instance Default FileLogMultiSwitch where
-  def = MkFileLogMultiSwitch False
-
-instance DecodeTOML FileLogMultiSwitch where
-  tomlDecoder = MkFileLogMultiSwitch <$> (tomlDecoder >>= parseSwitch)
-
-instance
-  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
-  LabelOptic
-    "unFileLogMultiSwitch"
-    k
-    FileLogMultiSwitch
-    FileLogMultiSwitch
-    a
-    b
-  where
-  labelOptic = iso (\(MkFileLogMultiSwitch b) -> b) MkFileLogMultiSwitch
   {-# INLINE labelOptic #-}
 
 -- NOTE: [Args vs. Toml mandatory fields]
@@ -316,8 +298,8 @@ type family FileLogFileF p where
 
 type FileLogMultiF :: ConfigPhase -> Type
 type family FileLogMultiF p where
-  FileLogMultiF ConfigPhaseArgs = Maybe FileLogMultiSwitch
-  FileLogMultiF ConfigPhaseToml = Maybe FileLogMultiSwitch
+  FileLogMultiF ConfigPhaseArgs = Maybe FileLogMulti
+  FileLogMultiF ConfigPhaseToml = Maybe FileLogMulti
   FileLogMultiF ConfigPhaseMerged = FileLogMultiSwitch
   FileLogMultiF ConfigPhaseEnv = Maybe (TVar Word16)
 
@@ -534,15 +516,14 @@ mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
   lineTrunc <-
     mergeLineTrunc False detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
-  -- Only enable multi-logging if the flag is active and command graph is
-  -- /not/ sequential.
-  let multi =
-        if Graph.isSequential cmdGraph
-          then MkFileLogMultiSwitch False
-          else
-            args
-              ^. #multi
-              <.> (toml ^. #multi)
+  -- If the user specifies a mode, use it. Otherwise, use the default logic:
+  --
+  -- Enable multi-logging iff the command graph is /not/ sequential.
+  let multi = MkFileLogMultiSwitch $ case args ^. #multi <.> toml ^. #multi of
+        FileLogMultiOn -> True
+        FileLogMultiOff -> False
+        FileLogMultiAuto -> not (Graph.isSequential cmdGraph)
+
   pure
     $ MkFileLoggingP
       { file =

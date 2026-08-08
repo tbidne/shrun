@@ -6,8 +6,10 @@ module Unit.Shrun.Configuration.Args.Parsing.FileLogging (tests) where
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
-    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingArgs,
+  )
+import Shrun.Configuration.Data.FileLogging.FileLogMulti
+  ( FileLogMulti (FileLogMultiAuto, FileLogMultiOff, FileLogMultiOn),
   )
 import Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode (FileModeAppend, FileModeRename, FileModeWrite),
@@ -271,6 +273,7 @@ multiTests =
   testGroup
     "--file-log-multi"
     [ testMultiOn,
+      testMultiAuto,
       testMultiOff
     ]
 
@@ -282,7 +285,17 @@ testMultiOn =
     $ U.verifyResult argList expected
   where
     argList = ["--file-log-multi", "on", "command"]
-    expected = updateDefFileLogArgs #multi (MkFileLogMultiSwitch True)
+    expected = updateDefFileLogArgs #multi FileLogMultiOn
+
+testMultiAuto :: TestTree
+testMultiAuto =
+  testPropertyNamed
+    "Parses --file-log-multi auto"
+    "testMultiAuto"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--file-log-multi", "auto", "command"]
+    expected = updateDefFileLogArgs #multi FileLogMultiAuto
 
 testMultiOff :: TestTree
 testMultiOff =
@@ -292,7 +305,7 @@ testMultiOff =
     $ U.verifyResult argList expected
   where
     argList = ["--file-log-multi", "off", "command"]
-    expected = updateDefFileLogArgs #multi (MkFileLogMultiSwitch False)
+    expected = updateDefFileLogArgs #multi FileLogMultiOff
 
 stripControlTests :: TestTree
 stripControlTests =

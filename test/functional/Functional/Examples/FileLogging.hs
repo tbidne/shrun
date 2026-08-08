@@ -135,7 +135,7 @@ fileLogMultiOne testArgs = testCase "No multi-log with one command" $ do
           [ "--file-log",
             outFileStr,
             "--file-log-multi",
-            "on",
+            "auto",
             "sleep 2"
           ]
 
@@ -161,7 +161,7 @@ fileLogMultiSequential testArgs = testCase "No multi-log with sequential command
           [ "--file-log",
             outFileStr,
             "--file-log-multi",
-            "on",
+            "auto",
             "--edges",
             edgeStr,
             "sleep 1",

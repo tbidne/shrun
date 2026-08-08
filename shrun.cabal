@@ -107,6 +107,7 @@ library
     Shrun.Configuration.Data.Core
     Shrun.Configuration.Data.Core.Timeout
     Shrun.Configuration.Data.FileLogging
+    Shrun.Configuration.Data.FileLogging.FileLogMulti
     Shrun.Configuration.Data.FileLogging.FileMode
     Shrun.Configuration.Data.FileLogging.FilePathDefault
     Shrun.Configuration.Data.FileLogging.FileSizeMode

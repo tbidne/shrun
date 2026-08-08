@@ -192,8 +192,10 @@ timer-format = "prose_compact"
 # Logs each command to its own file, rather than all logs being sent to the
 # same file. This allows usage with
 # '--command-log-read-strategy block-line-buffer'. The filename is based on
-# '--file-log'. Note that '--file-log-mode' does not apply i.e. we always come
-# up with fresh filenames.
+# '--file-log'. Note that '--file-log-mode' applies to the generated file.
+#
+# Can be 'on', 'off', or 'auto'. The latter activates multi-mode if and only
+# if there are concurrent commands.
 #multi = "off"
 
 # Sets a threshold for the file log size, upon which we either print a

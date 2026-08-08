@@ -80,7 +80,6 @@ import Shrun.Configuration.Data.FileLogging
         path,
         sizeMode
       ),
-    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingP
       ( MkFileLoggingP,
         commandNameTrunc,
@@ -91,6 +90,9 @@ import Shrun.Configuration.Data.FileLogging
         multi,
         stripControl
       ),
+  )
+import Shrun.Configuration.Data.FileLogging.FileLogMulti
+  ( FileLogMultiSwitch (MkFileLogMultiSwitch),
   )
 import Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode
