@@ -153,7 +153,7 @@ multiParser =
           "sent to the same file. This allows usage with ",
           "'--command-log-read-strategy block-line-buffer'. The filename is ",
           "based on --file-log. Note that --file-log-mode applies to the ",
-          "generated file. With 'auto', activates unless there are ",
+          "generated file. With 'auto', activates if and only if there are ",
           "concurrent commands."
         ]
 
