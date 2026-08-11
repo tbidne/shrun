@@ -3,10 +3,18 @@
 -- | Functional tests for readme examples.
 module Functional.Examples.Core (tests) where
 
-import Data.Text qualified as T
+import Data.Aeson qualified as Asn
+import Data.Set qualified as Set
 import Effects.FileSystem.PathReader (XdgDirectory (XdgState))
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
+import Shrun.Configuration.Data.LegendKeysCache
+  ( KeyCache
+      ( MkKeyCache,
+        global,
+        local
+      ),
+  )
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
@@ -70,8 +78,16 @@ testLegendKeysAdd =
     ("add", "add")
     (expected1, expected2)
   where
-    expected1 = ["cfg1_key_1", "cfg1_key_2", "short"]
-    expected2 = ["cfg1_key_1", "cfg1_key_2", "cfg2_key_1", "cfg2_key_2", "short"]
+    expected1 =
+      MkKeyCache
+        { global = Set.fromList ["cfg1_key_1", "cfg1_key_2", "short"],
+          local = mempty
+        }
+    expected2 =
+      MkKeyCache
+        { global = Set.fromList ["cfg1_key_1", "cfg1_key_2", "cfg2_key_1", "cfg2_key_2", "short"],
+          local = mempty
+        }
 
 testLegendKeysClear :: IO TestArgs -> TestTree
 testLegendKeysClear =
@@ -80,8 +96,12 @@ testLegendKeysClear =
     ("add", "clear")
     (expected1, expected2)
   where
-    expected1 = ["cfg1_key_1", "cfg1_key_2", "short"]
-    expected2 = []
+    expected1 =
+      MkKeyCache
+        { global = Set.fromList ["cfg1_key_1", "cfg1_key_2", "short"],
+          local = mempty
+        }
+    expected2 = mempty
 
 testLegendKeysWrite :: IO TestArgs -> TestTree
 testLegendKeysWrite =
@@ -90,8 +110,16 @@ testLegendKeysWrite =
     ("write", "write")
     (expected1, expected2)
   where
-    expected1 = ["cfg1_key_1", "cfg1_key_2", "short"]
-    expected2 = ["cfg2_key_1", "cfg2_key_2", "short"]
+    expected1 =
+      MkKeyCache
+        { global = Set.fromList ["cfg1_key_1", "cfg1_key_2", "short"],
+          local = mempty
+        }
+    expected2 =
+      MkKeyCache
+        { global = Set.fromList ["cfg2_key_1", "cfg2_key_2", "short"],
+          local = mempty
+        }
 
 testLegendKeysOff :: IO TestArgs -> TestTree
 testLegendKeysOff =
@@ -100,19 +128,23 @@ testLegendKeysOff =
     ("add", "off")
     (expected1, expected1)
   where
-    expected1 = ["cfg1_key_1", "cfg1_key_2", "short"]
+    expected1 =
+      MkKeyCache
+        { global = Set.fromList ["cfg1_key_1", "cfg1_key_2", "short"],
+          local = mempty
+        }
 
 testLegendKeysCache ::
   OsPath ->
   (String, String) ->
-  (List Text, List Text) ->
+  (KeyCache, KeyCache) ->
   IO TestArgs ->
   TestTree
 testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr $ do
   xdgDir <- (</> xdgName) . view #tmpDir <$> testArgs
 
   env <- mkEnv xdgDir
-  let keysPath = xdgDir </> [ospPathSep|shrun/legend-keys.txt|]
+  let keysPath = xdgDir </> [ospPathSep|shrun/legend-keys.json|]
 
   void $ runConfigIO env args1
   contents1 <- readLines keysPath
@@ -156,12 +188,16 @@ mkEnv d = do
           other -> error $ "Unexpected xdg: " ++ show other
       }
 
-readLines :: OsPath -> IO (List Text)
+readLines :: OsPath -> IO KeyCache
 readLines p = do
   exists <- doesFileExist p
   if exists
-    then fmap T.lines . readFileUtf8ThrowM $ p
-    else pure []
+    then do
+      bs <- readBinaryFile p
+      case Asn.eitherDecodeStrict bs of
+        Left err -> throwString err
+        Right x -> pure x
+    else pure mempty
 
 timeout :: TestTree
 timeout =

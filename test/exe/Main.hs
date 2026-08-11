@@ -6,7 +6,6 @@ import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
 import Exe.Help qualified as Help
 import Exe.Terminate qualified as Terminate
-import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
 import System.Environment.Guard (guardOrElse')
 import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))

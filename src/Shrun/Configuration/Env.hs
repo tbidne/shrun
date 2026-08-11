@@ -15,11 +15,18 @@ module Shrun.Configuration.Env
   )
 where
 
-import Data.HashMap.Strict qualified as Map
-import Data.HashSet qualified as Set
+import Data.Aeson qualified as Asn
+import Data.Aeson.Encode.Pretty
+  ( Config (confIndent, confTrailingNewline),
+    Indent (Spaces),
+  )
+import Data.Aeson.Encode.Pretty qualified as AsnPretty
+import Data.ByteString.Lazy qualified as BSL
+import Data.HashMap.Strict qualified as HashMap
 import Data.List qualified as L
+import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
-import Data.Text qualified as T
+import Data.Set qualified as Set
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
 import Shrun (runShellT, shrun)
@@ -31,13 +38,15 @@ import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing qualified as P
 import Shrun.Configuration.Data.Core qualified as CoreConfig
 import Shrun.Configuration.Data.LegendKeysCache
-  ( LegendKeysCache
+  ( KeyCache,
+    LegendKeysCache
       ( LegendKeysAdd,
         LegendKeysClear,
         LegendKeysOff,
         LegendKeysWrite
       ),
   )
+import Shrun.Configuration.Data.LegendKeysCache qualified as LKC
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
@@ -140,11 +149,14 @@ getMergedConfig = do
 
   -- Read legend keys from last run, if they exist. We then pass them into
   -- the parser so we get completions.
-  prevKeys <- readPreviousLegendKeys xdgState
+  keyCache <- readPreviousLegendKeys xdgState
+  cwd <- PR.getCurrentDirectory
+  let prevKeySet = getCurrentKeys cwd keyCache
+      prevKeys = Set.toList prevKeySet
 
   args <- customExecParser P.parserPrefs (P.parserInfoArgs $ unpack <$> prevKeys)
 
-  let configPaths = args ^. #configPaths
+  let configPaths = (fmap . fmap) TomlOther $ args ^. #configPaths
 
   tomls <- do
     -- If our configs list contains /any/ Disabled, then the implicit configs
@@ -152,18 +164,28 @@ getMergedConfig = do
     -- against it to save unnecessary lookups.
     if containsDisabled configPaths
       then pure configPaths
-      else (\ps -> (With <$> ps) <> configPaths) <$> findImplicitConfigs
+      else (\ps -> (With <$> ps) <> configPaths) <$> findImplicitConfigs cwd
 
-  (tomlPaths, finalToml) <- mergeTomls tomls
+  (tomlPaths, finalToml, cwdToml) <- mergeTomls tomls
 
   merged <- mergeConfig args finalToml tomlPaths
 
-  saveLegendKeys xdgState (merged ^. #coreConfig % #legendKeysCache) prevKeys finalToml
+  saveLegendKeys xdgState cwd (merged ^. #coreConfig % #legendKeysCache) keyCache finalToml cwdToml
 
   pure merged
   where
     containsDisabled = L.elem Disabled
 {-# INLINEABLE getMergedConfig #-}
+
+data TomlPath
+  = TomlCwd OsPath
+  | TomlOther OsPath
+  deriving stock (Eq, Show)
+
+unTomlPath :: TomlPath -> OsPath
+unTomlPath = \case
+  TomlCwd p -> p
+  TomlOther p -> p
 
 -- | Searches for implicit configs. The list of searched paths are:
 --
@@ -174,14 +196,14 @@ findImplicitConfigs ::
   ( HasCallStack,
     MonadPathReader m
   ) =>
-  m (Seq OsPath)
-findImplicitConfigs = do
+  OsPath ->
+  m (Seq TomlPath)
+findImplicitConfigs cwd = do
   xdgConfig <- getShrunXdgConfig
-  cwd <- PR.getCurrentDirectory
   let paths =
-        (xdgConfig </> [osp|config.toml|])
-          :<| mkPaths xdgConfig
-          <> mkPaths cwd
+        TomlOther (xdgConfig </> [osp|config.toml|])
+          :<| (TomlOther <$> mkPaths xdgConfig)
+          <> (TomlCwd <$> mkPaths cwd)
 
   xs <- traverse configExists paths
   pure $ catSeqMaybes xs
@@ -192,13 +214,17 @@ findImplicitConfigs = do
       ]
 {-# INLINEABLE findImplicitConfigs #-}
 
-configExists :: (HasCallStack, MonadPathReader m) => OsPath -> m (Maybe OsPath)
-configExists p = do
-  exists <- doesFileExist p
-  pure
-    $ if exists
-      then Just p
-      else Nothing
+configExists :: (HasCallStack, MonadPathReader m) => TomlPath -> m (Maybe TomlPath)
+configExists = \case
+  TomlCwd p -> (fmap . fmap) TomlCwd (f p)
+  TomlOther p -> (fmap . fmap) TomlOther (f p)
+  where
+    f path = do
+      exists <- doesFileExist path
+      pure
+        $ if exists
+          then Just path
+          else Nothing
 {-# INLINEABLE configExists #-}
 
 -- | Merges several toml files together.
@@ -230,19 +256,37 @@ mergeTomls ::
     MonadFileReader m,
     MonadThrow m
   ) =>
-  Seq (WithDisabled OsPath) ->
-  m (Tuple2 (Seq OsPath) (Toml notifyEnv))
-mergeTomls =
-  -- Reverse toml paths so they are in the original order. No need to reverse
-  -- actual Toml files because mergeTomls expects the inverse order.
-  fmap (bimap Seq.reverse Toml.mergeTomls . Seq.unzip)
-    . traverse (\t -> (t,) <$> readConfig t)
-    . dropAfterDisabled
-    . Seq.reverse
+  Seq (WithDisabled TomlPath) ->
+  m (Tuple3 (Seq OsPath) (Toml notifyEnv) (Toml notifyEnv))
+mergeTomls tomlPaths = do
+  pathsWithTomls <- traverse (\t -> (t,) <$> readConfig (unTomlPath t)) toRead
+
+  let (paths, finalToml) =
+        bimap
+          -- Reverse toml paths so they are in the original order. No need to reverse
+          -- actual Toml files because mergeTomls expects the inverse order.
+          (fmap unTomlPath . Seq.reverse)
+          Toml.mergeTomls
+          . Seq.unzip
+          $ pathsWithTomls
+
+      cwdToml =
+        Toml.mergeTomls
+          . fmap snd
+          . Seq.filter (isTomlCwd . fst)
+          $ pathsWithTomls
+
+  pure (paths, finalToml, cwdToml)
   where
+    toRead = dropAfterDisabled $ Seq.reverse tomlPaths
+
     dropAfterDisabled Empty = Empty
     dropAfterDisabled (Disabled :<| _) = Empty
     dropAfterDisabled (With f :<| fs) = f :<| dropAfterDisabled fs
+
+    isTomlCwd = \case
+      TomlCwd _ -> True
+      _ -> False
 
 data TomlPathError = MkTomlPathError OsPath TOMLError
   deriving stock (Show)
@@ -297,7 +341,7 @@ fromMergedConfig cfg onEnv = do
     kvs <- for commands $ \cmd -> do
       statusVar <- newTVar' CommandWaiting
       pure (cmd ^. #index, (cmd, statusVar))
-    pure $ MkCommandStatusMapP $ Map.fromList $ toList kvs
+    pure $ MkCommandStatusMapP $ HashMap.fromList $ toList kvs
 
   anyError <- newTVarA' False
   consoleLogQueue <- newTBQueueA 1_000
@@ -355,19 +399,24 @@ readPreviousLegendKeys ::
     MonadTerminal m
   ) =>
   OsPath ->
-  m (List Text)
+  m KeyCache
 readPreviousLegendKeys xdgState = do
   exists <- PR.doesFileExist keysPath
   if exists
     then do
       -- Don't let a read keys error take down shrun.
-      tryMySync (readFileUtf8ThrowM keysPath) >>= \case
+      tryMySync (readBinaryFile keysPath) >>= \case
         Left err -> do
           putStrLn $ "Error reading legend keys cache: " <> displayException err
           void $ tryMySync $ PW.removePathForcibly keysPath
-          pure []
-        Right contents -> pure $ T.lines $ T.strip contents
-    else pure []
+          pure mempty
+        Right contents -> case Asn.eitherDecodeStrict contents of
+          Left jsonErr -> do
+            putStrLn $ "Error decoding legend keys json: " <> jsonErr
+            void $ tryMySync $ PW.removePathForcibly keysPath
+            pure mempty
+          Right c -> pure c
+    else pure mempty
   where
     keysPath = mkLegendKeysPath xdgState
 {-# INLINEABLE readPreviousLegendKeys #-}
@@ -382,45 +431,62 @@ saveLegendKeys ::
   ) =>
   -- | Shrun xdg state.
   OsPath ->
+  -- | Current directory.
+  OsPath ->
   -- | Key action.
   LegendKeysCache ->
-  -- | Keys from last run.
-  List Text ->
-  -- | Toml from this run.
+  -- | Key cache.
+  KeyCache ->
+  -- | Final toml from this run.
+  Toml notifyEnv ->
+  -- | Current directory toml, for saving local keys.
   Toml notifyEnv ->
   m ()
-saveLegendKeys xdgState cache prevKeysList toml =
-  case cache of
+saveLegendKeys xdgState cwd cacheAction keyCache finalToml cwdToml =
+  case cacheAction of
     -- 1. Do nothing.
     LegendKeysOff -> pure ()
     -- 2. Delete file.
     LegendKeysClear -> PW.removeFileIfExists_ keysPath
     -- 3. Overwrite the previous key file, if it exists. If the current keys are
     --    /not/ equal to the old keys, write them.
-    LegendKeysWrite ->
-      unless (prevKeySet == currKeySet) $ writeKeys currKeySet
+    LegendKeysWrite -> do
+      let newKeyCache = LKC.mkKeyCache globalKeySet (cwd, localKeySet)
+      unless (keyCache == newKeyCache) $ writeKeys newKeyCache
     -- 4. Union the previous and new keys. If the current keys are /not/ a
     --    subset of the previous keys, write the union.
-    LegendKeysAdd ->
-      unless currIsSubset $ writeKeys (Set.union prevKeySet currKeySet)
+    LegendKeysAdd -> do
+      let newKeyCache = LKC.addKeyCache globalKeySet (cwd, localKeySet) keyCache
+      unless (keyCache == newKeyCache) $ writeKeys newKeyCache
   where
     toKeyList = toList . fmap (view #key)
-    prevKeySet = Set.fromList prevKeysList
-    currKeySet = maybe Set.empty (Set.fromList . toKeyList) (toml ^. #legend)
+    allKeySet = maybe Set.empty (Set.fromList . toKeyList) (finalToml ^. #legend)
 
-    currIsSubset = currKeySet `Set.isSubsetOf` prevKeySet
+    globalKeySet = Set.difference allKeySet localKeySet
+    localKeySet = maybe Set.empty (Set.fromList . toKeyList) (cwdToml ^. #legend)
 
     writeKeys newKeys = do
-      let allKeys = L.sort $ toList newKeys
+      let keysBs = BSL.toStrict $ AsnPretty.encodePretty' jsonCfg newKeys
       -- Ensure directory exists.
       PW.createDirectoryIfMissing True xdgState
-      writeFileUtf8 keysPath (T.intercalate "\n" allKeys)
+      writeBinaryFile keysPath keysBs
 
     keysPath = mkLegendKeysPath xdgState
+
+    jsonCfg =
+      AsnPretty.defConfig
+        { confIndent = Spaces 2,
+          confTrailingNewline = True
+        }
 {-# INLINEABLE saveLegendKeys #-}
 
+getCurrentKeys :: OsPath -> KeyCache -> Set Text
+getCurrentKeys p kc = Set.union (kc ^. #global) localKeys
+  where
+    localKeys = fromMaybe Set.empty $ Map.lookup p (kc ^. #local)
+
 mkLegendKeysPath :: OsPath -> OsPath
-mkLegendKeysPath xdgState = xdgState </> [osp|legend-keys.txt|]
+mkLegendKeysPath xdgState = xdgState </> [osp|legend-keys.json|]
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = PR.getXdgState [osp|shrun|]

@@ -23,7 +23,6 @@ where
 
 import FileSystem.OsPath as X
   ( combineFilePaths,
-    unsafeDecode,
     (</>!),
   )
 import Hedgehog as X

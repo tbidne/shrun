@@ -195,13 +195,6 @@ legend = [
 <span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
-<pre>
-<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-<span style="color:">cfg1_key_1</span>
-<span style="color:">cfg1_key_2</span>
-<span style="color:">short</span></code>
-</pre>
-
 #### `add`: Adds keys from `config2.toml`:
 
 <pre>

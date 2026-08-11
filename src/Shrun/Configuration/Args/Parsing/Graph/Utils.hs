@@ -32,7 +32,6 @@ where
 
 import Data.Char qualified as Ch
 import Data.Sequence.NonEmpty qualified as NESeq
-import Data.Set (Set)
 import Shrun.Command.Types qualified as Cmd.T
 import Shrun.Command.Types.Internal (CommandIndex (MkCommandIndex))
 import Shrun.Prelude

@@ -1,0 +1,14 @@
+{
+  "global": [
+    "xdg_key"
+  ],
+  "local": [
+    {
+      "keys": [
+        ".shrun_key",
+        "shrun_key"
+      ],
+      "path": "test/functional/cwd"
+    }
+  ]
+}

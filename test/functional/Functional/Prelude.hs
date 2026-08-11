@@ -78,7 +78,7 @@ import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
 import Effects.Concurrent.Async qualified as Async
-import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)
+import FileSystem.OsPath as X (combineFilePaths)
 import Functional.Prelude.FuncEnv
   ( ConfigIOEnv (MkConfigIOEnv, cwdDir, logs, xdgDir),
     FuncEnv (MkFuncEnv, coreEnv, logs, shrunNotes),

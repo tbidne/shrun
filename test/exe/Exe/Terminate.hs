@@ -8,7 +8,6 @@ import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.FileSystem.PathReader qualified as PR
-import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude
 import Test.Shrun.Logger qualified as Test.Logger
 import Test.Shrun.Process qualified as Test.Process

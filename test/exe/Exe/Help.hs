@@ -3,7 +3,6 @@
 module Exe.Help (tests) where
 
 import Data.Text qualified as T
-import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
 import Test.Shrun.Process qualified as Test.Process
 import Test.Tasty (TestTree, testGroup)

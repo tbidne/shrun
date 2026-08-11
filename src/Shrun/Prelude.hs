@@ -140,6 +140,7 @@ import Control.Monad.Reader as X
     asks,
   )
 import Control.Monad.Trans as X (MonadTrans (lift))
+import Data.Aeson as X (FromJSON (parseJSON), ToJSON (toJSON))
 import Data.Bifunctor as X (Bifunctor (bimap, first, second))
 import Data.Bits (Bits, toIntegralSized)
 import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
@@ -198,6 +199,7 @@ import Data.Sequence as X (Seq ((:<|), (:|>)), pattern Empty)
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.Sequence.NonEmpty qualified as NESeq
+import Data.Set as X (Set)
 import Data.Singletons (SingI)
 import Data.String as X (IsString (fromString), String)
 import Data.Text as X (Text, pack, unpack)
@@ -242,12 +244,14 @@ import Effects.Evaluate as X (MonadEvaluate (evaluate))
 import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
+    readBinaryFile,
     readFileUtf8Lenient,
     readFileUtf8ThrowM,
   )
 import Effects.FileSystem.FileWriter as X
   ( MonadFileWriter,
     appendFileUtf8,
+    writeBinaryFile,
     writeFileUtf8,
   )
 import Effects.FileSystem.Handle as X
@@ -331,11 +335,14 @@ import Effects.System.Terminal as X
 import Effects.Time as X (MonadTime, withTiming)
 import FileSystem.OsPath as X
   ( OsPath,
+    decodeFail,
     decodeLenient,
     decodeThrowM,
+    encodeFail,
     encodeThrowM,
     osp,
     ospPathSep,
+    unsafeDecode,
     unsafeEncode,
     (</>),
   )

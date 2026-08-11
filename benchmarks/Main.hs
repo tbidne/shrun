@@ -5,7 +5,6 @@ module Main (main) where
 import Bench.Prelude
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.PathWriter qualified as WDir
-import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty.Bench

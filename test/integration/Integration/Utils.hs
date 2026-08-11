@@ -26,7 +26,6 @@ where
 
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
-import Effects.FileSystem.FileWriter (MonadFileWriter (writeBinaryFile))
 import Effects.FileSystem.PathReader
   ( MonadPathReader
       ( doesPathExist,
