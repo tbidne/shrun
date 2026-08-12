@@ -35,6 +35,7 @@
   - [Notifications](#notifications)
     - [Notify Action Complete](#notify-action-complete)
     - [Notify Action Start](#notify-action-start)
+    - [Notify Error Urgency](#notify-error-urgency)
     - [Notify System](#notify-system)
     - [Notify Timeout](#notify-timeout)
   - [Miscellaneous](#miscellaneous)
@@ -792,6 +793,18 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action-start on "sleep 5"</span></code>
+</pre>
+
+### Notify Error Urgency
+
+**Arg:** `--notify-error-urgency (low | normal | critical)`
+
+**Description:** Urgency level for error notifications. Defaults to critical.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-error-urgency normal --notify-action-start on "sleep 5"</span></code>
 </pre>
 
 ### Notify System

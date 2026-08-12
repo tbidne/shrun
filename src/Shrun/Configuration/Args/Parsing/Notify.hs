@@ -12,8 +12,10 @@ import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Notify
   ( NotifyActionsInit (MkNotifyActionsInit, complete, start),
     NotifyArgs,
-    NotifyP (MkNotifyP, actions, system, timeout),
+    NotifyErrUrgency,
+    NotifyP (MkNotifyP, actions, errUrgency, system, timeout),
   )
+import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete,
     NotifyActionStartSwitch (MkNotifyActionStartSwitch),
@@ -29,6 +31,7 @@ notifyParser :: Parser (NotifyArgs r)
 notifyParser = do
   complete <- notifyActionCompleteParser
   start <- notifyActionStartParser
+  errUrgency <- notifyErrUrgencyParser
   system <- notifySystemParser
   timeout <- notifyTimeoutParser
 
@@ -39,6 +42,7 @@ notifyParser = do
             { complete,
               start
             },
+        errUrgency,
         system,
         timeout
       }
@@ -74,6 +78,20 @@ notifyActionStartParser :: Parser (Maybe NotifyActionStartSwitch)
 notifyActionStartParser = Utils.switchParser MkNotifyActionStartSwitch "notify-action-start" helpTxt
   where
     helpTxt = "Sends a notification when a command is started."
+
+notifyErrUrgencyParser :: Parser (Maybe NotifyErrUrgency)
+notifyErrUrgencyParser = mainParser
+  where
+    mainParser =
+      OA.optional
+        $ OA.option (Notify.parseNotifyErrUrgency OA.str)
+        $ mconcat
+          [ OA.long "notify-error-urgency",
+            OA.completeWith ["low", "normal", "critical"],
+            Utils.mkHelp helpTxt,
+            OA.metavar (ShrunUtils.mkMetaStr Notify.notifyErrUrgencyMeta)
+          ]
+    helpTxt = "Urgency level for error notifications. Defaults to critical."
 
 notifySystemParser :: Parser (Maybe NotifySystem)
 notifySystemParser = mainParser

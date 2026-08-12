@@ -12,6 +12,7 @@ notifyTests =
   [ notifySystem,
     notifyActionCommand,
     notifyActionAll,
+    notifyErrorUrgency,
     notifyTimeout5
   ]
 
@@ -107,6 +108,40 @@ notifyActionAll = testCase "Runs --notify-action-complete all" $ do
           & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
           & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal)
+      ]
+
+notifyErrorUrgency :: TestTree
+notifyErrorUrgency = testCase "Runs with --notify-error-urgency" $ do
+  results <- runExitNotes args
+  expected @=? results
+  where
+    args =
+      withNoConfig
+        [ "--notify-action-complete",
+          "all",
+          "--notify-system",
+          notifySystemArg,
+          "--notify-error-urgency",
+          "low",
+          "sleep 3",
+          appendScriptsHome "bad.sh"
+        ]
+    expected =
+      [ Notify.mkNote "Shrun Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setTitle (Just "Shrun")
+          & Notify.setUrgency (Just NotifyUrgencyLow),
+        Notify.mkNote "[sleep 3] Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setTitle (Just "Shrun")
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[test/functional/scripts/bad.sh] Finished"
+          & Notify.setBody (Just "1 second\nsomething went wrong")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setTitle (Just "Shrun")
+          & Notify.setUrgency (Just NotifyUrgencyLow)
       ]
 
 notifyTimeout5 :: TestTree

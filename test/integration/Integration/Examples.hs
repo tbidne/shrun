@@ -89,7 +89,8 @@ import Shrun.Configuration.Data.MergedConfig
   )
 import Shrun.Configuration.Data.Notify
   ( NotifyActionsActive (NotifyActionsActiveAll),
-    NotifyP (MkNotifyP, actions, system, timeout),
+    NotifyErrUrgency (MkNotifyErrUrgency),
+    NotifyP (MkNotifyP, actions, errUrgency, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete (NotifyActionCompleteCommand),
@@ -149,6 +150,7 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
                   Just
                     $ MkNotifyP
                       { actions = NotifyActionsActiveAll NotifyActionCompleteCommand,
+                        errUrgency = MkNotifyErrUrgency NotifyUrgencyNormal,
                         system = notifySystemNotifySend,
                         timeout = NotifyTimeoutNever
                       }

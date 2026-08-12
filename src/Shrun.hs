@@ -26,7 +26,8 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingEnv,
   )
 import Shrun.Configuration.Data.Notify
-  ( _NotifyActionsActiveCompleteAny,
+  ( NotificationEnv,
+    _NotifyActionsActiveCompleteAny,
     _NotifyActionsActiveStartAny,
   )
 import Shrun.Configuration.Data.Notify.Action
@@ -215,7 +216,7 @@ runCommand ::
   CommandP1 ->
   m ()
 runCommand globalStartTime cmd = do
-  cfg <- asks (getNotifyConfig @_ @notifyEnv)
+  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
   commonLogging <- asks getCommonLogging
   (consoleLogging, consoleQueue, _) <- asks (getConsoleLogging @env @(Region m))
 
@@ -223,7 +224,7 @@ runCommand globalStartTime cmd = do
       keyHide = commonLogging ^. #keyHide
       formattedCmd = LogFmt.formatCommand keyHide commandNameTrunc cmd
 
-  case cfg ^? (_Just % #actions % _NotifyActionsActiveStartAny) of
+  case mCfg ^? (_Just % #actions % _NotifyActionsActiveStartAny) of
     Just () -> do
       cmdStartTimeDouble <- Time.getMonotonicTime
       let cmdStartTime = Time.fromSeconds (cmdStartTimeDouble - globalStartTime)
@@ -238,18 +239,21 @@ runCommand globalStartTime cmd = do
 
   cmdResult <- tryCommandLogging cmd
 
-  let (urgency, mkConsoleLog, mkFileLog, notifyMsg) =
+  let (mkUrgency, mkConsoleLog, mkFileLog, notifyMsg) =
         mkResultData commonLogging consoleLogging cmd cmdResult
 
   putCommandFinalLog consoleQueue mkConsoleLog mkFileLog
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteCommand is set
-  case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
-    Just NotifyActionCompleteAll ->
-      Notify.sendNotif (Notify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
-    Just NotifyActionCompleteCommand ->
-      Notify.sendNotif (Notify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
-    _ -> pure ()
+  for_ mCfg $ \cfg -> do
+    let urgency = mkUrgency cfg
+
+    case cfg ^? (#actions % _NotifyActionsActiveCompleteAny) of
+      Just NotifyActionCompleteAll ->
+        Notify.sendNotif (Notify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
+      Just NotifyActionCompleteCommand ->
+        Notify.sendNotif (Notify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
+      _ -> pure ()
 {-# INLINEABLE runCommand #-}
 
 -- | Prints the final log from the command (i.e. success/error message).
@@ -280,10 +284,10 @@ putCommandFinalLog consoleQueue mkConsoleLog mkFileLog = do
 {-# INLINEABLE putCommandFinalLog #-}
 
 -- | All of the command result data needed for final log.
-type CommandResultData m =
+type CommandResultData notifyEnv m =
   Tuple4
     -- Urgency level for notifs
-    NotifyUrgency
+    (NotificationEnv notifyEnv -> NotifyUrgency)
     -- Console log
     (m ConsoleLog)
     -- File log, if active
@@ -293,7 +297,7 @@ type CommandResultData m =
 
 -- | Gets log data from CommandResult.
 mkResultData ::
-  forall env m.
+  forall env m notifyEnv.
   ( HasCallStack,
     HasCommands env,
     MonadAtomic m,
@@ -304,17 +308,19 @@ mkResultData ::
   ConsoleLoggingEnv ->
   CommandP1 ->
   CommandResult ->
-  CommandResultData m
+  CommandResultData notifyEnv m
 mkResultData commonLogging consoleLogging cmd cmdResult =
   (urgency, consoleLog, mMkFileLog, notifyMsg)
   where
     timerFormat = consoleLogging ^. #timerFormat
     keyHide = commonLogging ^. #keyHide
 
+    mkErrUrgency cfg = cfg ^. #errUrgency % #unNotifyErrUrgency
+
     (urgency, lvl, rt, messages) = case cmdResult of
-      CommandResultFailure t (MkStderr []) -> (NotifyUrgencyCritical, LevelError, t, ["<no error message>"])
-      CommandResultFailure t (MkStderr errs) -> (NotifyUrgencyCritical, LevelError, t, errs)
-      CommandResultSuccess t -> (NotifyUrgencyNormal, LevelSuccess, t, [])
+      CommandResultFailure t (MkStderr []) -> (mkErrUrgency, LevelError, t, ["<no error message>"])
+      CommandResultFailure t (MkStderr errs) -> (mkErrUrgency, LevelError, t, errs)
+      CommandResultSuccess t -> (const NotifyUrgencyNormal, LevelSuccess, t, [])
 
     timeMsg = TimerFormat.formatRelativeTime timerFormat rt
     notifyMsg = Notify.formatNotifyMessage timeMsg messages
@@ -432,15 +438,20 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
   -- Send off a 'finished' notification
   anyError <- readTVarA' =<< asks getAnyError
-  let urgency = if anyError then NotifyUrgencyCritical else NotifyUrgencyNormal
-      notifyBody = Notify.formatNotifyMessage totalTimeTxt []
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteFinal is set
-  cfg <- asks (getNotifyConfig @_ @notifyEnv)
-  case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
-    Just NotifyActionCompleteAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
-    Just NotifyActionCompleteFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
-    _ -> pure ()
+  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
+
+  for_ mCfg $ \cfg -> do
+    let urgency
+          | anyError = cfg ^. #errUrgency % #unNotifyErrUrgency
+          | otherwise = NotifyUrgencyNormal
+        notifyBody = Notify.formatNotifyMessage totalTimeTxt []
+
+    case cfg ^? (#actions % _NotifyActionsActiveCompleteAny) of
+      Just NotifyActionCompleteAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
+      Just NotifyActionCompleteFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
+      _ -> pure ()
 
   Logging.putRegionLog r finalLog
   where
@@ -707,11 +718,14 @@ teardown startTime = do
   Logging.putRegionLogDirect finalLog
 
   -- 3. Send notification
-  cfg <- asks (getNotifyConfig @_ @notifyEnv)
-  case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
-    -- If complete notifcations are on at all, send one
-    Just _ -> Notify.sendNotif notifyBody "" NotifyUrgencyCritical
-    _ -> pure ()
+  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
+  for_ mCfg $ \cfg -> do
+    let urgency = cfg ^. #errUrgency % #unNotifyErrUrgency
+
+    case cfg ^? (#actions % _NotifyActionsActiveCompleteAny) of
+      -- If complete notifcations are on at all, send one
+      Just _ -> Notify.sendNotif notifyBody "" urgency
+      _ -> pure ()
 {-# INLINEABLE teardown #-}
 
 -- | Installs a handler for SIGTERM, so shrun can be cancelled with kill -15.

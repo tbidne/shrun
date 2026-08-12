@@ -88,7 +88,7 @@ import Shrun.Configuration.Data.Graph
   )
 import Shrun.Configuration.Data.Notify
   ( NotifyActionsInit (MkNotifyActionsInit, complete, start),
-    NotifyP (MkNotifyP, actions, system, timeout),
+    NotifyP (MkNotifyP, actions, errUrgency, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action (NotifyActionStartSwitch (MkNotifyActionStartSwitch))
 import Shrun.Configuration.Data.Truncation
@@ -249,6 +249,7 @@ genCoreConfig = do
     genNotify = do
       complete <- genMWithDisabled G.enumBounded
       start <- fmap MkNotifyActionStartSwitch <$> genMaybe G.enumBounded
+      errUrgency <- genMaybe G.enumBounded
       system <- genMaybe G.enumBounded
       timeout <- genMaybe genNotifyTimeout
       pure
@@ -258,6 +259,7 @@ genCoreConfig = do
                 { complete,
                   start
                 },
+            errUrgency,
             system,
             timeout
           }

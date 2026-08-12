@@ -58,7 +58,9 @@ import Shrun.Configuration.Data.ConsoleLogging
         timerFormat
       ),
   )
-import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat (DigitalCompact, ProseCompact))
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
+  ( TimerFormat (DigitalCompact, ProseCompact),
+  )
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
@@ -89,12 +91,16 @@ import Shrun.Configuration.Data.FileLogging
 import Shrun.Configuration.Data.FileLogging.FileLogMulti
   ( FileLogMultiSwitch (MkFileLogMultiSwitch),
   )
-import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeRename, FileModeWrite))
+import Shrun.Configuration.Data.FileLogging.FileMode
+  ( FileMode (FileModeRename, FileModeWrite),
+  )
 import Shrun.Configuration.Data.FileLogging.FilePathDefault
   ( FilePathDefault (FPManual),
     _FPManual,
   )
-import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeNothing, FileSizeModeWarn))
+import Shrun.Configuration.Data.FileLogging.FileSizeMode
+  ( FileSizeMode (FileSizeModeNothing, FileSizeModeWarn),
+  )
 import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.LegendKeysCache
   ( LegendKeysCache
@@ -114,7 +120,8 @@ import Shrun.Configuration.Data.MergedConfig
   )
 import Shrun.Configuration.Data.Notify
   ( NotifyActionsActive (NotifyActionsActiveAll),
-    NotifyP (MkNotifyP, actions, system, timeout),
+    NotifyErrUrgency (MkNotifyErrUrgency),
+    NotifyP (MkNotifyP, actions, errUrgency, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete (NotifyActionCompleteAll),
@@ -653,6 +660,7 @@ expectedMultiConfig =
               Just
                 $ MkNotifyP
                   { actions = NotifyActionsActiveAll NotifyActionCompleteAll,
+                    errUrgency = MkNotifyErrUrgency NotifyUrgencyCritical,
                     system = notifySystemDBus,
                     timeout = NotifyTimeoutNever
                   }

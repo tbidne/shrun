@@ -1,7 +1,7 @@
 module Unit.Shrun.Configuration.Args.Parsing.Notify (tests) where
 
 import Shrun.Configuration.Args (Args)
-import Shrun.Configuration.Data.Notify (NotifyArgs)
+import Shrun.Configuration.Data.Notify (NotifyArgs, NotifyErrUrgency (MkNotifyErrUrgency))
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete
       ( NotifyActionCompleteAll,
@@ -20,6 +20,7 @@ tests =
     "Shrun.Configuration.Args.Parsing.Notify"
     [ notifyActionCompleteTests,
       notifyActionStartTests,
+      notifyErrUrgencyTests,
       notifySystemTests,
       notifyTimeoutTests
     ]
@@ -94,6 +95,42 @@ testActionStartOff =
     desc = "Parses --notify-action-start off"
     argList = ["--notify-action-start", "off", "command"]
     expected = updateDefNotifyArgs (#actions % #start) (MkNotifyActionStartSwitch False)
+
+notifyErrUrgencyTests :: TestTree
+notifyErrUrgencyTests =
+  testGroup
+    "--notify-error-urgency"
+    [ testErrUrgencyLow,
+      testErrUrgencyNormal,
+      testErrUrgencyCritical
+    ]
+
+testErrUrgencyLow :: TestTree
+testErrUrgencyLow =
+  testPropertyNamed desc "testErrUrgencyLow"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --notify-error-urgency low"
+    argList = ["--notify-error-urgency", "low", "command"]
+    expected = updateDefNotifyArgs #errUrgency (MkNotifyErrUrgency NotifyUrgencyLow)
+
+testErrUrgencyNormal :: TestTree
+testErrUrgencyNormal =
+  testPropertyNamed desc "testErrUrgencyNormal"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --notify-error-urgency normal"
+    argList = ["--notify-error-urgency", "normal", "command"]
+    expected = updateDefNotifyArgs #errUrgency (MkNotifyErrUrgency NotifyUrgencyNormal)
+
+testErrUrgencyCritical :: TestTree
+testErrUrgencyCritical =
+  testPropertyNamed desc "testErrUrgencyCritical"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --notify-error-urgency critical"
+    argList = ["--notify-error-urgency", "critical", "command"]
+    expected = updateDefNotifyArgs #errUrgency (MkNotifyErrUrgency NotifyUrgencyCritical)
 
 notifySystemTests :: TestTree
 notifySystemTests =

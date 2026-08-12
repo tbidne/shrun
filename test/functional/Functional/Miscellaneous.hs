@@ -721,6 +721,7 @@ testExampleDryRun = testCase desc $ do
         "  notify:",
         "    action-complete: command",
         "    action-start: on",
+        "    error-urgency: normal",
         "    system: " <> notifySystemArg,
         "    timeout: off",
         "command-graph:",

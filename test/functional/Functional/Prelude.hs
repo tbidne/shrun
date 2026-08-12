@@ -18,6 +18,7 @@ module Functional.Prelude
     -- * Running tests
     run,
     runNotes,
+    runExitNotes,
     runException,
     runExceptionE,
     runExitFailure,
@@ -122,6 +123,9 @@ runConfigIO env = fmap (view _2) . baseRunner @SomeException (Just env) Nothing
 -- | Runs the args and retrieves the sent notifications.
 runNotes :: List String -> IO (List Note)
 runNotes = fmap (view _3) . baseRunner @SomeException Nothing Nothing
+
+runExitNotes :: List String -> IO (List Note)
+runExitNotes = fmap (view _3) . baseRunner Nothing (Just $ Proxy @ExitCode)
 
 runExitConfigLogs :: List String -> IO (List Text)
 runExitConfigLogs = fmap (view _1) . baseRunner Nothing (Just $ Proxy @ExitCode)

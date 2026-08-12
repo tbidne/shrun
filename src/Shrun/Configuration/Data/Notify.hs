@@ -10,6 +10,11 @@ module Shrun.Configuration.Data.Notify
     _NotifyActionsActiveCompleteAny,
     _NotifyActionsActiveStartAny,
 
+    -- * Error Urgency
+    NotifyErrUrgency (..),
+    parseNotifyErrUrgency,
+    notifyErrUrgencyMeta,
+
     -- * Notify
     NotifyP (..),
     NotifyArgs,
@@ -21,6 +26,7 @@ module Shrun.Configuration.Data.Notify
   )
 where
 
+import Data.Text.Display (Display (displayBuilder))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -28,6 +34,7 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
+    ConfigPhaseDisabledMaybeF,
     ConfigPhaseF,
     SwitchF,
   )
@@ -193,6 +200,44 @@ type family NotifySystemF p r where
   NotifySystemF ConfigPhaseMerged _ = NotifySystem
   NotifySystemF ConfigPhaseEnv r = r
 
+newtype NotifyErrUrgency = MkNotifyErrUrgency
+  { unNotifyErrUrgency :: NotifyUrgency
+  }
+  deriving stock (Eq, Show)
+  deriving newtype (Bounded, Enum)
+
+instance
+  ( k ~ An_Iso,
+    a ~ NotifyUrgency,
+    b ~ NotifyUrgency
+  ) =>
+  LabelOptic "unNotifyErrUrgency" k NotifyErrUrgency NotifyErrUrgency a b
+  where
+  labelOptic =
+    iso
+      (\(MkNotifyErrUrgency u) -> u)
+      MkNotifyErrUrgency
+
+instance Default NotifyErrUrgency where
+  def = MkNotifyErrUrgency NotifyUrgencyCritical
+
+instance Display NotifyErrUrgency where
+  displayBuilder (MkNotifyErrUrgency u) = case u of
+    NotifyUrgencyLow -> "low"
+    NotifyUrgencyNormal -> "normal"
+    NotifyUrgencyCritical -> "critical"
+
+instance DecodeTOML NotifyErrUrgency where
+  tomlDecoder = parseNotifyErrUrgency tomlDecoder
+
+-- | Parses 'NotifySystemOs'.
+parseNotifyErrUrgency :: (MonadFail m) => m Text -> m NotifyErrUrgency
+parseNotifyErrUrgency = (>>= Utils.inverseMapFail display "error-urgency" notifyErrUrgencyMeta)
+{-# INLINEABLE parseNotifyErrUrgency #-}
+
+notifyErrUrgencyMeta :: (IsString a) => Tuple2 Bool (List a)
+notifyErrUrgencyMeta = (False, ["low", "normal", "critical"])
+
 -- | Holds notification config. We have an invariant that if the notify config
 -- exists (i.e. is 'Just'), then at least one of actionComplete, actionStart
 -- should be Just/True.
@@ -200,6 +245,8 @@ type NotifyP :: ConfigPhase -> Type -> Type
 data NotifyP p r = MkNotifyP
   { -- | Notify actions.
     actions :: NotifyActionsF p,
+    -- | Urgency level for errors.
+    errUrgency :: SwitchF p NotifyErrUrgency,
     -- | The notification system to use.
     system :: NotifySystemF p r,
     -- | when to timeout successful notifications.
@@ -215,10 +262,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkNotifyP a1 a2 a3) ->
+      $ \f (MkNotifyP a1 a2 a3 a4) ->
         fmap
-          (\b -> MkNotifyP b a2 a3)
+          (\b -> MkNotifyP b a2 a3 a4)
           (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ SwitchF p NotifyErrUrgency,
+    b ~ SwitchF p NotifyErrUrgency
+  ) =>
+  LabelOptic "errUrgency" k (NotifyP p r) (NotifyP p r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkNotifyP a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkNotifyP a1 b a3 a4)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -230,10 +292,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkNotifyP a1 a2 a3) ->
+      $ \f (MkNotifyP a1 a2 a3 a4) ->
         fmap
-          (\b -> MkNotifyP a1 b a3)
-          (f a2)
+          (\b -> MkNotifyP a1 a2 b a4)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -245,16 +307,17 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkNotifyP a1 a2 a3) ->
+      $ \f (MkNotifyP a1 a2 a3 a4) ->
         fmap
-          (\b -> MkNotifyP a1 a2 b)
-          (f a3)
+          (\b -> MkNotifyP a1 a2 a3 b)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance Semigroup (NotifyToml r) where
   l <> r =
     MkNotifyP
       { actions = l ^. #actions <> r ^. #actions,
+        errUrgency = l ^. #errUrgency <|> r ^. #errUrgency,
         system = l ^. #system <|> r ^. #system,
         timeout = l ^. #timeout <|> r ^. #timeout
       }
@@ -263,6 +326,7 @@ instance Monoid (NotifyToml r) where
   mempty =
     MkNotifyP
       { actions = mempty,
+        errUrgency = Nothing,
         system = Nothing,
         timeout = Nothing
       }
@@ -271,6 +335,7 @@ instance Pretty (NotifyMerged r) where
   pretty c =
     vcat
       [ pretty (c ^. #actions),
+        "error-urgency: " <> pretty (display $ c ^. #errUrgency),
         "system: " <> pretty (display $ c ^. #system),
         "timeout: " <> prettyNotifyTimeout (c ^. #timeout)
       ]
@@ -301,6 +366,7 @@ instance Default (NotifyArgs r) where
   def =
     MkNotifyP
       { actions = mempty,
+        errUrgency = Nothing,
         system = Nothing,
         timeout = Nothing
       }
@@ -320,6 +386,7 @@ mergeNotifications args mToml = do
       Just
         $ MkNotifyP
           { actions,
+            errUrgency,
             system,
             timeout =
               (args ^. #timeout) <.> (mToml ^? Utils.surroundJust #timeout)
@@ -339,10 +406,15 @@ mergeNotifications args mToml = do
       (Nothing, True) -> Just NotifyActionsActiveStart
       (Just actionComplete, True) -> Just $ NotifyActionsActiveAll actionComplete
 
+    errUrgency =
+      (args ^. #errUrgency) <.> (mToml ^? Utils.surroundJust #errUrgency)
+
 instance DecodeTOML (NotifyToml r) where
   tomlDecoder = do
     complete <- getFieldOptWith tomlDecoder "action-complete"
     start <- getFieldOptWith tomlDecoder "action-start"
+
+    errUrgency <- getFieldOptWith tomlDecoder "error-urgency"
 
     let actions =
           MkNotifyActionsInit
@@ -355,6 +427,7 @@ instance DecodeTOML (NotifyToml r) where
     pure
       $ MkNotifyP
         { actions,
+          errUrgency,
           system,
           timeout
         }
@@ -381,6 +454,7 @@ mkNotify :: NotifyMerged r -> NotifySystemF ConfigPhaseEnv r -> NotifyP ConfigPh
 mkNotify notifyToml systemP2 =
   MkNotifyP
     { actions = notifyToml ^. #actions,
+      errUrgency = notifyToml ^. #errUrgency,
       system = systemP2,
       timeout = notifyToml ^. #timeout
     }

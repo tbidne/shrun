@@ -132,7 +132,8 @@ import Shrun.Configuration.Data.Notify
       ( NotifyActionsActiveAll,
         NotifyActionsActiveComplete
       ),
-    NotifyP (MkNotifyP, actions, system, timeout),
+    NotifyErrUrgency (MkNotifyErrUrgency),
+    NotifyP (MkNotifyP, actions, errUrgency, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete
@@ -235,6 +236,7 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                   Just
                     $ MkNotifyP
                       { actions = NotifyActionsActiveAll NotifyActionCompleteAll,
+                        errUrgency = MkNotifyErrUrgency NotifyUrgencyCritical,
                         system = notifySystemDBus,
                         timeout = NotifyTimeoutNever
                       }
@@ -311,6 +313,8 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
         "final",
         "--notify-action-start",
         "off",
+        "--notify-error-urgency",
+        "low",
         "--notify-timeout",
         "10"
       ]
@@ -364,6 +368,7 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                   Just
                     $ MkNotifyP
                       { actions = NotifyActionsActiveComplete NotifyActionCompleteFinal,
+                        errUrgency = MkNotifyErrUrgency NotifyUrgencyLow,
                         system = notifySystemNotifySend,
                         timeout = NotifyTimeoutMillis 10_000
                       }
