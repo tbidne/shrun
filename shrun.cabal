@@ -77,6 +77,7 @@ library
   autogen-modules: Paths_shrun
   exposed-modules:
     Shrun
+    Shrun.Cleanup
     Shrun.Command
     Shrun.Command.Types
     Shrun.Command.Types.Internal
@@ -131,6 +132,7 @@ library
     Shrun.Data.Text
     Shrun.IO
     Shrun.IO.Handle
+    Shrun.IO.Signals
     Shrun.Logging
     Shrun.Logging.Formatting
     Shrun.Logging.MonadRegionLogger

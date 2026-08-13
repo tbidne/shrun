@@ -8,20 +8,14 @@ module Shrun.IO
 
     -- * Running commands
     tryCommandLogging,
-
-    -- * Misc
-    killChildPids,
-    killPids,
   )
 where
 
-import Control.Monad (filterM)
 import Data.List qualified as L
-import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.Handle qualified as H
 import Effects.FileSystem.HandleWriter qualified as HW
-import Effects.System.Process (Pid, ProcessHandle)
+import Effects.System.Process (ProcessHandle)
 import Effects.System.Process qualified as P
 import Effects.Time (MonadTime (getMonotonicTime))
 import Shrun.Command.Types
@@ -29,11 +23,7 @@ import Shrun.Command.Types
     CommandStatus (CommandFailure, CommandRunning, CommandSuccess),
     commandToProcess,
   )
-import Shrun.Configuration.Data.CommandLogging
-  ( BufferLength,
-    BufferTimeout,
-    ReportReadErrorsSwitch,
-  )
+import Shrun.Configuration.Data.CommandLogging (ReportReadErrorsSwitch)
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy
       ( ReadBlock,
@@ -46,7 +36,7 @@ import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCleanup),
+    HasCommands,
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -62,6 +52,7 @@ import Shrun.IO.Handle
     ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
   )
 import Shrun.IO.Handle qualified as Handle
+import Shrun.IO.Signals qualified as Signals
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.MonadRegionLogger
@@ -81,7 +72,6 @@ import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 import System.IO qualified as IO
-import Text.Read qualified as TR
 
 -- | Newtype wrapper for stderr.
 newtype Stderr = MkStderr {unStderr :: List UnlinedText}
@@ -401,7 +391,7 @@ tryCommandStream logFn cmd = do
     --
     -- See NOTE: [Command cleanup]
     mPid <- P.getPid ph
-    childPids <- getChildPids True mPid
+    childPids <- Signals.getChildPids True mPid
     updateCommandStatus cmd (CommandRunning (mPid, childPids))
     streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
@@ -466,7 +456,7 @@ streamOutput logFn cmd processParams = do
               (m HandleResult)
           )
       handleToParams =
-        mkHandleParams
+        Handle.mkHandleParams
           blockSize
           readStrategy
           bufferLength
@@ -565,53 +555,6 @@ streamOutput logFn cmd processParams = do
   where
     (outHandle, errHandle, processHandle) = processParams
 {-# INLINEABLE streamOutput #-}
-
--- | Create params for reading from the handle.
-mkHandleParams ::
-  ( CanRead p,
-    HasCallStack,
-    MonadCatch m,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadTime m
-  ) =>
-  -- | Read block size.
-  Int ->
-  -- | Read strategy.
-  ReadStrategy ->
-  -- | Max buffer length, for read-block-line-buffer strategy.
-  BufferLength ->
-  -- | Max buffer time, for read-block-line-buffer strategy.
-  BufferTimeout ->
-  -- | Handle from which to read.
-  Handle p ->
-  -- | Returns:
-  --
-  --  1. Ref for the last read (always active).
-  --  2. Ref for previous partial read (only for read-block-line-buffer
-  --     strategy).
-  --  3. Read function.
-  m
-    ( Tuple3
-        (IORef HandleResult)
-        (IORef (Maybe UnlinedText))
-        (m HandleResult)
-    )
-mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
-  lastReadRef <- newIORef' (0, ReadNoData)
-  prevReadRef <- newIORef' Nothing
-
-  currTime <- getMonotonicTime
-  bufFlushTimeRef <- newIORef' currTime
-
-  let readFn = case readStrategy of
-        ReadBlock -> Handle.readHandle Nothing blockSize handle
-        ReadBlockLineBuffer ->
-          let outBufferParams = (prevReadRef, bufLength, bufTimeout, bufFlushTimeRef)
-           in Handle.readHandle (Just outBufferParams) blockSize handle
-
-  pure (lastReadRef, prevReadRef, readFn)
-{-# INLINEABLE mkHandleParams #-}
 
 -- | Final read after the process has exited, to retrieve leftover data.
 -- Only used with the read-block-line-buffer strategy.
@@ -725,217 +668,3 @@ logDebugCmd cmd procConfig logFn = do
               mode = Types.LogModeFinish
             }
     withRegion Linear $ \r -> logFn r lg
-
-killChildPids ::
-  forall env m.
-  ( HasCallStack,
-    HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
-  ) =>
-  Maybe Pid ->
-  m ()
-killChildPids Nothing = Logging.putDebugLogDirect "killChildPids: No pid given"
-killChildPids (Just pid) = do
-  pidsStr <- getChildPids False (Just pid)
-  pidsToKill <- filterM canKillPid pidsStr
-  killPids pidsToKill
-
-getChildPids ::
-  ( HasCallStack,
-    HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
-  ) =>
-  -- | Is multithreaded. Used for logging.
-  Bool ->
-  Maybe Pid ->
-  m (List Pid)
-getChildPids _ Nothing = pure []
-getChildPids multiThreads (Just pid) = do
-  asks getCleanup >>= \case
-    Nothing -> pure []
-    Just cleanup -> do
-      (ec, stdout, stderr) <-
-        readProcessTotal
-          (cleanup ^. #findPidsExe)
-          args
-          "getChildPids"
-
-      let (result, msg) = case ec of
-            ExitFailure _ ->
-              let m =
-                    fromString
-                      $ mconcat
-                        [ "Failed finding child pids of '",
-                          show pid,
-                          "': out: '",
-                          stdout,
-                          "', err: '",
-                          stderr,
-                          "'"
-                        ]
-               in ([], m)
-            ExitSuccess ->
-              let pidsTxt =
-                    T.lines
-                      . T.strip
-                      . pack
-                      $ stdout
-                  m =
-                    fromString
-                      $ mconcat
-                        [ "Child pids of '",
-                          show pid,
-                          "': ",
-                          unpack $ T.intercalate "," pidsTxt
-                        ]
-               in case traverse (TR.readMaybe . unpack) pidsTxt of
-                    Nothing -> ([], fromString $ "Failed reading pid strings: " <> show pidsTxt)
-                    Just pids -> (pids, m)
-      logFn msg
-      pure result
-  where
-    args = ["-P", show pid]
-
-    logFn =
-      -- If multiThreads is active then this function is possibly called from
-      -- multiple threads i.e. the logs should be sent to the queue, as usual.
-      --
-      -- OTOH, this must have been called during termination when the queues
-      -- are already shutdown, hence we should log directly.
-      if multiThreads
-        then Logging.putDebugLog
-        else Logging.putDebugLogDirect
-
-killPids ::
-  ( HasCallStack,
-    HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
-  ) =>
-  List Pid ->
-  m ()
-killPids [] = pure ()
-killPids pids =
-  void
-    . runKill "-15"
-    $ pids
-
-canKillPid ::
-  forall env m.
-  ( HasCallStack,
-    HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
-  ) =>
-  Pid ->
-  m Bool
-canKillPid = runKill "-0" . (: [])
-
-runKill ::
-  forall env m.
-  ( HasCallStack,
-    HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
-  ) =>
-  String ->
-  List Pid ->
-  m Bool
-runKill signal pids = do
-  asks getCleanup >>= \case
-    Nothing -> pure False
-    Just cleanup -> do
-      (ec, stdout, stderr) <-
-        readProcessTotal
-          (cleanup ^. #killPidsExe)
-          (signal : pidArgs)
-          ("runKill " <> signal)
-
-      let msg = case ec of
-            ExitSuccess ->
-              fromString
-                $ mconcat
-                  [ "Successfully ran kill ",
-                    signal,
-                    " with: ",
-                    pidDispStr
-                  ]
-            ExitFailure _ ->
-              fromString
-                $ mconcat
-                  [ "Kill ",
-                    signal,
-                    " with '",
-                    pidDispStr,
-                    "' failed: ",
-                    "': out: '",
-                    stdout,
-                    "', err: '",
-                    stderr,
-                    "'"
-                  ]
-      Logging.putDebugLogDirect msg
-
-      case ec of
-        ExitSuccess -> pure True
-        ExitFailure _ -> pure False
-  where
-    pidArgs = show <$> pids
-    pidDispStr = unpack $ T.intercalate ", " (showt <$> pids)
-
-readProcessTotal ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadProcess m
-  ) =>
-  FilePath ->
-  [String] ->
-  String ->
-  m (ExitCode, String, String)
-readProcessTotal exe args str = do
-  tryMySync (P.readProcessWithExitCode exe args str) >>= \case
-    Left ex -> pure (ExitFailure 1, "", mkExeErr exe args $ displayException ex)
-    Right r -> pure r
-
-mkExeErr :: String -> [String] -> String -> String
-mkExeErr exeStr args err =
-  mconcat
-    [ "Failed running command '",
-      exeStr,
-      "' with args '",
-      unpack $ T.intercalate "," (pack <$> args),
-      "': ",
-      err
-    ]

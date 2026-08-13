@@ -10,6 +10,9 @@ module Shrun.IO.Handle
     readHandle,
     readHandleRaw,
     readAndUpdateRefFinal,
+
+    -- * Construction
+    mkHandleParams,
   )
 where
 
@@ -27,6 +30,9 @@ import GHC.Real (RealFrac (floor))
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
     BufferTimeout,
+  )
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy
+  ( ReadStrategy (ReadBlock, ReadBlockLineBuffer),
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
@@ -495,3 +501,50 @@ unsnoc = foldr (\x -> Just . maybe ([], x) (\(~(a, b)) -> (x : a, b))) Nothing
 
 ne :: a -> NonEmpty a
 ne x = x :| []
+
+-- | Create params for reading from the handle.
+mkHandleParams ::
+  ( CanRead p,
+    HasCallStack,
+    MonadCatch m,
+    MonadHandleReader m,
+    MonadIORef m,
+    MonadTime m
+  ) =>
+  -- | Read block size.
+  Int ->
+  -- | Read strategy.
+  ReadStrategy ->
+  -- | Max buffer length, for read-block-line-buffer strategy.
+  BufferLength ->
+  -- | Max buffer time, for read-block-line-buffer strategy.
+  BufferTimeout ->
+  -- | Handle from which to read.
+  Handle p ->
+  -- | Returns:
+  --
+  --  1. Ref for the last read (always active).
+  --  2. Ref for previous partial read (only for read-block-line-buffer
+  --     strategy).
+  --  3. Read function.
+  m
+    ( Tuple3
+        (IORef HandleResult)
+        (IORef (Maybe UnlinedText))
+        (m HandleResult)
+    )
+mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
+  lastReadRef <- newIORef' (0, ReadNoData)
+  prevReadRef <- newIORef' Nothing
+
+  currTime <- getMonotonicTime
+  bufFlushTimeRef <- newIORef' currTime
+
+  let readFn = case readStrategy of
+        ReadBlock -> readHandle Nothing blockSize handle
+        ReadBlockLineBuffer ->
+          let outBufferParams = (prevReadRef, bufLength, bufTimeout, bufFlushTimeRef)
+           in readHandle (Just outBufferParams) blockSize handle
+
+  pure (lastReadRef, prevReadRef, readFn)
+{-# INLINEABLE mkHandleParams #-}

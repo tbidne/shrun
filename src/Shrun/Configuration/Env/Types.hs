@@ -25,10 +25,14 @@ module Shrun.Configuration.Env.Types
     -- * Types
     Env (..),
     whenDebug,
+
+    -- * Misc
+    formatTimeSpec,
   )
 where
 
 import Data.HashMap.Strict qualified as Map
+import Effects.Time (TimeSpec)
 import Shrun.Command.Types
   ( CommandP1,
     CommandStatus,
@@ -40,15 +44,18 @@ import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConfigPhase (ConfigPhase (ConfigPhaseEnv))
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.Core (CoreConfigP)
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Data.Notify (NotificationEnv)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
+import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Alias for all logging config.
 type HasLogging env m =
@@ -398,3 +405,18 @@ whenTimedOut :: (HasTimeout env, MonadAtomic m, MonadReader env m) => m () -> m 
 whenTimedOut m = do
   hasTimedOut <- readTVarA' =<< asks getHasTimedOut
   when hasTimedOut m
+
+formatTimeSpec ::
+  forall env m.
+  ( HasConsoleLogging env (Region m),
+    MonadReader env m
+  ) =>
+  TimeSpec ->
+  m UnlinedText
+formatTimeSpec totalTime = do
+  timerFormat <- asks (view (_1 % #timerFormat) . getConsoleLogging @_ @(Region m))
+  pure
+    $ TimerFormat.formatRelativeTime
+      timerFormat
+      (Utils.timeSpecToRelTime totalTime)
+{-# INLINEABLE formatTimeSpec #-}
