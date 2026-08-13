@@ -92,12 +92,12 @@ key-hide = "off"
 # Configuration for "command logs", enabled by console-log.command and/or
 # file-logging.
 [command-log]
-# Max text length held by the log buffer, used in conjunction with
+# Max text length held by the log buffer, used with
 # read-strategy block-line-buffer. Defaults to 1,000 characters.
 buffer-length = 2000
 
-# Max time the log buffer will hold a log before flushing it, used in
-# conjunction with command-log.read-strategy = block-line-buffer. Defaults to
+# Max time the log buffer will hold a log before flushing it, used with
+# command-log.read-strategy = block-line-buffer. Defaults to
 # 30 seconds."
 buffer-timeout = 60
 
@@ -114,12 +114,14 @@ poll-interval = 100
 # across lines. The default is "16 kb".
 read-size = "1 mb"
 
-# The 'block' strategy reads N (--command-log-read-size) bytes at a time,
-# whereas 'block-line-buffer' also reads N bytes at a time, but buffers
-# newlines, for potentially nicer formatted logs. By default, we use
-# 'block-line-buffer' if we are only running one command and/or file-logging
-# is not active. For multiple commands with file-logging, we default to
-# 'block'. This option explicitly sets the strategy.
+# Strategy for reading command logs. 'block-line-buffer' is allowed (and
+# the default) except when all of the following are true: file-log: on,
+# file-log-multi: off, and concurrent commands. There is therefore no
+# need to set this option, except to set 'block' unconditionally.
+#
+# - block: Reads N (--command-log-read-size) bytes at a time.
+# - block-line-buffer: Also reads N bytes at a time, but buffers
+#   newlines, for potentially nicer formatted logs.
 read-strategy = "block"
 
 # Configuration for console logging.
@@ -189,13 +191,12 @@ timer-format = "prose_compact"
 # 'shrun (1).log'.
 #mode = "write"
 
-# Logs each command to its own file, rather than all logs being sent to the
-# same file. This allows usage with
-# '--command-log-read-strategy block-line-buffer'. The filename is based on
-# '--file-log'. Note that '--file-log-mode' applies to the generated file.
-#
-# Can be 'on', 'off', or 'auto'. The latter activates multi-mode if and only
-# if there are concurrent commands.
+# Logs each command to its own file, rather than all logs being sent to
+# the same file. In particular, this allows usage with
+# '--command-log-read-strategy block-line-buffer' and concurrent
+# commands. The filename is based on --file-log. Note that
+# --file-log-mode applies to the generated file. With 'auto', activates
+# if and only if there are concurrent commands.
 #multi = "off"
 
 # Sets a threshold for the file log size, upon which we either print a

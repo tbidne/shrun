@@ -21,7 +21,6 @@ module Shrun.Configuration.Data.Core
   )
 where
 
-import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingP, mergeCommandLogging)
 import Shrun.Configuration.Data.CommandLogging qualified as CommandLogging
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingP, mergeCommonLogging)
@@ -301,12 +300,11 @@ mergeCoreConfig ::
     MonadIORef m,
     MonadTerminal m
   ) =>
-  NESeq CommandP1 ->
   CommandGraph ->
   CoreConfigArgs r ->
   CoreConfigToml r ->
   m (CoreConfigMerged r)
-mergeCoreConfig cmds cmdGraph args toml = do
+mergeCoreConfig cmdGraph args toml = do
   detectRef <- newIORef' DetectNotRun
 
   consoleLogging <-
@@ -330,7 +328,7 @@ mergeCoreConfig cmds cmdGraph args toml = do
     mergeCommandLogging
       isFileLog
       isFileLogMulti
-      cmds
+      cmdGraph
       (args ^. #commandLogging)
       (toml ^. #commandLogging)
 

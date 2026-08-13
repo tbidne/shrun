@@ -70,8 +70,8 @@ bufferLengthParser = mainParser
           )
     helpTxt =
       mconcat
-        [ "Max text length held by the log buffer, used in conjunction ",
-          "with --command-log-read-strategy block-line-buffer. Defaults to ",
+        [ "Max text length held by the log buffer, used ",
+          "with '--command-log-read-strategy block-line-buffer'. Defaults to ",
           "1,000 characters."
         ]
 
@@ -91,8 +91,8 @@ bufferTimeoutParser = mainParser
     helpTxt =
       mconcat
         [ "Max time the log buffer will hold a log before flushing it, used ",
-          "in conjunction with --command-log-read-strategy ",
-          "block-line-buffer. Defaults to 30 seconds."
+          "with '--command-log-read-strategy ",
+          "block-line-buffer'. Defaults to 30 seconds."
         ]
 
 pollIntervalParser :: Parser (Maybe PollInterval)
@@ -110,7 +110,7 @@ pollIntervalParser = mainParser
           )
     helpTxt =
       mconcat
-        [ "Non-negative integer used in conjunction with --console-log-command and ",
+        [ "Non-negative integer used with --console-log-command and ",
           "--file-log that determines how quickly we poll commands for ",
           "logs, in microseconds. A value of 0 is interpreted as infinite ",
           "i.e. limited only by the CPU. Defaults to ",
@@ -173,8 +173,9 @@ readStrategyParser = mainParser
     intro =
       mconcat
         [ "Strategy for reading command logs. 'block-line-buffer' is allowed ",
-          "(and the default) as long as we do not have multiple commands with ",
-          "file logging. In that scenario, we use 'block'."
+          "(and the default) except when all of the following are true: ",
+          "file-log: on, file-log-multi: off, and concurrent commands. There ",
+          "is therefore no need to set this option, except to set 'block' unconditionally."
         ]
 
     block = "block: Reads N (--command-log-read-size) bytes at a time."

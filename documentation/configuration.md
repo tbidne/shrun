@@ -327,7 +327,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 **Arg:** `--command-log-buffer-length NATURAL`
 
-**Description:** Max text length held by the log buffer, used in conjunction with `--command-log-read-strategy block-line-buffer`. Defaults to 1,000 characters.
+**Description:** Max text length held by the log buffer, used with `--command-log-read-strategy block-line-buffer`. Defaults to 1,000 characters.
 
 **Example:**
 
@@ -344,7 +344,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 **Arg:** `--command-log-buffer-timeout (NATURAL | STRING)`
 
-**Description:** Max time the log buffer will hold a log before flushing it, used in conjunction with `--command-log-read-strategy block-line-buffer`. Defaults to 30 seconds.
+**Description:** Max time the log buffer will hold a log before flushing it, used with `--command-log-read-strategy block-line-buffer`. Defaults to 30 seconds.
 
 **Example:**
 
@@ -408,14 +408,12 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 **Arg:** `--command-log-read-strategy (block | block-line-buffer)`
 
-**Description:** Strategy for reading command logs. `block-line-buffer` is allowed (and the default) as long as we do not have multiple commands with file logging. In that scenario, we use `block`.
+**Description:** Strategy for reading command logs. `block-line-buffer` is allowed (and the default) except when all of the following are true: `file-log: on`, `file-log-multi: off`, and concurrent commands. There is therefore no need to set this option, except to set `block` unconditionally.
 
-  - block: Reads `N` (`--command-log-read-size`) bytes at a time.
-  - block-line-buffer: Also reads `N` bytes at a time, but buffers newlines, for potentially nicer formatted logs.
+  - block: Reads N (--command-log-read-size) bytes at a time.
 
-> [!WARNING]
->
-> The `block-line-buffer` strategy only makes sense when there is exactly _one_ command. Otherwise we could easily mix up logs from different commands, leading to nonsense output.
+  - block-line-buffer: Also reads N bytes at a time, but buffers
+    newlines, for potentially nicer formatted logs.
 
 **Example:**
 
@@ -697,7 +695,7 @@ vs.
 
 **Arg:** `--file-log-multi (on | off)`
 
-**Description:** Logs each command to its own file, rather than all logs being sent to the same file. This allows usage with `--command-log-read-strategy block-line-buffer`. The filename is based on `--file-log`. Note that `--file-log-mode` applies to the generated file. Only activates with multiple concurrent commands.
+**Description:** Logs each command to its own file, rather than all logs being sent to the same file. In particular, this allows usage with `--command-log-read-strategy block-line-buffer` and concurrent commands. The filename is based on `--file-log`. Note that `--file-log-mode` applies to the generated file. With `auto`, activates if and only if there are concurrent commands.
 
 **Example:**
 

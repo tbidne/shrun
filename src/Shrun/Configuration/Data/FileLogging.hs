@@ -518,7 +518,7 @@ mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
 
   -- If the user specifies a mode, use it. Otherwise, use the default logic:
   --
-  -- Enable multi-logging iff the command graph is /not/ sequential.
+  -- Enable multi-logging iff the command graph is concurrent.
   let multi = MkFileLogMultiSwitch $ case args ^. #multi <.> toml ^. #multi of
         FileLogMultiOn -> True
         FileLogMultiOff -> False

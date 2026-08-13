@@ -9,7 +9,8 @@ module Shrun.Configuration.Data.CommandLogging.ReadStrategy
   )
 where
 
-import Shrun.Command.Types (CommandP1)
+import Shrun.Configuration.Data.Graph (CommandGraph)
+import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
@@ -32,19 +33,24 @@ instance Pretty ReadStrategy where
     ReadBlock -> "block"
     ReadBlockLineBuffer -> "block-line-buffer"
 
-defaultReadStrategy :: Bool -> Bool -> NESeq CommandP1 -> ReadStrategy
-defaultReadStrategy isFileLog isFileLogMulti cmds =
-  if readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds
+defaultReadStrategy :: Bool -> Bool -> CommandGraph -> ReadStrategy
+defaultReadStrategy fileLogOn fileLogMultiOn cmdGraph =
+  if readBlockLineBufferNotAllowed fileLogOn fileLogMultiOn cmdGraph
     then ReadBlock
     else ReadBlockLineBuffer
 
-readBlockLineBufferNotAllowed :: Bool -> Bool -> NESeq CommandP1 -> Bool
-readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds =
-  isMulti
-    && isFileLog
-    && not isFileLogMulti
+-- Block line buffer not allowed when /all/ of the following are true:
+--
+-- - file logging: on
+-- - file multi log: off
+-- - commands: concurrent
+readBlockLineBufferNotAllowed :: Bool -> Bool -> CommandGraph -> Bool
+readBlockLineBufferNotAllowed fileLogOn fileLogMultiOn cmdGraph =
+  isConcurrent
+    && fileLogOn
+    && not fileLogMultiOn
   where
-    isMulti = length cmds > 1
+    isConcurrent = not (Graph.isSequential cmdGraph)
 
 -- | Parses 'ReadStrategy'.
 parseReadStrategy :: (MonadFail m) => m Text -> m ReadStrategy

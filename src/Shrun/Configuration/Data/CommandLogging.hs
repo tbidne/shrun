@@ -24,14 +24,12 @@ module Shrun.Configuration.Data.CommandLogging
     -- * Functions
     mergeCommandLogging,
     toEnv,
-    defaultCommandLoggingMerged,
 
     -- * Exceptions
     ReadStrategyException (..),
   )
 where
 
-import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
@@ -54,6 +52,7 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
+import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
 
@@ -288,21 +287,6 @@ instance Default CommandLoggingArgs where
         reportReadErrors = Nothing
       }
 
-defaultCommandLoggingMerged ::
-  Bool ->
-  Bool ->
-  NESeq CommandP1 ->
-  CommandLoggingP ConfigPhaseMerged
-defaultCommandLoggingMerged isFileLog isFileLogMulti cmds =
-  MkCommandLoggingP
-    { bufferLength = def,
-      bufferTimeout = def,
-      pollInterval = def,
-      readStrategy = RS.defaultReadStrategy isFileLog isFileLogMulti cmds,
-      readSize = def,
-      reportReadErrors = def
-    }
-
 -- | Merges args and toml configs.
 mergeCommandLogging ::
   ( HasCallStack,
@@ -310,11 +294,11 @@ mergeCommandLogging ::
   ) =>
   Bool ->
   Bool ->
-  NESeq CommandP1 ->
+  CommandGraph ->
   CommandLoggingArgs ->
   Maybe CommandLoggingToml ->
   m CommandLoggingMerged
-mergeCommandLogging isFileLog isFileLogMulti cmds args mToml = do
+mergeCommandLogging isFileLog isFileLogMulti cmdGraph args mToml = do
   readStrategy <-
     guardReadStrategy
       ((args ^. #readStrategy) <|> (toml ^. #readStrategy))
@@ -342,13 +326,13 @@ mergeCommandLogging isFileLog isFileLogMulti cmds args mToml = do
     guardReadStrategy = \case
       -- 1. User set ReadBlockLineBuffer, verify it's okay.
       Just ReadBlockLineBuffer ->
-        if RS.readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds
+        if RS.readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmdGraph
           then throwM MkReadStrategyException
           else pure ReadBlockLineBuffer
       -- 2. User set ReadBlock, fine.
       Just ReadBlock -> pure ReadBlock
       -- 3. User did not specify. Pick a good default.
-      Nothing -> pure $ RS.defaultReadStrategy isFileLog isFileLogMulti cmds
+      Nothing -> pure $ RS.defaultReadStrategy isFileLog isFileLogMulti cmdGraph
 
 instance DecodeTOML CommandLoggingToml where
   tomlDecoder =

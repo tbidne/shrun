@@ -75,7 +75,6 @@ mergeConfig args toml tomlPaths = do
 
   coreConfig <-
     mergeCoreConfig
-      commands
       commandGraph
       (args ^. #coreConfig)
       (toml ^. #coreConfig)
