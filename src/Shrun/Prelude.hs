@@ -77,6 +77,9 @@ module Shrun.Prelude
     isMyAsync,
     isTermException,
 
+    -- * Optics
+    makeFieldLabelsNoPrefixReadOnly,
+
     -- * Prelude exports
     module X,
   )
@@ -360,6 +363,7 @@ import GHC.Num as X (Num ((*), (+), (-)))
 import GHC.Real as X (Integral, div, truncate)
 import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack, withFrozenCallStack)
+import Language.Haskell.TH (DecsQ, Name)
 import Numeric.Algebra (MGroup)
 import Numeric.Algebra as X
   ( ASemigroup ((.+.)),
@@ -431,6 +435,14 @@ import Optics.Core as X
     _Right,
   )
 import Optics.Core.Extras as X (is)
+import Optics.TH as X
+  ( declareFieldLabels,
+    generateUpdateableOptics,
+    makeFieldLabelsNoPrefix,
+    makeFieldLabelsWith,
+    makePrisms,
+    noPrefixFieldLabels,
+  )
 import Options.Applicative.Help qualified as H
 import Prettyprinter as X
   ( Doc,
@@ -744,3 +756,8 @@ prettyToText =
 
 foldMapA :: (Applicative m, Foldable t, Monoid b) => (a -> m b) -> t a -> m b
 foldMapA f = getAp <$> foldMap (Ap . f)
+
+makeFieldLabelsNoPrefixReadOnly :: Name -> DecsQ
+makeFieldLabelsNoPrefixReadOnly =
+  makeFieldLabelsWith
+    (noPrefixFieldLabels & generateUpdateableOptics .~ False)

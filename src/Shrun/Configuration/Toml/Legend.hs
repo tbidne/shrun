@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types for the legend.
@@ -36,35 +37,7 @@ pattern MkKeyVal es k v <- UnsafeKeyVal es k v
 
 {-# COMPLETE MkKeyVal #-}
 
-instance
-  ( k ~ A_Getter,
-    a ~ Maybe EdgeArgs,
-    b ~ Maybe EdgeArgs
-  ) =>
-  LabelOptic "edges" k KeyVal KeyVal a b
-  where
-  labelOptic = to (\(UnsafeKeyVal es _ _) -> es)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Getter,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "key" k KeyVal KeyVal a b
-  where
-  labelOptic = to (\(UnsafeKeyVal _ k _) -> k)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Getter,
-    a ~ NESeq Text,
-    b ~ NESeq Text
-  ) =>
-  LabelOptic "val" k KeyVal KeyVal a b
-  where
-  labelOptic = to (\(UnsafeKeyVal _ _ v) -> v)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''KeyVal
 
 instance DecodeTOML KeyVal where
   tomlDecoder =

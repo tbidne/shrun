@@ -1,12 +1,6 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
-
--- NOTE: -Wno-redundant-constraints for
---
---   withCoreEnv :: (..., MonadDBus m, ...) => ...
---
--- on OSX.
 
 module Shrun.Configuration.Data.Core
   ( -- * Types
@@ -99,125 +93,7 @@ data CoreConfigP p notifyEnv = MkCoreConfigP
     notifications :: ArgsOnlyDetF p (NotifyP p notifyEnv)
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseDisabledMaybeF p Text,
-    b ~ ConfigPhaseDisabledMaybeF p Text
-  ) =>
-  LabelOptic "init" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP b a2 a3 a4 a5 a6 a7 a8)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ LegendKeysCacheF p,
-    b ~ LegendKeysCacheF p
-  ) =>
-  LabelOptic "legendKeysCache" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 b a3 a4 a5 a6 a7 a8)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TimeoutF p,
-    b ~ TimeoutF p
-  ) =>
-  LabelOptic "timeout" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 a2 b a4 a5 a6 a7 a8)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TomlOptF p (CommonLoggingP p),
-    b ~ TomlOptF p (CommonLoggingP p)
-  ) =>
-  LabelOptic "commonLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 a2 a3 b a5 a6 a7 a8)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TomlOptF p (CommandLoggingP p),
-    b ~ TomlOptF p (CommandLoggingP p)
-  ) =>
-  LabelOptic "commandLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 b a6 a7 a8)
-          (f a5)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TomlOptF p (ConsoleLoggingP p),
-    b ~ TomlOptF p (ConsoleLoggingP p)
-  ) =>
-  LabelOptic "consoleLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 b a7 a8)
-          (f a6)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ArgsOnlyDetF p (FileLoggingP p),
-    b ~ ArgsOnlyDetF p (FileLoggingP p)
-  ) =>
-  LabelOptic "fileLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 a6 b a8)
-          (f a7)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ArgsOnlyDetF p (NotifyP p r),
-    b ~ ArgsOnlyDetF p (NotifyP p r)
-  ) =>
-  LabelOptic "notifications" k (CoreConfigP p r) (CoreConfigP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
-        fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 b)
-          (f a8)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CoreConfigP
 
 instance Semigroup (CoreConfigToml r) where
   l <> r =

@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'Timeout' type.
@@ -22,12 +23,7 @@ newtype Timeout = MkTimeout
   deriving stock (Eq, Ord, Show)
   deriving (FromInteger, Num, Pretty) via Natural
 
-instance
-  (k ~ An_Iso, a ~ Natural, b ~ Natural) =>
-  LabelOptic "unTimeout" k Timeout Timeout a b
-  where
-  labelOptic = iso (\(MkTimeout x) -> x) MkTimeout
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Timeout
 
 instance DecodeTOML Timeout where
   tomlDecoder = parseTimeout tomlDecoder tomlDecoder

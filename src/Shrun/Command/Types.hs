@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'Command' wrapper for commands.
@@ -76,50 +77,7 @@ data CommandP p = MkCommandP
 -- probably use CommandOrd, and we do not want to accidentally use the
 -- derived Ord.
 
-instance
-  ( k ~ A_Lens,
-    a ~ CommandIndex,
-    b ~ CommandIndex
-  ) =>
-  LabelOptic "index" k (CommandP p) (CommandP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandP a1 a2 a3) ->
-        fmap
-          (\b -> MkCommandP b a2 a3)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Maybe Text,
-    b ~ Maybe Text
-  ) =>
-  LabelOptic "key" k (CommandP p) (CommandP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandP a1 a2 a3) ->
-        fmap
-          (\b -> MkCommandP a1 b a3)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "command" k (CommandP p) (CommandP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandP a1 a2 a3) ->
-        fmap
-          (\b -> MkCommandP a1 a2 b)
-          (f a3)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CommandP
 
 -- | Phase1 commands.
 type CommandP1 = CommandP CommandPhase1
@@ -159,22 +117,23 @@ data CommandStatus
   | -- | The command is waiting to run.
     CommandWaiting
 
--- | Wraps 'CommandP' for the purposes of ordering by index.
-newtype CommandOrd p = MkCommandOrd (CommandP p)
-  deriving newtype (Generic, Hashable)
+-- Creates data type CommandOrd w/ label optic #unCommandOrd but no
+-- '{unCommandOrd :: CommandP p}', hence no field selector or update
+-- syntax.
+--
+-- https://hackage.haskell.org/package/optics-th-0.4.1/docs/Optics-TH.html
+declareFieldLabels
+  [d|
+    -- Wraps 'CommandP' for the purposes of ordering by index.
+    newtype CommandOrd p = MkCommandOrd {unCommandOrd :: CommandP p}
+      deriving newtype (Generic, Hashable)
+    |]
 
 instance Eq (CommandOrd p) where
   MkCommandOrd x == MkCommandOrd y = x ^. #index == y ^. #index
 
 instance Ord (CommandOrd p) where
   MkCommandOrd x <= MkCommandOrd y = x ^. #index <= y ^. #index
-
-instance
-  (k ~ An_Iso, a ~ CommandP p, b ~ CommandP p) =>
-  LabelOptic "unCommandOrd" k (CommandOrd p) (CommandOrd p) a b
-  where
-  labelOptic = iso (\(MkCommandOrd x) -> x) MkCommandOrd
-  {-# INLINE labelOptic #-}
 
 -- | Command status map index.
 data CommandStatusMapIndex
@@ -199,12 +158,7 @@ type TCommandStatusMap = CommandStatusMapP CommandStatusMapStm
 -- | Pure status map i.e. after the stm map has been read.
 type CommandStatusMap = CommandStatusMapP CommandStatusMapPure
 
-instance
-  (k ~ An_Iso, a ~ CommandStatusMapIndexF p, b ~ CommandStatusMapIndexF p) =>
-  LabelOptic "unCommandStatusMap" k (CommandStatusMapP p) (CommandStatusMapP p) a b
-  where
-  labelOptic = iso (\(MkCommandStatusMapP x) -> x) MkCommandStatusMapP
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CommandStatusMapP
 
 -- | Reads a map of TVars into a pure map via a single STM transaction.
 readCommandStatus ::

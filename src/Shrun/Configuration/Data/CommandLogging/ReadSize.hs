@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.CommandLogging.ReadSize
@@ -14,20 +15,7 @@ import Shrun.Utils qualified as U
 newtype ReadSize = MkReadSize {unReadSize :: Bytes B Int}
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ An_Iso,
-    a ~ Bytes B Int,
-    b ~ Bytes B Int
-  ) =>
-  LabelOptic
-    "unReadSize"
-    k
-    ReadSize
-    ReadSize
-    a
-    b
-  where
-  labelOptic = iso (\(MkReadSize x) -> x) MkReadSize
+makeFieldLabelsNoPrefix ''ReadSize
 
 instance Default ReadSize where
   -- NOTE: [Command log splitting]

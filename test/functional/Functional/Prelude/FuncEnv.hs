@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
@@ -50,50 +51,7 @@ data ConfigIOEnv = MkConfigIOEnv
     xdgDir :: Maybe (XdgDirectory -> OsPath)
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ Maybe OsPath,
-    b ~ Maybe OsPath
-  ) =>
-  LabelOptic "cwdDir" k ConfigIOEnv ConfigIOEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConfigIOEnv a1 a2 a3) ->
-        fmap
-          (\b -> MkConfigIOEnv b a2 a3)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ IORef (List Text),
-    b ~ IORef (List Text)
-  ) =>
-  LabelOptic "logs" k ConfigIOEnv ConfigIOEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConfigIOEnv a1 a2 a3) ->
-        fmap
-          (\b -> MkConfigIOEnv a1 b a3)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Maybe (XdgDirectory -> OsPath),
-    b ~ Maybe (XdgDirectory -> OsPath)
-  ) =>
-  LabelOptic "xdgDir" k ConfigIOEnv ConfigIOEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConfigIOEnv a1 a2 a3) ->
-        fmap
-          (\b -> MkConfigIOEnv a1 a2 b)
-          (f a3)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''ConfigIOEnv
 
 -- | In a real run, we run shrun with 'ShellT (Env IO) IO'. In our functional
 -- tests, this would generally be 'ShellT FuncEnv IO', which is mostly unmocked,
@@ -202,50 +160,7 @@ data FuncEnv = MkFuncEnv
     shrunNotes :: IORef (List Note)
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ Env NotifyEnv (),
-    b ~ Env NotifyEnv ()
-  ) =>
-  LabelOptic "coreEnv" k FuncEnv FuncEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFuncEnv a1 a2 a3) ->
-        fmap
-          (\b -> MkFuncEnv b a2 a3)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ IORef (List Text),
-    b ~ IORef (List Text)
-  ) =>
-  LabelOptic "logs" k FuncEnv FuncEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFuncEnv a1 a2 a3) ->
-        fmap
-          (\b -> MkFuncEnv a1 b a3)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ IORef (List Note),
-    b ~ IORef (List Note)
-  ) =>
-  LabelOptic "shrunNotes" k FuncEnv FuncEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFuncEnv a1 a2 a3) ->
-        fmap
-          (\b -> MkFuncEnv a1 a2 b)
-          (f a3)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''FuncEnv
 
 instance HasTimeout FuncEnv where
   getTimeout = getTimeout . view #coreEnv

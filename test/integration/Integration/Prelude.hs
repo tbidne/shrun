@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Integration.Prelude
@@ -83,35 +84,7 @@ data TestArgs = MkTestArgs
   }
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ A_Lens,
-    a ~ OsPath,
-    b ~ OsPath
-  ) =>
-  LabelOptic "rootTmpDir" k TestArgs TestArgs a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkTestArgs a1 a2) ->
-        fmap
-          (\b -> MkTestArgs b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ OsPath,
-    b ~ OsPath
-  ) =>
-  LabelOptic "workingTmpDir" k TestArgs TestArgs a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkTestArgs a1 a2) ->
-        fmap
-          (\b -> MkTestArgs a1 b)
-          (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''TestArgs
 
 xdgDirPathOS :: OsPath
 #if OSX

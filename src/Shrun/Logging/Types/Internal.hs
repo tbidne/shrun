@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Internal module for logging types.
@@ -18,15 +19,7 @@ newtype FileLog = UnsafeFileLog
   }
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ A_Getter,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "unFileLog" k FileLog FileLog a b
-  where
-  labelOptic = to (\(UnsafeFileLog x) -> x)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefixReadOnly ''FileLog
 
 -- | 'ConsoleLog' is a textual representation of a given log after it has
 -- been formatted.
@@ -35,15 +28,7 @@ newtype ConsoleLog = UnsafeConsoleLog
   }
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ A_Getter,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "unConsoleLog" k ConsoleLog ConsoleLog a b
-  where
-  labelOptic = to (\(UnsafeConsoleLog x) -> x)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefixReadOnly ''ConsoleLog
 
 -- NOTE: LogMode exists here so we do not have cyclic dependencies w/
 -- RegionLogger

@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
@@ -75,35 +76,7 @@ data NotifyActionsInit p = MkNotifyActionsInit
     start :: SwitchF p NotifyActionStartSwitch
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ NotifyActionCompleteF p,
-    b ~ NotifyActionCompleteF p
-  ) =>
-  LabelOptic "complete" k (NotifyActionsInit p) (NotifyActionsInit p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkNotifyActionsInit a1 a2) ->
-        fmap
-          (\b -> MkNotifyActionsInit b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ SwitchF p NotifyActionStartSwitch,
-    b ~ SwitchF p NotifyActionStartSwitch
-  ) =>
-  LabelOptic "start" k (NotifyActionsInit p) (NotifyActionsInit p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkNotifyActionsInit a1 a2) ->
-        fmap
-          (\b -> MkNotifyActionsInit a1 b)
-          (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''NotifyActionsInit
 
 instance
   ( NotifyActionCompleteF p ~ Maybe (WithDisabled NotifyActionComplete),
@@ -206,17 +179,7 @@ newtype NotifyErrUrgency = MkNotifyErrUrgency
   deriving stock (Eq, Show)
   deriving newtype (Bounded, Enum)
 
-instance
-  ( k ~ An_Iso,
-    a ~ NotifyUrgency,
-    b ~ NotifyUrgency
-  ) =>
-  LabelOptic "unNotifyErrUrgency" k NotifyErrUrgency NotifyErrUrgency a b
-  where
-  labelOptic =
-    iso
-      (\(MkNotifyErrUrgency u) -> u)
-      MkNotifyErrUrgency
+makeFieldLabelsNoPrefix ''NotifyErrUrgency
 
 instance Default NotifyErrUrgency where
   def = MkNotifyErrUrgency NotifyUrgencyCritical
@@ -253,65 +216,7 @@ data NotifyP p r = MkNotifyP
     timeout :: ConfigPhaseF p NotifyTimeout
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ NotifyActionsF p,
-    b ~ NotifyActionsF p
-  ) =>
-  LabelOptic "actions" k (NotifyP p r) (NotifyP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkNotifyP a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkNotifyP b a2 a3 a4)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ SwitchF p NotifyErrUrgency,
-    b ~ SwitchF p NotifyErrUrgency
-  ) =>
-  LabelOptic "errUrgency" k (NotifyP p r) (NotifyP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkNotifyP a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkNotifyP a1 b a3 a4)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ NotifySystemF p r,
-    b ~ NotifySystemF p r
-  ) =>
-  LabelOptic "system" k (NotifyP p r) (NotifyP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkNotifyP a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkNotifyP a1 a2 b a4)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p NotifyTimeout,
-    b ~ ConfigPhaseF p NotifyTimeout
-  ) =>
-  LabelOptic "timeout" k (NotifyP p r) (NotifyP p r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkNotifyP a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkNotifyP a1 a2 a3 b)
-          (f a4)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''NotifyP
 
 instance Semigroup (NotifyToml r) where
   l <> r =

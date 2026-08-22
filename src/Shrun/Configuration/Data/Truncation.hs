@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.Truncation
@@ -43,12 +44,7 @@ newtype Truncation a = MkTruncation
   deriving stock (Eq, Ord, Show)
   deriving (Num, Pretty) via Int
 
-instance
-  (k ~ An_Iso, a ~ Int, b ~ Int) =>
-  LabelOptic "unTruncation" k (Truncation r) (Truncation r) a b
-  where
-  labelOptic = iso (\(MkTruncation x) -> x) MkTruncation
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Truncation
 
 instance DecodeTOML (Truncation a) where
   tomlDecoder = parseTruncation tomlDecoder

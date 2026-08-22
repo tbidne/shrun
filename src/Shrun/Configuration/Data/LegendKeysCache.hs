@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.LegendKeysCache
@@ -61,35 +62,7 @@ data KeyCache = MkKeyCache
   }
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ A_Lens,
-    a ~ Set Text,
-    b ~ Set Text
-  ) =>
-  LabelOptic "global" k KeyCache KeyCache a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkKeyCache a1 a2) ->
-        fmap
-          (\b -> MkKeyCache b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Map OsPath (Set Text),
-    b ~ Map OsPath (Set Text)
-  ) =>
-  LabelOptic "local" k KeyCache KeyCache a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkKeyCache a1 a2) ->
-        fmap
-          (\b -> MkKeyCache a1 b)
-          (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''KeyCache
 
 instance Semigroup KeyCache where
   l <> r =

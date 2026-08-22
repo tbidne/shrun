@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Exe.Terminate (tests) where
@@ -14,6 +15,30 @@ import Test.Shrun.Process qualified as Test.Process
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase)
 import Text.Read qualified as TR
+
+-- Ways to terminate shrun.
+data SignalType
+  = -- | SIGINT is sent to the process.
+    SignalTypeSIGINT
+  | -- | SIGTERM is sent to the process.
+    SignalTypeSIGTERM
+  | -- | --timeout is used.
+    SignalTypeTimeout
+  deriving stock (Bounded, Enum)
+
+data TestCommand
+  = TestCommandSingle
+  | TestCommandScript
+  deriving stock (Bounded, Enum)
+
+-- | TestParams is used for individual tests.
+data TestParams = MkTestParams
+  { command :: TestCommand,
+    commandLogging :: Bool,
+    signalType :: SignalType
+  }
+
+makeFieldLabelsNoPrefix ''TestParams
 
 tests :: OsPath -> TestTree
 tests testDir =
@@ -393,64 +418,6 @@ testTeardown testDir (_, shrunPid) = do
   killPid testDir SignalTypeSIGTERM shrunPid False
   -- Kill leftover sleeps so tests do not interfere.
   Test.Process.runProcessOrDie testDir "pkill -15 sleep || true"
-
--- Ways to terminate shrun.
-data SignalType
-  = -- | SIGINT is sent to the process.
-    SignalTypeSIGINT
-  | -- | SIGTERM is sent to the process.
-    SignalTypeSIGTERM
-  | -- | --timeout is used.
-    SignalTypeTimeout
-  deriving stock (Bounded, Enum)
-
-data TestCommand
-  = TestCommandSingle
-  | TestCommandScript
-  deriving stock (Bounded, Enum)
-
--- | TestParams is used for individual tests.
-data TestParams = MkTestParams
-  { command :: TestCommand,
-    commandLogging :: Bool,
-    signalType :: SignalType
-  }
-
-instance
-  (k ~ A_Lens, a ~ TestCommand, b ~ TestCommand) =>
-  LabelOptic "command" k TestParams TestParams a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkTestParams a1 a2 a3) ->
-        fmap
-          (\b -> MkTestParams b a2 a3)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
-  LabelOptic "commandLogging" k TestParams TestParams a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkTestParams a1 a2 a3) ->
-        fmap
-          (\b -> MkTestParams a1 b a3)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ SignalType, b ~ SignalType) =>
-  LabelOptic "signalType" k TestParams TestParams a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkTestParams a1 a2 a3) ->
-        fmap
-          (MkTestParams a1 a2)
-          (f a3)
-  {-# INLINE labelOptic #-}
 
 mkCommandStr :: OsPath -> TestParams -> String
 mkCommandStr testDir tp = case tp ^. #command of

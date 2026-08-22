@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types and typeclasses for our environment.
@@ -57,14 +58,6 @@ import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
--- | Alias for all logging config.
-type HasLogging env m =
-  ( HasCommandLogging env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env
-  )
-
 -- TODO: When we can (i.e. process provides OsPath API), these types should
 -- be changed to OsPath.
 data CommandCleanup = MkCommandCleanup
@@ -73,29 +66,7 @@ data CommandCleanup = MkCommandCleanup
   }
   deriving stock (Eq, Show)
 
-instance
-  (k ~ A_Lens, a ~ FilePath, b ~ FilePath) =>
-  LabelOptic "findPidsExe" k CommandCleanup CommandCleanup a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandCleanup a1 a2) ->
-        fmap
-          (\b -> MkCommandCleanup b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ FilePath, b ~ FilePath) =>
-  LabelOptic "killPidsExe" k CommandCleanup CommandCleanup a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandCleanup a1 a2) ->
-        fmap
-          (\b -> MkCommandCleanup a1 b)
-          (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CommandCleanup
 
 -- | The commands themselves.
 class HasCommands env where
@@ -172,140 +143,7 @@ data Env notifyEnv logRegion = MkEnv
     timerRegion :: IORef (Maybe logRegion)
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ TVar Bool,
-    b ~ TVar Bool
-  ) =>
-  LabelOptic "anyError" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv b a2 a3 a4 a5 a6 a7 a8 a9)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Maybe CommandCleanup,
-    b ~ Maybe CommandCleanup
-  ) =>
-  LabelOptic "commandCleanup" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 b a3 a4 a5 a6 a7 a8 a9)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ NESeq CommandP1,
-    b ~ NESeq CommandP1
-  ) =>
-  LabelOptic "commands" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 b a4 a5 a6 a7 a8 a9)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ CommandGraph,
-    b ~ CommandGraph
-  ) =>
-  LabelOptic "commandGraph" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 a3 b a5 a6 a7 a8 a9)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TCommandStatusMap,
-    b ~ TCommandStatusMap
-  ) =>
-  LabelOptic "commandStatusMap" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 a3 a4 b a6 a7 a8 a9)
-          (f a5)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ CoreConfigP ConfigPhaseEnv notifyEnv,
-    b ~ CoreConfigP ConfigPhaseEnv notifyEnv
-  ) =>
-  LabelOptic "config" k (Env notifyEnv r) (Env notifyEnv r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 b a7 a8 a9)
-          (f a6)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TBQueue (LogRegion r),
-    b ~ TBQueue (LogRegion r)
-  ) =>
-  LabelOptic "consoleLogQueue" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 a6 b a8 a9)
-          (f a7)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TVar Bool,
-    b ~ TVar Bool
-  ) =>
-  LabelOptic "hasTimedOut" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 a6 a7 b a9)
-          (f a8)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ IORef (Maybe r),
-    b ~ IORef (Maybe r)
-  ) =>
-  LabelOptic "timerRegion" k (Env m r) (Env m r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
-        fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 a6 a7 a8 b)
-          (f a9)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Env
 
 instance HasTimeout (Env m r) where
   getTimeout = view (#config % #timeout)
@@ -420,3 +258,11 @@ formatTimeSpec totalTime = do
       timerFormat
       (Utils.timeSpecToRelTime totalTime)
 {-# INLINEABLE formatTimeSpec #-}
+
+-- | Alias for all logging config.
+type HasLogging env m =
+  ( HasCommandLogging env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env
+  )

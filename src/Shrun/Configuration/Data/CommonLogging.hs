@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.CommonLogging
@@ -33,12 +34,7 @@ newtype Debug = MkDebug {unDebug :: Bool}
   deriving stock (Eq, Show)
   deriving (Pretty) via PrettySwitch
 
-instance
-  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
-  LabelOptic "unDebug" k Debug Debug a b
-  where
-  labelOptic = iso (\(MkDebug b) -> b) MkDebug
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Debug
 
 instance Default Debug where
   def = MkDebug False
@@ -55,27 +51,7 @@ data CommonLoggingP p = MkCommonLoggingP
     keyHide :: SwitchF p KeyHideSwitch
   }
 
-instance
-  (k ~ A_Lens, a ~ SwitchF p Debug, b ~ SwitchF p Debug) =>
-  LabelOptic "debug" k (CommonLoggingP p) (CommonLoggingP p) a b
-  where
-  labelOptic =
-    lensVL $ \f (MkCommonLoggingP a1 a2) ->
-      fmap
-        (\b -> MkCommonLoggingP b a2)
-        (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ SwitchF p KeyHideSwitch, b ~ SwitchF p KeyHideSwitch) =>
-  LabelOptic "keyHide" k (CommonLoggingP p) (CommonLoggingP p) a b
-  where
-  labelOptic =
-    lensVL $ \f (MkCommonLoggingP a1 a2) ->
-      fmap
-        (\b -> MkCommonLoggingP a1 b)
-        (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CommonLoggingP
 
 instance Semigroup CommonLoggingToml where
   l <> r =

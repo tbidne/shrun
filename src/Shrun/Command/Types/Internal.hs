@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Internal module. Take care as usage can violate invariants.
@@ -33,20 +34,12 @@ newtype CommandIndex = MkCommandIndex {unCommandIndex :: Positive Int}
   deriving anyclass (NFData)
   deriving (Pretty) via Int
 
+makeFieldLabelsNoPrefix ''CommandIndex
+
 instance Enum CommandIndex where
   toEnum = unsafeFromInt
 
   fromEnum = view (#unCommandIndex % #unPositive)
-
-instance
-  ( k ~ An_Iso,
-    a ~ Positive Int,
-    b ~ Positive Int
-  ) =>
-  LabelOptic "unCommandIndex" k CommandIndex CommandIndex a b
-  where
-  labelOptic = iso (\(MkCommandIndex i) -> i) MkCommandIndex
-  {-# INLINE labelOptic #-}
 
 succ :: CommandIndex -> CommandIndex
 succ = (.+. one)

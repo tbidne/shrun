@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.ConsoleLogging
@@ -42,29 +43,20 @@ import Shrun.Configuration.Data.WithDisabled ((<|?|>))
 import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
 
--- | Switch for command logging in console logs.
-newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch Bool
-  deriving stock (Eq, Show)
-  deriving newtype (Bounded, Enum)
-  deriving (Pretty) via PrettySwitch
+declareFieldLabels
+  [d|
+    -- Switch for command logging in console logs.
+    newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch {unConsoleLogCmdSwitch :: Bool}
+      deriving stock (Eq, Show)
+      deriving newtype (Bounded, Enum)
+      deriving (Pretty) via PrettySwitch
+    |]
 
 instance Default ConsoleLogCmdSwitch where
   def = MkConsoleLogCmdSwitch True
 
 instance DecodeTOML ConsoleLogCmdSwitch where
   tomlDecoder = MkConsoleLogCmdSwitch <$> (tomlDecoder >>= parseSwitch)
-
-instance
-  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
-  LabelOptic
-    "unConsoleLogCmdSwitch"
-    k
-    ConsoleLogCmdSwitch
-    ConsoleLogCmdSwitch
-    a
-    b
-  where
-  labelOptic = iso (\(MkConsoleLogCmdSwitch b) -> b) MkConsoleLogCmdSwitch
 
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
@@ -81,80 +73,7 @@ data ConsoleLoggingP p = MkConsoleLoggingP
     timerFormat :: ConfigPhaseF p TimerFormat
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ SwitchF p ConsoleLogCmdSwitch,
-    b ~ SwitchF p ConsoleLogCmdSwitch
-  ) =>
-  LabelOptic "commandLogging" k (ConsoleLoggingP p) (ConsoleLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkConsoleLoggingP b a2 a3 a4 a5)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName),
-    b ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)
-  ) =>
-  LabelOptic "commandNameTrunc" k (ConsoleLoggingP p) (ConsoleLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkConsoleLoggingP a1 b a3 a4 a5)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ LineTruncF p,
-    b ~ LineTruncF p
-  ) =>
-  LabelOptic "lineTrunc" k (ConsoleLoggingP p) (ConsoleLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkConsoleLoggingP a1 a2 b a4 a5)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p ConsoleLogStripControl,
-    b ~ ConfigPhaseF p ConsoleLogStripControl
-  ) =>
-  LabelOptic "stripControl" k (ConsoleLoggingP p) (ConsoleLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkConsoleLoggingP a1 a2 a3 b a5)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p TimerFormat,
-    b ~ ConfigPhaseF p TimerFormat
-  ) =>
-  LabelOptic "timerFormat" k (ConsoleLoggingP p) (ConsoleLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkConsoleLoggingP a1 a2 a3 a4 b)
-          (f a5)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''ConsoleLoggingP
 
 instance Semigroup ConsoleLoggingToml where
   l <> r =

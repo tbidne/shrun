@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.MergedConfig
@@ -26,80 +27,7 @@ data MergedConfig notifyEnv = MkMergedConfig
   }
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ A_Lens,
-    a ~ CoreConfigMerged r,
-    b ~ CoreConfigMerged r
-  ) =>
-  LabelOptic "coreConfig" k (MergedConfig r) (MergedConfig r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkMergedConfig b a2 a3 a4 a5)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ CommandGraph,
-    b ~ CommandGraph
-  ) =>
-  LabelOptic "commandGraph" k (MergedConfig r) (MergedConfig r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkMergedConfig a1 b a3 a4 a5)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ NESeq CommandP1,
-    b ~ NESeq CommandP1
-  ) =>
-  LabelOptic "commands" k (MergedConfig r) (MergedConfig r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkMergedConfig a1 a2 b a4 a5)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Bool,
-    b ~ Bool
-  ) =>
-  LabelOptic "dryRun" k (MergedConfig r) (MergedConfig r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkMergedConfig a1 a2 a3 b a5)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Seq OsPath,
-    b ~ Seq OsPath
-  ) =>
-  LabelOptic "tomlPaths" k (MergedConfig r) (MergedConfig r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
-        fmap
-          (\b -> MkMergedConfig a1 a2 a3 a4 b)
-          (f a5)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''MergedConfig
 
 instance Pretty (MergedConfig r) where
   pretty c =

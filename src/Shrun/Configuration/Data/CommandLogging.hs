@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.CommandLogging
@@ -56,16 +57,12 @@ import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
 
-newtype BufferLength = MkBufferLength Int
-  deriving stock (Eq, Show)
-  deriving (Num, Pretty) via Int
-
-instance
-  (k ~ An_Iso, a ~ Int, b ~ Int) =>
-  LabelOptic "unBufferLength" k BufferLength BufferLength a b
-  where
-  labelOptic = iso (\(MkBufferLength x) -> x) MkBufferLength
-  {-# INLINE labelOptic #-}
+declareFieldLabels
+  [d|
+    newtype BufferLength = MkBufferLength {unBufferLength :: Int}
+      deriving stock (Eq, Show)
+      deriving (Num, Pretty) via Int
+    |]
 
 instance Default BufferLength where
   def = MkBufferLength 1_000
@@ -81,16 +78,12 @@ parseBufferLength getNat = do
     Right x -> pure $ MkBufferLength x
 {-# INLINEABLE parseBufferLength #-}
 
-newtype BufferTimeout = MkBufferTimeout Timeout
-  deriving stock (Eq, Show)
-  deriving newtype (FromInteger, Pretty)
-
-instance
-  (k ~ An_Iso, a ~ Timeout, b ~ Timeout) =>
-  LabelOptic "unBufferTimeout" k BufferTimeout BufferTimeout a b
-  where
-  labelOptic = iso (\(MkBufferTimeout x) -> x) MkBufferTimeout
-  {-# INLINE labelOptic #-}
+declareFieldLabels
+  [d|
+    newtype BufferTimeout = MkBufferTimeout {unBufferTimeout :: Timeout}
+      deriving stock (Eq, Show)
+      deriving newtype (FromInteger, Pretty)
+    |]
 
 instance Default BufferTimeout where
   def = MkBufferTimeout 30
@@ -107,29 +100,19 @@ parseBufferTimeout getNat getTxt =
   MkBufferTimeout <$> Timeout.parseTimeout getNat getTxt
 {-# INLINEABLE parseBufferTimeout #-}
 
--- | Switch for logging read errors
-newtype ReportReadErrorsSwitch = MkReportReadErrorsSwitch Bool
-  deriving stock (Eq, Show)
-  deriving newtype (Bounded, Enum)
+declareFieldLabels
+  [d|
+    -- Switch for logging read errors
+    newtype ReportReadErrorsSwitch = MkReportReadErrorsSwitch {unReportReadErrorsSwitch :: Bool}
+      deriving stock (Eq, Show)
+      deriving newtype (Bounded, Enum)
+    |]
 
 instance Default ReportReadErrorsSwitch where
   def = MkReportReadErrorsSwitch False
 
 instance DecodeTOML ReportReadErrorsSwitch where
   tomlDecoder = MkReportReadErrorsSwitch <$> (tomlDecoder >>= parseSwitch)
-
-instance
-  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
-  LabelOptic
-    "unReportReadErrorsSwitch"
-    k
-    ReportReadErrorsSwitch
-    ReportReadErrorsSwitch
-    a
-    b
-  where
-  labelOptic = iso (\(MkReportReadErrorsSwitch b) -> b) MkReportReadErrorsSwitch
-  {-# INLINE labelOptic #-}
 
 -- | Holds config related to (console and file) command logging.
 type CommandLoggingP :: ConfigPhase -> Type
@@ -151,77 +134,7 @@ data CommandLoggingP p = MkCommandLoggingP
     reportReadErrors :: SwitchF p ReportReadErrorsSwitch
   }
 
-instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p BufferLength, b ~ ConfigPhaseF p BufferLength) =>
-  LabelOptic "bufferLength" k (CommandLoggingP p) (CommandLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
-        fmap
-          (\b -> MkCommandLoggingP b a2 a3 a4 a5 a6)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p BufferTimeout, b ~ ConfigPhaseF p BufferTimeout) =>
-  LabelOptic "bufferTimeout" k (CommandLoggingP p) (CommandLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
-        fmap
-          (\b -> MkCommandLoggingP a1 b a3 a4 a5 a6)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p PollInterval, b ~ ConfigPhaseF p PollInterval) =>
-  LabelOptic "pollInterval" k (CommandLoggingP p) (CommandLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
-        fmap
-          (\b -> MkCommandLoggingP a1 a2 b a4 a5 a6)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p ReadSize, b ~ ConfigPhaseF p ReadSize) =>
-  LabelOptic "readSize" k (CommandLoggingP p) (CommandLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
-        fmap
-          (\b -> MkCommandLoggingP a1 a2 a3 b a5 a6)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p ReadStrategy, b ~ ConfigPhaseF p ReadStrategy) =>
-  LabelOptic "readStrategy" k (CommandLoggingP p) (CommandLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
-        fmap
-          (\b -> MkCommandLoggingP a1 a2 a3 a4 b a6)
-          (f a5)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ SwitchF p ReportReadErrorsSwitch, b ~ SwitchF p ReportReadErrorsSwitch) =>
-  LabelOptic "reportReadErrors" k (CommandLoggingP p) (CommandLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
-        fmap
-          (\b -> MkCommandLoggingP a1 a2 a3 a4 a5 b)
-          (f a6)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CommandLoggingP
 
 instance Semigroup CommandLoggingToml where
   l <> r =

@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.Graph
@@ -133,6 +134,9 @@ edgeToFgl (s, d, l) =
     l
   )
 
+toV :: CommandIndex -> Node
+toV = Command.Types.toVertex
+
 -- | FGL edge.
 type GEdge = Tuple3 Node Node EdgeLabel
 
@@ -141,21 +145,13 @@ newtype Edges = MkEdges {unEdges :: Seq Edge}
   deriving newtype (IsList, Monoid, Semigroup)
   deriving stock (Eq, Show)
 
+makeFieldLabelsNoPrefix ''Edges
+
 sortEdges :: Edges -> Edges
 sortEdges =
   MkEdges
     . Seq.sort
     . view #unEdges
-
-instance
-  ( k ~ An_Iso,
-    a ~ Seq Edge,
-    b ~ Seq Edge
-  ) =>
-  LabelOptic "unEdges" k Edges Edges a b
-  where
-  labelOptic = iso (\(MkEdges es) -> es) MkEdges
-  {-# INLINE labelOptic #-}
 
 -------------------------------------------------------------------------------
 --                              Command Graph                                --
@@ -187,35 +183,7 @@ data CommandGraph = MkCommandGraph
   }
   deriving stock (Eq, Show)
 
-instance
-  ( k ~ A_Lens,
-    a ~ Gr CommandP1 EdgeLabel,
-    b ~ Gr CommandP1 EdgeLabel
-  ) =>
-  LabelOptic "graph" k CommandGraph CommandGraph a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandGraph a1 a2) ->
-        fmap
-          (\b -> MkCommandGraph b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ NESeq Vertex,
-    b ~ NESeq Vertex
-  ) =>
-  LabelOptic "roots" k CommandGraph CommandGraph a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandGraph a1 a2) ->
-        fmap
-          (\b -> MkCommandGraph a1 b)
-          (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''CommandGraph
 
 instance Pretty CommandGraph where
   pretty c =
@@ -402,9 +370,6 @@ displayCommandIndex = prettyToText
 
 displayVertex :: Node -> Text
 displayVertex = displayCommandIndex . Command.Types.fromVertex
-
-toV :: CommandIndex -> Node
-toV = Command.Types.toVertex
 
 -- ((out) Edge Map, Non-roots)
 type EdgeAcc =

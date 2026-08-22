@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | This module provides the `Log` type and associated functions.
@@ -52,19 +53,14 @@ data LogRegion r
   | -- | Log without region.
     LogNoRegion ConsoleLog
 
-newtype LogMessage = UnsafeLogMessage Text
-  deriving stock (Eq, Show)
-  deriving newtype (IsString)
+declareFieldLabels
+  [d|
+    newtype LogMessage = UnsafeLogMessage {unLogMessage :: Text}
+      deriving stock (Eq, Show)
+      deriving newtype (IsString)
+    |]
 
-instance
-  ( k ~ A_Getter,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "unLogMessage" k LogMessage LogMessage a b
-  where
-  labelOptic = to (\(UnsafeLogMessage t) -> t)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''LogMessage
 
 fromUnlined :: UnlinedText -> LogMessage
 fromUnlined = UnsafeLogMessage . view #unUnlinedText
@@ -86,62 +82,4 @@ data Log = MkLog
   }
   deriving stock (Show)
 
-instance
-  ( k ~ A_Lens,
-    a ~ Maybe CommandP1,
-    b ~ Maybe CommandP1
-  ) =>
-  LabelOptic "cmd" k Log Log a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkLog a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkLog b a2 a3 a4)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ LogMessage,
-    b ~ LogMessage
-  ) =>
-  LabelOptic "msg" k Log Log a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkLog a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkLog a1 b a3 a4)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ LogLevel,
-    b ~ LogLevel
-  ) =>
-  LabelOptic "lvl" k Log Log a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkLog a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkLog a1 a2 b a4)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ LogMode,
-    b ~ LogMode
-  ) =>
-  LabelOptic "mode" k Log Log a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkLog a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkLog a1 a2 a3 b)
-          (f a4)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Log

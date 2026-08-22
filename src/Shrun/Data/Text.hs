@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Data.Text
@@ -41,18 +42,10 @@ newtype UnlinedText = UnsafeUnlinedText {unUnlinedText :: Text}
   deriving stock (Eq, Show)
   deriving (Monoid, Semigroup) via Text
 
+makeFieldLabelsNoPrefixReadOnly ''UnlinedText
+
 instance IsString UnlinedText where
   fromString = fromTextReplace . pack
-
-instance
-  ( k ~ A_Getter,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "unUnlinedText" k UnlinedText UnlinedText a b
-  where
-  labelOptic = to (\(UnsafeUnlinedText ts) -> ts)
-  {-# INLINE labelOptic #-}
 
 -- | Creates a list of 'UnlinedText'.
 fromText :: Text -> List UnlinedText

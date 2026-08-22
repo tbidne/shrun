@@ -64,45 +64,7 @@ data Args m = MkArgs
   }
   deriving stock (Eq, Show)
 
-instance
-  (k ~ A_Lens, a ~ Seq (WithDisabled OsPath), b ~ Seq (WithDisabled OsPath)) =>
-  LabelOptic "configPaths" k (Args m) (Args m) a b
-  where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
-    fmap (\b -> MkArgs b a2 a3 a4 a5) (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ CoreConfigArgs m, b ~ CoreConfigArgs m) =>
-  LabelOptic "coreConfig" k (Args m) (Args m) a b
-  where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
-    fmap (\b -> MkArgs a1 b a3 a4 a5) (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ NESeq Text, b ~ NESeq Text) =>
-  LabelOptic "commands" k (Args m) (Args m) a b
-  where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
-    fmap (\b -> MkArgs a1 a2 b a4 a5) (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
-  LabelOptic "dryRun" k (Args m) (Args m) a b
-  where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
-    fmap (\b -> MkArgs a1 a2 a3 b a5) (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ Maybe (WithDisabled EdgeArgs), b ~ Maybe (WithDisabled EdgeArgs)) =>
-  LabelOptic "edges" k (Args m) (Args m) a b
-  where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
-    fmap (\b -> MkArgs a1 a2 a3 a4 b) (f a5)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Args
 
 -- | 'ParserInfo' type for parsing 'Args'.
 parserInfoArgs :: List String -> ParserInfo (Args m)

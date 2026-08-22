@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Toml
@@ -35,21 +36,7 @@ data Toml notifyEnv = MkToml
   }
   deriving stock (Eq, Show)
 
-instance
-  (k ~ A_Lens, a ~ CoreConfigToml notifyEnv, b ~ CoreConfigToml notifyEnv) =>
-  LabelOptic "coreConfig" k (Toml notifyEnv) (Toml notifyEnv) a b
-  where
-  labelOptic = lensVL $ \f (MkToml a1 a2) ->
-    fmap (\b -> MkToml b a2) (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ Maybe (Seq KeyVal), b ~ Maybe (Seq KeyVal)) =>
-  LabelOptic "legend" k (Toml notifyEnv) (Toml notifyEnv) a b
-  where
-  labelOptic = lensVL $ \f (MkToml a1 a2) ->
-    fmap (\b -> MkToml a1 b) (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''Toml
 
 instance DecodeTOML (Toml notifyEnv) where
   tomlDecoder = do

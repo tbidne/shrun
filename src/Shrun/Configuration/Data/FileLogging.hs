@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.FileLogging
@@ -86,11 +87,14 @@ import Shrun.Utils qualified as Utils
 import System.OsPath qualified as OsPath
 import System.OsString.Internal.Types (OsString (OsString))
 
--- | Switch for deleting the log file upon success.
-newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch Bool
-  deriving stock (Eq, Show)
-  deriving newtype (Bounded, Enum)
-  deriving (Pretty) via PrettySwitch
+declareFieldLabels
+  [d|
+    -- Switch for deleting the log file upon success.
+    newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch {unDeleteOnSuccessSwitch :: Bool}
+      deriving stock (Eq, Show)
+      deriving newtype (Bounded, Enum)
+      deriving (Pretty) via PrettySwitch
+    |]
 
 instance Default DeleteOnSuccessSwitch where
   def = MkDeleteOnSuccessSwitch False
@@ -98,18 +102,7 @@ instance Default DeleteOnSuccessSwitch where
 instance DecodeTOML DeleteOnSuccessSwitch where
   tomlDecoder = MkDeleteOnSuccessSwitch <$> (tomlDecoder >>= parseSwitch)
 
-instance
-  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
-  LabelOptic
-    "unDeleteOnSuccessSwitch"
-    k
-    DeleteOnSuccessSwitch
-    DeleteOnSuccessSwitch
-    a
-    b
-  where
-  labelOptic = iso (\(MkDeleteOnSuccessSwitch b) -> b) MkDeleteOnSuccessSwitch
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''DeleteOnSuccessSwitch
 
 -- NOTE: [Args vs. Toml mandatory fields]
 --
@@ -149,35 +142,7 @@ data FileLogInitP p = MkFileLogInitP
     sizeMode :: ConfigPhaseF p FileSizeMode
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ FileLogPathF p,
-    b ~ FileLogPathF p
-  ) =>
-  LabelOptic "path" k (FileLogInitP p) (FileLogInitP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLogInitP a1 a2) ->
-        fmap
-          (\b -> MkFileLogInitP b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p FileSizeMode,
-    b ~ ConfigPhaseF p FileSizeMode
-  ) =>
-  LabelOptic "sizeMode" k (FileLogInitP p) (FileLogInitP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLogInitP a1 a2) ->
-        fmap
-          (\b -> MkFileLogInitP a1 b)
-          (f a2)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''FileLogInitP
 
 instance Semigroup FileLogInitToml where
   l <> r =
@@ -244,50 +209,7 @@ data FileLogOpened = MkFileLogOpened
     queue :: ~(TBQueue FileLog)
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ LockedHandleW,
-    b ~ LockedHandleW
-  ) =>
-  LabelOptic "handle" k FileLogOpened FileLogOpened a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLogOpened a1 a2 a3) ->
-        fmap
-          (\b -> MkFileLogOpened b a2 a3)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ OsPath,
-    b ~ OsPath
-  ) =>
-  LabelOptic "path" k FileLogOpened FileLogOpened a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLogOpened a1 a2 a3) ->
-        fmap
-          (\b -> MkFileLogOpened a1 b a3)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TBQueue FileLog,
-    b ~ TBQueue FileLog
-  ) =>
-  LabelOptic "queue" k FileLogOpened FileLogOpened a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLogOpened a1 a2 a3) ->
-        fmap
-          (\b -> MkFileLogOpened a1 a2 b)
-          (f a3)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''FileLogOpened
 
 type FileLogFileF :: ConfigPhase -> Type
 type family FileLogFileF p where
@@ -324,110 +246,7 @@ data FileLoggingP p = MkFileLoggingP
     stripControl :: ConfigPhaseF p FileLogStripControl
   }
 
-instance
-  ( k ~ A_Lens,
-    a ~ FileLogFileF p,
-    b ~ FileLogFileF p
-  ) =>
-  LabelOptic "file" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP b a2 a3 a4 a5 a6 a7)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName),
-    b ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)
-  ) =>
-  LabelOptic "commandNameTrunc" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP a1 b a3 a4 a5 a6 a7)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ SwitchF p DeleteOnSuccessSwitch,
-    b ~ SwitchF p DeleteOnSuccessSwitch
-  ) =>
-  LabelOptic "deleteOnSuccess" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP a1 a2 b a4 a5 a6 a7)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ LineTruncF p,
-    b ~ LineTruncF p
-  ) =>
-  LabelOptic "lineTrunc" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP a1 a2 a3 b a5 a6 a7)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p FileMode,
-    b ~ ConfigPhaseF p FileMode
-  ) =>
-  LabelOptic "mode" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP a1 a2 a3 a4 b a6 a7)
-          (f a5)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ FileLogMultiF p,
-    b ~ FileLogMultiF p
-  ) =>
-  LabelOptic "multi" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP a1 a2 a3 a4 a5 b a7)
-          (f a6)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p FileLogStripControl,
-    b ~ ConfigPhaseF p FileLogStripControl
-  ) =>
-  LabelOptic "stripControl" k (FileLoggingP p) (FileLoggingP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkFileLoggingP a1 a2 a3 a4 a5 a6 b)
-          (f a7)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefix ''FileLoggingP
 
 instance Semigroup FileLoggingToml where
   l <> r =

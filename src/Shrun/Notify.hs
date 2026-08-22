@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Module for sending notifications.
@@ -35,15 +36,7 @@ newtype NotifyMessage = UnsafeNotifyMessage {unNotifyMessage :: Text}
   deriving stock (Eq, Show)
   deriving newtype (IsString)
 
-instance
-  ( k ~ A_Getter,
-    a ~ Text,
-    b ~ Text
-  ) =>
-  LabelOptic "unNotifyMessage" k NotifyMessage NotifyMessage a b
-  where
-  labelOptic = to (\(UnsafeNotifyMessage x) -> x)
-  {-# INLINE labelOptic #-}
+makeFieldLabelsNoPrefixReadOnly ''NotifyMessage
 
 fromUnlined :: UnlinedText -> NotifyMessage
 fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
