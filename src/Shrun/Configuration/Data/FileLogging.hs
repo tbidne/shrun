@@ -497,7 +497,7 @@ withMLogging (Just fileLogging) onLogging = do
       else pure Nothing
 
   result <-
-    withBinaryFile uniqFp ioMode $ \h -> withLockedFile h $ \lh ->
+    withBinaryFile uniqFp ioMode $ \h -> withLockedFileOrDie uniqFp h $ \lh ->
       onLogging (Just (fileLogging, lh, uniqFp, fileQueue, mMultiCounter))
 
   -- If the above command succeeded and deleteOnSuccess is true, delete the

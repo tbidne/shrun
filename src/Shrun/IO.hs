@@ -256,7 +256,7 @@ tryCommandLogging command = do
 
           -- 1.2. Open file, run command.
           r <- HW.withBinaryFile multiPath ioMode $ \handle -> do
-            withLockedFile handle $ \lockedHandle -> do
+            withLockedFileOrDie multiPath handle $ \lockedHandle -> do
               let logFn mRegion log = do
                     consoleLog mRegion log
                     logMultiFile lockedHandle keyHide fileLogging log
