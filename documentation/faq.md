@@ -286,77 +286,20 @@ $ shrun --edges "1 &.. n" cmd1 cmd2 ... cmdn
 
 ## Can file logging preserve formatting?
 
-In general, we would like `shrun`'s file logging to preserve command log formatting when possible. For example, `shrun`'s test suite prints output like:
+The option `--command-log-read-strategy block-line-buffer` attempts to preserve output formatting in file logs. The option is on by default *except* when all of the following are true:
 
-```
-Test suite unit: RUNNING...
-Unit tests
-  Shrun.Configuration.Args.Parsing
-    Defaults
-      Parses default args:                                               OK
-          ✓ testDefaultArgs passed 1 test.
-    --config
-      Parses -c:                                                         OK
-          ✓ testConfigShort passed 1 test.
-      Parses --config:                                                   OK
-          ✓ testConfig passed 1 test.
-...
-```
+- There are concurrent commands.
+- `file-log: on`
+- `file-log-multi: off`
 
-We would therefore like `shrun` to log something like:
-
-```
-[2024-06-03 17:48:13][Command][cabal test unit] Test suite unit: RUNNING...
-[2024-06-03 17:48:13][Command][cabal test unit] Unit tests
-[2024-06-03 17:48:13][Command][cabal test unit]   Shrun.Configuration.Args.Parsing
-[2024-06-03 17:48:13][Command][cabal test unit]     Defaults
-[2024-06-03 17:48:13][Command][cabal test unit]       Parses default args:                                               OK
-[2024-06-03 17:48:13][Command][cabal test unit]           ✓ testDefaultArgs passed 1 test.
-[2024-06-03 17:48:13][Command][cabal test unit]     --config
-[2024-06-03 17:48:13][Command][cabal test unit]       Parses -c:                                                         OK
-[2024-06-03 17:48:13][Command][cabal test unit]           ✓ testConfigShort passed 1 test.
-[2024-06-03 17:48:13][Command][cabal test unit]       Parses --config:                                                   OK
-[2024-06-03 17:48:13][Command][cabal test unit]           ✓ testConfig passed 1 test.
-...
-```
-
-It is easy to split logs on newlines and log each line separately, but there are still complications. The fundamental problem is that we are reading `N` bytes of data at a time, so there is no guarantee that our read will end at a newline. We thus have to handle this case ourselves. To that end, we introduce several options that interact with command-log reading:
-
-- `--command-log-poll-interval`: How fast `shrun` reads logs from the underlying commands.
-- `--command-log-read-size`: Maximum number of bytes `shrun` will read from the underlying command, in a single read.
-- `--command-log-read-strategy`: The first strategy, `block`, simply reads and logs `N` bytes at a time. The more complex `block-line-buffer` also reads `N` bytes, however, it buffers logs until a newline is found, or some threshold is exceeded.
-- `--command-log-buffer-length`: Used in conjunction with `block-line-buffer`. If the length is exceeded, the buffer is flushed, to avoid holding an arbitrarily large string in memory.
-- `--command-log-buffer-timeout`: Same idea as `--command-log-buffer-length`, except the threshold is a timeout.
-
-The general hope is that logs are newline-terminated and `--command-log-read-size` is large enough to read whatever the underlying command is logging, so we will not end up cutting anything off. Then we can split the logs on newlines and log each line separately. Even so, there are a couple ways the intended formatting can be disrupted:
-
-- If the `--command-log-poll-interval` is slower than the underlying command's logging, there will be a build-up of logs in the next read, so it is possible the total size is greater than `--command-log-read-size`, hence we will be cutting off logs at an arbitrary place.
-- On the other hand, if the `--command-log-poll-interval` is _faster_, it is possible to break up an "incomplete log". For instance, our test examples prints the text description like `Parses default args:` immediately, then only prints the remaining `...OK` after the test finishes. Thus we might read the first part of the log without its corresponding end, and the log will be broken.
-
-The `block-line-buffer` strategy is the primary solution to these problems, and indeed the reason this option was introduced.
-
-> [!WARNING]
->
-> The `block-line-buffer` strategy can lead to nonsense file logs when there are multiple commands. See below.
-
-With that out of the way, we can now justify the default behavior.
-
-- If:
-  1. We have multiple commands
-  2. `file-logging` is enabled
-  3. `file-log-multi` is _disabled_
-
-  Then we use the `block` strategy.
-
-- Otherwise, we use the `block-line-buffer` strategy, as this has the best chance at preserving formatting.
+This is because having multiple commands writing to the same log file with `block-line-buffer` can produce nonsense, and is exactly why `file-log-multi` exists, to give each command its own log file. Hence if you are want `block-line-buffer` with concurrent commands, set `file-log-multi: on`.
 
 > [!TIP]
 >
-> There is little reason to explicitly set `--read-strategy block-line-buffer` manually, as the only cases where it is permissible (see above), `shrun` will automatically choose that strategy. Thus the only reason is to be explicit.
-
-There are various other tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.
-
-If none of those help, the best solution is likely to simply use `--command-log-read-strategy block` -- which generally does a pretty good job -- and make your peace with the fact that this is all best-effort 🙂.
+> You can set `file-log.multi = "auto"` in the toml config and forget all about this, as this will always have `block-line-buffer = "on"` and do the right thing automatically:
+>
+> - If there are concurrent commands, `multi == "on"`.
+> - Otherwise `multi == "off"`.
 
 ## How do I set shell auto-completions?
 
