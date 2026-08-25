@@ -76,28 +76,17 @@ sendNotif summary body urgency = do
     notifyWithErrorLogging notifyEnv timeout =
       try @_ @Notify.NotifyException (Notify.notify notifyEnv (mkNote timeout)) >>= \case
         Right () -> pure ()
-        Left notifyEx -> do
-          let exMsg = displayExceptiont (notifyEx ^. #exception)
-              isTooMany = "Created too many similar notifications in quick succession" `T.isInfixOf` exMsg
+        Left notifyEx ->
+          -- Warn if this is a known exception.
+          case warnEx notifyEx of
+            Just warn -> withRegion Linear (logWarn warn)
+            Nothing -> withRegion Linear (logEx notifyEx)
 
-          -- Rethrow fatal exceptions, except for "too many" ones. This is
-          -- triggered by DBus when we run identical commands e.g.
-          --
-          --   shrun "sleep 1" "sleep 1"
-          --
-          -- But it is not important, so ignore it.
-          if
-            | notifyEx ^. #fatal && not isTooMany -> throwM notifyEx
-            | notifyEx ^. #fatal && isTooMany -> withRegion Linear logTooMany
-            | otherwise -> withRegion Linear (logEx notifyEx)
-
-    logTooMany r =
+    logWarn msg r =
       Logging.putRegionLog r
         $ MkLog
           { cmd = Nothing,
-            msg =
-              Types.fromUnlined
-                "Could not send notification: sent too many similar notifications.",
+            msg,
             lvl = LevelWarn,
             mode = LogModeFinish
           }
@@ -122,6 +111,22 @@ sendNotif summary body urgency = do
         & Notify.setTimeout (Just timeout)
         & Notify.setTitle (Just "Shrun")
         & Notify.setUrgency (Just urgency)
+
+warnEx :: Notify.NotifyException -> Maybe Types.LogMessage
+warnEx notifyEx =
+  if tooManyErr `T.isInfixOf` exMsg
+    then Just tooManyWarn
+    else Nothing
+  where
+    -- This is triggered by DBus when we run identical commands e.g.
+    --
+    --   shrun "sleep 1" "sleep 1"
+    --
+    -- But it is not important, so ignore it.
+    tooManyErr = "Created too many similar notifications in quick succession"
+    tooManyWarn = "Could not send notification: sent too many similar notifications."
+
+    exMsg = displayExceptiont (notifyEx ^. #exception)
 
 formatNotifyMessage :: UnlinedText -> [UnlinedText] -> NotifyMessage
 formatNotifyMessage timeTxt messages =
