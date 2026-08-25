@@ -113,6 +113,7 @@ for versions < 1.
 * Option `--common-log-debug`.
 * Option `--notify-timeout` can now take `TIME_STR` e.g. `2h3s`.
 * Option `--notify-error-urgency` for setting error urgency level.
+* Option `--common-log-command-index` for showing command index in logs.
 
 ### Fixed
 * Improved final command log formatting with newlines.

@@ -13,6 +13,7 @@ module Unit.Shrun.Logging.Generators
     -- * Misc
     genCommand,
     genKeyHide,
+    genCommandIndex,
   )
 where
 
@@ -22,6 +23,7 @@ import Shrun.Command.Types
     CommandP1,
     fromPositive,
   )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch (CommandIndexSwitch)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging.Types
@@ -87,6 +89,9 @@ genLogNoCmd = do
         lvl,
         mode
       }
+
+genCommandIndex :: Gen CommandIndexSwitch
+genCommandIndex = HGen.enumBounded
 
 genKeyHide :: Gen KeyHideSwitch
 genKeyHide = HGen.enumBounded

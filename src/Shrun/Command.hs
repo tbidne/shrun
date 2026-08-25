@@ -335,7 +335,8 @@ logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
   commonLogging <- asks getCommonLogging
   thisCmd <- nodeToCommand vertex
   prevCmd <- for mPrevVertex nodeToCommand
-  let keyHide = commonLogging ^. #keyHide
+  let cmdIndex = commonLogging ^. #commandIndex
+      keyHide = commonLogging ^. #keyHide
 
   depCmdTxt <- case mDepVertex of
     Nothing -> pure ""
@@ -346,9 +347,9 @@ logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
           [ "(",
             vToUnlined depVertex,
             ") ",
-            Formatting.displayCmd depCmd keyHide
+            Formatting.displayCmd depCmd cmdIndex keyHide
           ]
-  let cmdTxt = Formatting.displayCmd thisCmd keyHide
+  let cmdTxt = Formatting.displayCmd thisCmd cmdIndex keyHide
       errMsg = msgFn depCmdTxt cmdTxt
 
       log =

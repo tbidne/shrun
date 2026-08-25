@@ -28,8 +28,11 @@ import Shrun.Configuration.Data.CommandLogging.ReadSize
   ( ReadSize (MkReadSize),
   )
 import Shrun.Configuration.Data.CommonLogging
-  ( CommonLoggingP (MkCommonLoggingP, debug, keyHide),
+  ( CommonLoggingP (MkCommonLoggingP, commandIndex, debug, keyHide),
     Debug (MkDebug),
+  )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch (MkCommandIndexSwitch),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
@@ -167,11 +170,13 @@ genCoreConfig = do
     genTimeout = MkTimeout <$> genPos
 
     genCommonLogging = do
+      commandIndex <- fmap MkCommandIndexSwitch <$> genMaybe G.enumBounded
       debug <- fmap MkDebug <$> genMaybe G.enumBounded
       keyHide <- fmap MkKeyHideSwitch <$> genMaybe G.enumBounded
       pure
         $ MkCommonLoggingP
-          { debug,
+          { commandIndex,
+            debug,
             keyHide
           }
 

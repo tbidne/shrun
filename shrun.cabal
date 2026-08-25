@@ -101,6 +101,7 @@ library
     Shrun.Configuration.Data.CommandLogging.ReadSize
     Shrun.Configuration.Data.CommandLogging.ReadStrategy
     Shrun.Configuration.Data.CommonLogging
+    Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
     Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
     Shrun.Configuration.Data.ConfigPhase
     Shrun.Configuration.Data.ConsoleLogging

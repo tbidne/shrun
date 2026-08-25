@@ -30,6 +30,7 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
         ReadBlockLineBuffer
       ),
   )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch (CommandIndexSwitch)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Configuration.Data.FileLogging qualified as FL
 import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
@@ -157,7 +158,8 @@ tryCommandLogging command = do
   -- Hence for now, let's just do it the one time after commands are created.
   -- If we have problems, consider moving it to the timer.
 
-  let keyHide = commonLogging ^. #keyHide
+  let cmdIndex = commonLogging ^. #commandIndex
+      keyHide = commonLogging ^. #keyHide
       consoleLogSwitch = consoleLogging ^. #commandLogging % #unConsoleLogCmdSwitch
       -- In general, our loggers take an optional region (for debugging) and
       -- a log, and send it off to the console / file queues, depending on
@@ -172,7 +174,7 @@ tryCommandLogging command = do
             restoreTimerRegion timerRegion
             let logFn mRegion log =
                   let region = fromMaybe cmdRegion mRegion
-                   in logConsole keyHide consoleLogQueue region consoleLogging log
+                   in logConsole cmdIndex keyHide consoleLogQueue region consoleLogging log
 
             logFn Nothing hello
 
@@ -184,9 +186,9 @@ tryCommandLogging command = do
                 -- Even if cmdLogging is off, we still want to send debug
                 -- logs, if enabled.
                 for_ mRegion $ \region ->
-                  logConsole keyHide consoleLogQueue region consoleLogging log
+                  logConsole cmdIndex keyHide consoleLogQueue region consoleLogging log
 
-          withFileLogging keyHide fileLogging logConsoleRegion $ \logFn -> do
+          withFileLogging cmdIndex keyHide fileLogging logConsoleRegion $ \logFn -> do
             logFn Nothing hello
             tryCommandStream logFn cmd
 
@@ -198,9 +200,9 @@ tryCommandLogging command = do
 
             let logConsoleRegion mRegion log = do
                   let region = fromMaybe cmdRegion mRegion
-                  logConsole keyHide consoleLogQueue region consoleLogging log
+                  logConsole cmdIndex keyHide consoleLogQueue region consoleLogging log
 
-            withFileLogging keyHide fileLogging logConsoleRegion $ \logFn -> do
+            withFileLogging cmdIndex keyHide fileLogging logConsoleRegion $ \logFn -> do
               logFn Nothing hello
               tryCommandStream logFn cmd
 
@@ -219,20 +221,22 @@ tryCommandLogging command = do
 
       pure $ CommandResultFailure (U.timeSpecToRelTime rt) err
   where
-    logConsole keyHide consoleQueue region consoleLogging log = do
-      formatted <- formatConsoleLog keyHide consoleLogging log
+    logConsole cmdIndex keyHide consoleQueue region consoleLogging log = do
+      formatted <- formatConsoleLog cmdIndex keyHide consoleLogging log
       writeTBQueueA' consoleQueue (LogRegion (log ^. #mode) region formatted)
 
-    logMainFile keyHide fileLogging log = do
-      formatted <- formatFileLog keyHide fileLogging log
+    logMainFile cmdIndex keyHide fileLogging log = do
+      formatted <- formatFileLog cmdIndex keyHide fileLogging log
       writeTBQueueA' (fileLogging ^. #file % #queue) formatted
 
-    logMultiFile fileHandle keyHide fileLogging log = do
-      formatted <- formatFileLog keyHide fileLogging log
+    logMultiFile fileHandle cmdIndex keyHide fileLogging log = do
+      formatted <- formatFileLog cmdIndex keyHide fileLogging log
       Logging.logFile fileHandle formatted
 
     -- Augments an existing logger with a file logging.
     withFileLogging ::
+      -- command index
+      CommandIndexSwitch ->
       -- key hide
       KeyHideSwitch ->
       -- file logging env
@@ -242,7 +246,7 @@ tryCommandLogging command = do
       -- continuation on combined logger
       ((Maybe (Region m) -> Log -> m ()) -> m (Maybe Stderr)) ->
       m (Maybe Stderr)
-    withFileLogging keyHide fileLogging consoleLog m = do
+    withFileLogging cmdIndex keyHide fileLogging consoleLog m = do
       -- 1. Multi log is on. Need to do extra steps.
       case fileLogging ^. #multi of
         Just multiCounter -> do
@@ -259,7 +263,7 @@ tryCommandLogging command = do
             withLockedFileOrDie multiPath handle $ \lockedHandle -> do
               let logFn mRegion log = do
                     consoleLog mRegion log
-                    logMultiFile lockedHandle keyHide fileLogging log
+                    logMultiFile lockedHandle cmdIndex keyHide fileLogging log
 
               m logFn
 
@@ -278,7 +282,7 @@ tryCommandLogging command = do
         Nothing -> do
           let logFn mRegion log = do
                 consoleLog mRegion log
-                logMainFile keyHide fileLogging log
+                logMainFile cmdIndex keyHide fileLogging log
 
           m logFn
 

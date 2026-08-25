@@ -25,10 +25,11 @@ import Shrun.Command.Types
     CommandStatusMapP (MkCommandStatusMapP),
     TCommandStatusMap,
   )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch (MkCommandIndexSwitch),
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch
-      ( MkKeyHideSwitch
-      ),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
@@ -119,9 +120,10 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
   baseLog <- forAll LGens.genLogNoCmd
 
   -- keyHide should make no difference for NoCmd
+  cmdIndex <- forAll LGens.genCommandIndex
   keyHide <- forAll LGens.genKeyHide
 
-  let fmt = runFmtConsole . Formatting.formatConsoleLog keyHide baseConsoleLoggingEnv
+  let fmt = runFmtConsole . Formatting.formatConsoleLog cmdIndex keyHide baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
@@ -163,8 +165,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmtKeyHideOff = runFmtConsole . Formatting.formatConsoleLog (MkKeyHideSwitch False) baseConsoleLoggingEnv
-      fmtKeyHideOn = runFmtConsole . Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
+  let fmtKeyHideOff = runFmtConsole . Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) baseConsoleLoggingEnv
+      fmtKeyHideOn = runFmtConsole . Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -225,7 +227,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmt = runFmtConsole . Formatting.formatConsoleLog keyHide baseConsoleLoggingEnv
+  let fmt = runFmtConsole . Formatting.formatConsoleLog (MkCommandIndexSwitch False) keyHide baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -277,8 +279,8 @@ testFormatsCLCommandNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLLineTrunc :: TestTree
 testFormatsCLLineTrunc = testCase desc $ do
@@ -311,8 +313,8 @@ testFormatsCLLineTrunc = testCase desc $ do
     desc = "Formats with line truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLSpecs :: TestTree
 testFormatsCLSpecs = testCase "Specific specs" $ do
@@ -325,7 +327,7 @@ testFormatsCLSpecs = testCase "Specific specs" $ do
   where
     fmtKeyHideOn =
       runFmtConsole
-        . Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
+        . Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) baseConsoleLoggingEnv
 
 testFormatsCLMultiLine :: TestTree
 testFormatsCLMultiLine = testCase "Formats multiline" $ do
@@ -339,7 +341,7 @@ testFormatsCLMultiLine = testCase "Formats multiline" $ do
   where
     fmt =
       runFmtConsole
-        . Formatting.formatConsoleMultiLineLogs (MkKeyHideSwitch False) baseConsoleLoggingEnv
+        . Formatting.formatConsoleMultiLineLogs (MkCommandIndexSwitch False) (MkKeyHideSwitch False) baseConsoleLoggingEnv
 
     expected = "\ESC[91m[Error][] some error\n  more output\ESC[0m"
 
@@ -374,9 +376,10 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
   baseLog <- forAll LGens.genLogNoCmd
 
   -- keyHide should make no difference for NoCmd
+  cmdIndex <- forAll LGens.genCommandIndex
   keyHide <- forAll LGens.genKeyHide
 
-  let fmt = runFormatFileLog keyHide baseFileLoggingEnv
+  let fmt = runFormatFileLog cmdIndex keyHide baseFileLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
@@ -414,8 +417,8 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmtKeyHideOff = runFormatFileLog (MkKeyHideSwitch False) baseFileLoggingEnv
-      fmtKeyHideOn = runFormatFileLog (MkKeyHideSwitch True) baseFileLoggingEnv
+  let fmtKeyHideOff = runFormatFileLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) baseFileLoggingEnv
+      fmtKeyHideOn = runFormatFileLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) baseFileLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -478,7 +481,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmt = runFormatFileLog keyHide baseFileLoggingEnv
+  let fmt = runFormatFileLog (MkCommandIndexSwitch False) keyHide baseFileLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -531,8 +534,8 @@ testFormatsFLCommandNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = runFormatFileLog (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
-    fmtKh n = runFormatFileLog (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
+    fmt n = runFormatFileLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
+    fmtKh n = runFormatFileLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
 
 testFormatsFLLineTrunc :: TestTree
 testFormatsFLLineTrunc = testCase desc $ do
@@ -565,12 +568,12 @@ testFormatsFLLineTrunc = testCase desc $ do
     desc = "Formats with line truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = runFormatFileLog (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseFileLoggingEnv)
-    fmtKh n = runFormatFileLog (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseFileLoggingEnv)
+    fmt n = runFormatFileLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseFileLoggingEnv)
+    fmtKh n = runFormatFileLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseFileLoggingEnv)
 
-runFormatFileLog :: KeyHideSwitch -> FileLoggingEnv -> Log -> IO Text
-runFormatFileLog keyHide env log = do
-  flog <- runMockTime $ Formatting.formatFileLog @_ @MockTime keyHide env log
+runFormatFileLog :: CommandIndexSwitch -> KeyHideSwitch -> FileLoggingEnv -> Log -> IO Text
+runFormatFileLog cmdIndex keyHide env log = do
+  flog <- runMockTime $ Formatting.formatFileLog @_ @MockTime cmdIndex keyHide env log
   pure $ flog ^. #unFileLog
 
 -- The mock time our 'MonadTime' returns. Needs to be kept in sync with

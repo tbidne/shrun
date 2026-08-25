@@ -4,6 +4,7 @@ module Unit.Shrun.Configuration.Args.Parsing.CommonLogging (tests) where
 import Shrun.Configuration.Data.CommonLogging
   ( Debug (MkDebug),
   )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch (CommandIndexSwitch (MkCommandIndexSwitch))
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
   )
@@ -15,9 +16,34 @@ tests :: TestTree
 tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.CommonLogging"
-    [ debugTests,
+    [ commandIndexTests,
+      debugTests,
       keyHideTests
     ]
+
+commandIndexTests :: TestTree
+commandIndexTests =
+  testGroup
+    "--common-log-command-index"
+    [ testCommandIndex,
+      testCommandIndexOff
+    ]
+
+testCommandIndex :: TestTree
+testCommandIndex =
+  testPropertyNamed "Parses --common-log-command-index on" "testCommandIndex"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--common-log-command-index", "on", "command"]
+    expected = U.updateDefCoreArgs (#commonLogging % #commandIndex) (MkCommandIndexSwitch True)
+
+testCommandIndexOff :: TestTree
+testCommandIndexOff =
+  testPropertyNamed "Parses --common-log-command-index false" "testCommandIndexOff"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--common-log-command-index", "off", "command"]
+    expected = U.updateDefCoreArgs (#commonLogging % #commandIndex) (MkCommandIndexSwitch False)
 
 debugTests :: TestTree
 debugTests =

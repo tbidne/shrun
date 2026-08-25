@@ -93,16 +93,17 @@ putRegionLog region lg = do
   commonLogging <- asks getCommonLogging
   mFileLogging <- asks getFileLogging
 
-  let keyHide = commonLogging ^. #keyHide
+  let cmdIndex = view #commandIndex commonLogging
+      keyHide = commonLogging ^. #keyHide
 
   (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
 
-  formatted <- Formatting.formatConsoleLog keyHide consoleLogging lg
+  formatted <- Formatting.formatConsoleLog cmdIndex keyHide consoleLogging lg
   let regionLog = LogRegion (lg ^. #mode) region formatted
 
   regionLogToConsoleQueue queue regionLog
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileLog keyHide fl lg
+    fileLog <- Formatting.formatFileLog cmdIndex keyHide fl lg
     logToFileQueue fl fileLog
 {-# INLINEABLE putRegionLog #-}
 
@@ -127,16 +128,17 @@ putRegionMultiLineLog region logs = do
   commonLogging <- asks getCommonLogging
   mFileLogging <- asks getFileLogging
 
-  let keyHide = commonLogging ^. #keyHide
+  let cmdIndex = view #commandIndex commonLogging
+      keyHide = commonLogging ^. #keyHide
 
   (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
 
-  formatted <- Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
+  formatted <- Formatting.formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs
   let regionLog = LogRegion mode region formatted
 
   regionLogToConsoleQueue queue regionLog
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileMultiLineLogs keyHide fl logs
+    fileLog <- Formatting.formatFileMultiLineLogs cmdIndex keyHide fl logs
     logToFileQueue fl fileLog
   where
     mode = NE.head logs ^. #mode
@@ -184,7 +186,10 @@ mkUnfinishedCmdLogs ::
   ) =>
   m (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
 mkUnfinishedCmdLogs = do
-  keyHide <- asks (view #keyHide . getCommonLogging)
+  commonLogging <- asks getCommonLogging
+
+  let cmdIndex = view #commandIndex commonLogging
+      keyHide = view #keyHide commonLogging
 
   -- Statuses receive no updates at this point (command threads have finished
   -- or been killed), so this should be safe.
@@ -199,7 +204,7 @@ mkUnfinishedCmdLogs = do
 
       cmdToTxt :: CommandOrd CommandPhase1 -> Text
       cmdToTxt cmd =
-        "- " <> Formatting.displayCmd (cmd ^. #unCommandOrd) keyHide ^. #unUnlinedText
+        "- " <> Formatting.displayCmd (cmd ^. #unCommandOrd) cmdIndex keyHide ^. #unUnlinedText
 
       mkLog :: Text -> Log
       mkLog txt =
@@ -261,13 +266,14 @@ putRegionLogDirect log = do
   (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
   mFileLogging <- asks getFileLogging
 
-  let keyHide = view #keyHide commonLogging
-  consoleLog <- Formatting.formatConsoleLog keyHide consoleLogging log
+  let cmdIndex = view #commandIndex commonLogging
+      keyHide = view #keyHide commonLogging
+  consoleLog <- Formatting.formatConsoleLog cmdIndex keyHide consoleLogging log
 
   MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileLog keyHide fl log
+    fileLog <- Formatting.formatFileLog cmdIndex keyHide fl log
     logFile (fl ^. #file % #handle) fileLog
 {-# INLINEABLE putRegionLogDirect #-}
 
@@ -293,13 +299,14 @@ putRegionMultiLineLogDirect logs@(log :| _) = do
   (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
   mFileLogging <- asks getFileLogging
 
-  let keyHide = view #keyHide commonLogging
-  consoleLog <- Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
+  let cmdIndex = view #commandIndex commonLogging
+      keyHide = view #keyHide commonLogging
+  consoleLog <- Formatting.formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs
 
   MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileMultiLineLogs keyHide fl logs
+    fileLog <- Formatting.formatFileMultiLineLogs cmdIndex keyHide fl logs
     logFile (fl ^. #file % #handle) fileLog
 {-# INLINEABLE putRegionMultiLineLogDirect #-}
 

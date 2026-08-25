@@ -776,13 +776,14 @@ withLockedFileOrDie ::
   Handle p ->
   (LockedHandle p -> m a) ->
   m a
-withLockedFileOrDie p h k = withTryLockedFile h k >>= \case
-  Just r -> pure r
-  Nothing -> do
-    let msg =
-          mconcat
-            [ "Failed opening log file: '",
-              pack (decodeLenient p),
-              "'. Is another process writing to it?"
-            ]
-    throwText msg
+withLockedFileOrDie p h k =
+  withTryLockedFile h k >>= \case
+    Just r -> pure r
+    Nothing -> do
+      let msg =
+            mconcat
+              [ "Failed opening log file: '",
+                pack (decodeLenient p),
+                "'. Is another process writing to it?"
+              ]
+      throwText msg

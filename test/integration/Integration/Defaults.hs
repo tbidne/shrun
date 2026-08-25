@@ -36,8 +36,11 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (ReadBlock, ReadBlockLineBuffer),
   )
 import Shrun.Configuration.Data.CommonLogging
-  ( CommonLoggingP (MkCommonLoggingP, debug, keyHide),
+  ( CommonLoggingP (MkCommonLoggingP, commandIndex, debug, keyHide),
     Debug (MkDebug),
+  )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch (MkCommandIndexSwitch),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
@@ -197,7 +200,8 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                 legendKeysCache = LegendKeysOff,
                 commonLogging =
                   MkCommonLoggingP
-                    { debug = MkDebug True,
+                    { commandIndex = MkCommandIndexSwitch True,
+                      debug = MkDebug True,
                       keyHide = MkKeyHideSwitch True
                     },
                 consoleLogging =
@@ -285,6 +289,8 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
         "off",
         "--console-log-command",
         "on",
+        "--common-log-command-index",
+        "on",
         "--common-log-debug",
         "on",
         "--common-log-key-hide",
@@ -329,7 +335,8 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                 legendKeysCache = LegendKeysClear,
                 commonLogging =
                   MkCommonLoggingP
-                    { debug = MkDebug True,
+                    { commandIndex = MkCommandIndexSwitch True,
+                      debug = MkDebug True,
                       keyHide = MkKeyHideSwitch True
                     },
                 consoleLogging =

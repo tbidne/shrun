@@ -35,10 +35,14 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
+        commandIndex,
         debug,
         keyHide
       ),
     Debug (MkDebug),
+  )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch (MkCommandIndexSwitch),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
@@ -125,7 +129,8 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
                 legendKeysCache = LegendKeysWrite,
                 commonLogging =
                   MkCommonLoggingP
-                    { debug = MkDebug False,
+                    { commandIndex = MkCommandIndexSwitch False,
+                      debug = MkDebug False,
                       keyHide = MkKeyHideSwitch False
                     },
                 consoleLogging =

@@ -38,6 +38,9 @@ import Shrun.Command.Types
         CommandWaiting
       ),
   )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch,
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
   )
@@ -89,11 +92,12 @@ formatConsoleLog ::
     MonadAtomic m,
     MonadReader env m
   ) =>
+  CommandIndexSwitch ->
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   Log ->
   m ConsoleLog
-formatConsoleLog keyHide consoleLogging log = do
+formatConsoleLog cmdIndex keyHide consoleLogging log = do
   line <-
     coreFormatting
       False
@@ -101,6 +105,7 @@ formatConsoleLog keyHide consoleLogging log = do
       (consoleLogging ^. #commandNameTrunc)
       True
       (consoleLogging ^. #stripControl)
+      cmdIndex
       keyHide
       log
 
@@ -125,11 +130,12 @@ formatConsoleMultiLineLogs ::
     MonadAtomic m,
     MonadReader env m
   ) =>
+  CommandIndexSwitch ->
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   NonEmpty Log ->
   m ConsoleLog
-formatConsoleMultiLineLogs keyHide consoleLogging logs@(l :| _) =
+formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs@(l :| _) =
   fmap
     ( UnsafeConsoleLog
         -- No need to color each line individually: we can just do it once.
@@ -148,6 +154,7 @@ formatConsoleMultiLineLogs keyHide consoleLogging logs@(l :| _) =
         (consoleLogging ^. #commandNameTrunc)
         False
         (consoleLogging ^. #stripControl)
+        cmdIndex
         keyHide
         log
 
@@ -164,11 +171,12 @@ formatFileLog ::
     MonadReader env m,
     MonadTime m
   ) =>
+  CommandIndexSwitch ->
   KeyHideSwitch ->
   FileLoggingEnv ->
   Log ->
   m FileLog
-formatFileLog keyHide fileLogging log = do
+formatFileLog cmdIndex keyHide fileLogging log = do
   currTime <- getSystemTimeString
   let timestamp = brackets (pack currTime)
       timestampLen = T.length timestamp
@@ -180,6 +188,7 @@ formatFileLog keyHide fileLogging log = do
       (fileLogging ^. #commandNameTrunc)
       False
       (fileLogging ^. #stripControl)
+      cmdIndex
       keyHide
       log
 
@@ -205,11 +214,12 @@ formatFileMultiLineLogs ::
     MonadReader env m,
     MonadTime m
   ) =>
+  CommandIndexSwitch ->
   KeyHideSwitch ->
   FileLoggingEnv ->
   NonEmpty Log ->
   m FileLog
-formatFileMultiLineLogs keyHide fileLogging logs = do
+formatFileMultiLineLogs cmdIndex keyHide fileLogging logs = do
   currTime <- getSystemTimeString
   let timestamp = brackets (pack currTime)
       timestampLen = T.length timestamp
@@ -226,6 +236,7 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
             (fileLogging ^. #commandNameTrunc)
             False
             (fileLogging ^. #stripControl)
+            cmdIndex
             keyHide
             log
 
@@ -293,6 +304,8 @@ coreFormatting ::
   Bool ->
   -- | Strip control
   StripControl t ->
+  -- | Command index
+  CommandIndexSwitch ->
   -- | Key hide
   KeyHideSwitch ->
   -- | Log to format
@@ -304,6 +317,7 @@ coreFormatting
   mCommandNameTrunc
   stripLeading
   stripControl
+  cmdIndex
   keyHide
   log = do
     statusPrefix <- case log ^. #lvl of
@@ -338,7 +352,7 @@ coreFormatting
         cmdPrefix = case log ^. #cmd of
           Nothing -> ""
           Just cmd ->
-            formatCommand keyHide mCommandNameTrunc cmd ^. #unUnlinedText
+            formatCommand cmdIndex keyHide mCommandNameTrunc cmd ^. #unUnlinedText
 
     pure $ concatWithLineTrunc mLineTrunc finalPrefix (msgStripped ^. #unLogMessage)
     where
@@ -368,16 +382,17 @@ coreFormatting
       tos = showt . getSum
 
 formatCommand ::
+  CommandIndexSwitch ->
   KeyHideSwitch ->
   Maybe (Truncation TruncCommandName) ->
   CommandP1 ->
   UnlinedText
-formatCommand keyHide commandNameTrunc com =
+formatCommand cmdIndex keyHide commandNameTrunc com =
   ShrunText.reallyUnsafeMap (brackets . truncateNameFn) cmdName
   where
     -- Get cmd name to display. Always strip control sequences. Futhermore,
     -- strip leading/trailing whitespace.
-    cmdName = displayCmd com keyHide
+    cmdName = displayCmd com cmdIndex keyHide
 
     -- truncate cmd/name if necessary
     truncateNameFn =
@@ -443,10 +458,16 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
 --
 -- >>> fmt (Just "long") "some long command" (MkKeyHideSwitch false)
 -- "long"
-displayCmd :: CommandP1 -> KeyHideSwitch -> UnlinedText
-displayCmd cmd kh = case (cmd ^. #key, kh) of
-  (Just key, MkKeyHideSwitch False) -> formatCommandText key
-  _ -> formatCommandText (cmd ^. #command)
+displayCmd :: CommandP1 -> CommandIndexSwitch -> KeyHideSwitch -> UnlinedText
+displayCmd cmd ci kh =
+  idx <> case (cmd ^. #key, kh) of
+    (Just key, MkKeyHideSwitch False) -> formatCommandText key
+    _ -> formatCommandText (cmd ^. #command)
+  where
+    idx =
+      if ci ^. #unCommandIndexSwitch
+        then ShrunText.unsafeUnlinedText (prettyToText $ cmd ^. #index) <> ". "
+        else ""
 
 -- | Applies the given 'StripControl' to the 'Text'.
 --

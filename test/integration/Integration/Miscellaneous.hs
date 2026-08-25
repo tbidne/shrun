@@ -39,10 +39,14 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
+        commandIndex,
         debug,
         keyHide
       ),
     Debug (MkDebug),
+  )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch (MkCommandIndexSwitch),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
@@ -559,6 +563,7 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
           MkSomeSetter (#coreConfig % #commandLogging % #readSize % #unReadSize % #unBytes) 16_000,
           MkSomeSetter (#coreConfig % #commandLogging % #reportReadErrors % #unReportReadErrorsSwitch) False,
           -- common logging
+          MkSomeSetter (#coreConfig % #commonLogging % #commandIndex % #unCommandIndexSwitch) False,
           MkSomeSetter (#coreConfig % #commonLogging % #debug % #unDebug) False,
           MkSomeSetter (#coreConfig % #commonLogging % #keyHide % #unKeyHideSwitch) False,
           -- console logging
@@ -621,7 +626,8 @@ expectedMultiConfig =
             legendKeysCache = LegendKeysOff,
             commonLogging =
               MkCommonLoggingP
-                { debug = MkDebug True,
+                { commandIndex = MkCommandIndexSwitch True,
+                  debug = MkDebug True,
                   keyHide = MkKeyHideSwitch True
                 },
             consoleLogging =

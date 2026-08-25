@@ -19,6 +19,7 @@ legend = [
 ]
 
 [common-log]
+command-index = "on"
 debug = "on"
 key-hide = "on"
 

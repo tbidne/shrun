@@ -217,8 +217,9 @@ runCommand globalStartTime cmd = do
   (consoleLogging, consoleQueue, _) <- asks (getConsoleLogging @env @(Region m))
 
   let commandNameTrunc = consoleLogging ^. #commandNameTrunc
+      cmdIndex = commonLogging ^. #commandIndex
       keyHide = commonLogging ^. #keyHide
-      formattedCmd = LogFmt.formatCommand keyHide commandNameTrunc cmd
+      formattedCmd = LogFmt.formatCommand cmdIndex keyHide commandNameTrunc cmd
 
   case mCfg ^? (_Just % #actions % _NotifyActionsActiveStartAny) of
     Just () -> do
@@ -309,6 +310,7 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
   (urgency, consoleLog, mMkFileLog, notifyMsg)
   where
     timerFormat = consoleLogging ^. #timerFormat
+    cmdIndex = commonLogging ^. #commandIndex
     keyHide = commonLogging ^. #keyHide
 
     mkErrUrgency cfg = cfg ^. #errUrgency % #unNotifyErrUrgency
@@ -347,8 +349,8 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
                   lvl,
                   mode
                 }
-         in ( Formatting.formatConsoleLog keyHide consoleLogging log,
-              \fl -> Formatting.formatFileLog keyHide fl log
+         in ( Formatting.formatConsoleLog cmdIndex keyHide consoleLogging log,
+              \fl -> Formatting.formatFileLog cmdIndex keyHide fl log
             )
       -- 2. Exactly one message. Print normally.
       [m] ->
@@ -359,8 +361,8 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
                   lvl,
                   mode
                 }
-         in ( Formatting.formatConsoleLog keyHide consoleLogging log,
-              \fl -> Formatting.formatFileLog keyHide fl log
+         in ( Formatting.formatConsoleLog cmdIndex keyHide consoleLogging log,
+              \fl -> Formatting.formatFileLog cmdIndex keyHide fl log
             )
       -- Received multiple messages (lines). Use custom formatters.
       (m : ms) ->
@@ -372,8 +374,8 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
                     lvl,
                     mode
                   }
-         in ( Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs,
-              \fl -> Formatting.formatFileMultiLineLogs keyHide fl logs
+         in ( Formatting.formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs,
+              \fl -> Formatting.formatFileMultiLineLogs cmdIndex keyHide fl logs
             )
 
     mode = LogModeFinish
@@ -545,7 +547,10 @@ logCounter ::
   m ()
 logCounter region elapsed = do
   (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
-  keyHide <- asks (view #keyHide . getCommonLogging)
+  commonLogging <- asks getCommonLogging
+
+  let cmdIndex = commonLogging ^. #commandIndex
+      keyHide = commonLogging ^. #keyHide
 
   let timerFormat = consoleLogging ^. #timerFormat
       msg = Types.fromUnlined $ TimerFormat.formatSeconds timerFormat elapsed
@@ -556,7 +561,7 @@ logCounter region elapsed = do
             lvl = LevelTimer,
             mode = LogModeSet
           }
-  formatted <- Formatting.formatConsoleLog keyHide consoleLogging lg
+  formatted <- Formatting.formatConsoleLog cmdIndex keyHide consoleLogging lg
   let regionLog = LogRegion LogModeSet region formatted
   Logging.regionLogToConsoleQueue queue regionLog
 {-# INLINEABLE logCounter #-}

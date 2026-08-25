@@ -16,6 +16,7 @@ module Shrun.Configuration.Data.CommonLogging
   )
 where
 
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch (CommandIndexSwitch)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
@@ -45,7 +46,9 @@ instance DecodeTOML Debug where
 -- | Holds command logging config.
 type CommonLoggingP :: ConfigPhase -> Type
 data CommonLoggingP p = MkCommonLoggingP
-  { -- | Whether debug logs are on.
+  { -- | Whether to show Command index in logs.
+    commandIndex :: SwitchF p CommandIndexSwitch,
+    -- | Whether debug logs are on.
     debug :: SwitchF p Debug,
     -- | Whether to display command by (key) name or command.
     keyHide :: SwitchF p KeyHideSwitch
@@ -56,21 +59,24 @@ makeFieldLabelsNoPrefix ''CommonLoggingP
 instance Semigroup CommonLoggingToml where
   l <> r =
     MkCommonLoggingP
-      { debug = l ^. #debug <|> r ^. #debug,
+      { commandIndex = l ^. #commandIndex <|> r ^. #commandIndex,
+        debug = l ^. #debug <|> r ^. #debug,
         keyHide = l ^. #keyHide <|> r ^. #keyHide
       }
 
 instance Monoid CommonLoggingToml where
   mempty =
     MkCommonLoggingP
-      { debug = Nothing,
+      { commandIndex = Nothing,
+        debug = Nothing,
         keyHide = Nothing
       }
 
 instance Pretty CommonLoggingMerged where
   pretty c =
     vcat
-      [ "debug: " <> pretty (c ^. #debug),
+      [ "command-index: " <> pretty (c ^. #commandIndex),
+        "debug: " <> pretty (c ^. #debug),
         "key-hide: " <> pretty (c ^. #keyHide)
       ]
 
@@ -95,7 +101,7 @@ deriving stock instance Eq (CommonLoggingP ConfigPhaseMerged)
 deriving stock instance Show (CommonLoggingP ConfigPhaseMerged)
 
 instance Default CommonLoggingArgs where
-  def = MkCommonLoggingP Nothing Nothing
+  def = MkCommonLoggingP Nothing Nothing Nothing
 
 -- | Merges args and toml configs.
 mergeCommonLogging ::
@@ -104,7 +110,9 @@ mergeCommonLogging ::
   CommonLoggingMerged
 mergeCommonLogging args mToml =
   MkCommonLoggingP
-    { debug =
+    { commandIndex =
+        (args ^. #commandIndex) <.> (toml ^. #commandIndex),
+      debug =
         (args ^. #debug) <.> (toml ^. #debug),
       keyHide =
         (args ^. #keyHide) <.> (toml ^. #keyHide)
@@ -115,7 +123,8 @@ mergeCommonLogging args mToml =
 instance DecodeTOML CommonLoggingToml where
   tomlDecoder =
     MkCommonLoggingP
-      <$> getFieldOptWith tomlDecoder "debug"
+      <$> getFieldOptWith tomlDecoder "command-index"
+      <*> getFieldOptWith tomlDecoder "debug"
       <*> decodeKeyHideSwitch
 
 decodeKeyHideSwitch :: Decoder (Maybe KeyHideSwitch)
@@ -125,6 +134,7 @@ decodeKeyHideSwitch = getFieldOptWith tomlDecoder "key-hide"
 toEnv :: CommonLoggingMerged -> CommonLoggingEnv
 toEnv merged =
   MkCommonLoggingP
-    { debug = merged ^. #debug,
+    { commandIndex = merged ^. #commandIndex,
+      debug = merged ^. #debug,
       keyHide = merged ^. #keyHide
     }

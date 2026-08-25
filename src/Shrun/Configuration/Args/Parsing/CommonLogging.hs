@@ -11,13 +11,28 @@ import Shrun.Configuration.Data.CommonLogging
     CommonLoggingP (MkCommonLoggingP),
     Debug (MkDebug),
   )
+import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch
+  ( CommandIndexSwitch (MkCommandIndexSwitch),
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Shrun.Prelude
 
 commonLoggingParser :: Parser CommonLoggingArgs
-commonLoggingParser = MkCommonLoggingP <$> debugParser <*> keyHideParser
+commonLoggingParser =
+  MkCommonLoggingP
+    <$> commandIndexParser
+    <*> debugParser
+    <*> keyHideParser
+
+commandIndexParser :: Parser (Maybe CommandIndexSwitch)
+commandIndexParser = Utils.switchParser MkCommandIndexSwitch "common-log-command-index" helpTxt
+  where
+    helpTxt =
+      mconcat
+        [ "If enabled, displays the index for this command. Defaults to 'off."
+        ]
 
 debugParser :: Parser (Maybe Debug)
 debugParser = Utils.switchParser MkDebug "common-log-debug" helpTxt

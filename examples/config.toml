@@ -78,6 +78,8 @@ legend = [
 
 # Common logging configuation.
 [common-log]
+# If enabled, displays command index in logs.
+command-index = "off"
 # Enables additional debug logs.
 debug = "off"
 # By default (key-hide = "off"), logs will refer to the key name, as defined in

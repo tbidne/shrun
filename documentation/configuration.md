@@ -9,6 +9,7 @@
     - [Timeout](#timeout)
   - [Logging](#logging)
     - [Common Logging](#common-logging)
+      - [Command Index](#command-index)
       - [Debug](#debug)
       - [Key Hide](#key-hide)
     - [Command Logging](#command-logging)
@@ -280,6 +281,21 @@ legend = [
 
 This is general logging config.
 
+#### Command Index
+
+**Arg:** `--common-log-command-index (on | off)`
+
+**Description:** Shows command index in logs.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --common-log-command-index on "sleep 2"</span>
+<span style="color:">[Debug][1. sleep 2] Command: 'ShellCommand "sleep 2"'</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
+</pre>
+
 #### Debug
 
 **Arg:** `--common-log-debug (on | off)`
@@ -289,7 +305,7 @@ This is general logging config.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --common-log-debug "sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --common-log-debug on "sleep 2"</span>
 <span style="color:">[Debug][sleep 2] Command: 'ShellCommand "sleep 2"'</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
@@ -304,7 +320,7 @@ This is general logging config.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --common-log-key-hide --config=examples/config.toml some-key</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --common-log-key-hide on --config=examples/config.toml some-key</span>
 <span style="color: #69ff94">[Success][echo hi && sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
