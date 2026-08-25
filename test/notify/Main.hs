@@ -53,7 +53,27 @@ tests :: TestTree
 tests = do
   testGroup
     "Notify Tests"
-    osTests
+    (notifyIdenticalCommands : osTests)
+
+-- Tests that our 'too many notifications' (dbus) error to warning logic
+-- works. Might as well test osx too. Prior to the warning mitigation in
+-- Shrun.Notify, this test indeed fails on my machine. With the fix, it
+-- passes.
+notifyIdenticalCommands :: TestTree
+notifyIdenticalCommands = testCase desc $ do
+  runShrun args
+  where
+    desc = "Tests identical notifications"
+    args =
+      [ "--config",
+        "off",
+        "--notify-action-start",
+        "on",
+        "--notify-action-complete",
+        "all",
+        "sleep 1",
+        "sleep 1"
+      ]
 
 osTests :: List TestTree
 

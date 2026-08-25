@@ -25,7 +25,7 @@ import Shrun.Logging qualified as Logging
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel (LevelError),
+    LogLevel (LevelError, LevelWarn),
     LogMode (LogModeFinish),
   )
 import Shrun.Logging.Types qualified as Types
@@ -74,9 +74,33 @@ sendNotif summary body urgency = do
         (notifyConfig ^. #timeout)
   where
     notifyWithErrorLogging notifyEnv timeout =
-      Notify.tryNonFatalNotify notifyEnv (mkNote timeout) >>= \case
-        Nothing -> pure ()
-        Just notifyEx -> withRegion Linear (logEx notifyEx)
+      try @_ @Notify.NotifyException (Notify.notify notifyEnv (mkNote timeout)) >>= \case
+        Right () -> pure ()
+        Left notifyEx -> do
+          let exMsg = displayExceptiont (notifyEx ^. #exception)
+              isTooMany = "Created too many similar notifications in quick succession" `T.isInfixOf` exMsg
+
+          -- Rethrow fatal exceptions, except for "too many" ones. This is
+          -- triggered by DBus when we run identical commands e.g.
+          --
+          --   shrun "sleep 1" "sleep 1"
+          --
+          -- But it is not important, so ignore it.
+          if
+            | notifyEx ^. #fatal && not isTooMany -> throwM notifyEx
+            | notifyEx ^. #fatal && isTooMany -> withRegion Linear logTooMany
+            | otherwise -> withRegion Linear (logEx notifyEx)
+
+    logTooMany r =
+      Logging.putRegionLog r
+        $ MkLog
+          { cmd = Nothing,
+            msg =
+              Types.fromUnlined
+                "Could not send notification: sent too many similar notifications.",
+            lvl = LevelWarn,
+            mode = LogModeFinish
+          }
 
     logEx ex r = do
       -- set exit code

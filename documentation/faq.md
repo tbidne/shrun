@@ -12,6 +12,7 @@
 - [Can file logging preserve formatting?](#can-file-logging-preserve-formatting)
 - [How do I set shell auto-completions?](#how-do-i-set-shell-auto-completions)
 - [What does the status mean?](#what-does-the-status-mean)
+- [What does too many similar notifications mean?](#what-does-too-many-similar-notifications-mean)
 
 ## If I don't run multiple commands all that often, does shrun hold any value?
 
@@ -340,3 +341,36 @@ refers to the number of tasks in each status i.e.
 ```
 [waiting|running|failed|succeeded]
 ```
+
+## What does too many similar notifications mean?
+
+Some notification systems e.g. dbus will error if identical notifications are sent too quickly. This can be a problem for identical commands:
+
+```sh
+$ shrun "sleep 1" "sleep 1"
+[Warn] Could not send notification: sent too many similar notifications.
+[Success][sleep 1] 1 second
+[Success][sleep 1] 1 second
+[Warn] Could not send notification: sent too many similar notifications.
+[Finished][0|0|0|2] 1 second
+```
+
+We attempt to mitigate this error by intercepting it and turning it into a warning, though it is possible for it to slip by. There are two workarounds:
+
+1. Differentiate identical commands with extraneous whitespace, if possible.
+
+    ```sh
+    $ shrun "sleep  1" "sleep 1"
+    [Success][sleep 1] 1 second
+    [Success][sleep  1] 1 second
+    [Finished][0|0|0|2] 1 second
+    ```
+
+1. Set `--common-log-command-index on`.
+
+    ```sh
+    $ shrun --common-log-command-index on "sleep 1 " "sleep 1"
+    [Success][2. sleep 1] 1 second
+    [Success][1. sleep 1] 1 second
+    [Finished][0|0|0|2] 1 second
+    ```
