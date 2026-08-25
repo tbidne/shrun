@@ -441,23 +441,27 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.
 --
 -- >>> import Shrun.Command.Types (CommandP (MkCommandP), unsafeFromInt)
+-- >>> import Shrun.Configuration.Data.CommonLogging.CommandIndexSwitch (CommandIndexSwitch (MkCommandIndexSwitch))
 -- >>> import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (MkKeyHideSwitch))
 --
 -- >>> let idx = unsafeFromInt 1
 -- >>> let mkCmd = MkCommandP idx
--- >>> let fmt k cmd kh = view #unUnlinedText $ displayCmd (mkCmd k cmd) kh
+-- >>> let fmt k cmd cmdIdx kh = view #unUnlinedText $ displayCmd (mkCmd k cmd) cmdIdx kh
 --
--- >>> fmt Nothing "some long command" (MkKeyHideSwitch true)
+-- >>> fmt Nothing "some long command" (MkCommandIndexSwitch False) (MkKeyHideSwitch True)
 -- "some long command"
 --
--- >>> fmt Nothing "some long command" (MkKeyHideSwitch false)
+-- >>> fmt Nothing "some long command" (MkCommandIndexSwitch False) (MkKeyHideSwitch False)
 -- "some long command"
 --
--- >>> fmt (Just "long") "some long command" (MkKeyHideSwitch true)
+-- >>> fmt (Just "long") "some long command" (MkCommandIndexSwitch False) (MkKeyHideSwitch True)
 -- "some long command"
 --
--- >>> fmt (Just "long") "some long command" (MkKeyHideSwitch false)
+-- >>> fmt (Just "long") "some long command" (MkCommandIndexSwitch False) (MkKeyHideSwitch False)
 -- "long"
+--
+-- >>> fmt (Just "long") "some long command" (MkCommandIndexSwitch True) (MkKeyHideSwitch False)
+-- "1. long"
 displayCmd :: CommandP1 -> CommandIndexSwitch -> KeyHideSwitch -> UnlinedText
 displayCmd cmd ci kh =
   idx <> case (cmd ^. #key, kh) of

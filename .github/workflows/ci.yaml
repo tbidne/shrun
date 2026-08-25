@@ -25,11 +25,11 @@ jobs:
       fail-fast: false
       matrix:
         ghc:
-          - vers: "9.6.7"
+          - vers: "9.6"
             proj-file: ""
-          - vers: "9.8.4"
+          - vers: "9.8"
             proj-file: ""
-          - vers: "9.10.2"
+          - vers: "9.10"
             proj-file: ""
           - vers: "9.12.2"
             proj-file: "--project-file cabal.ghc9122.project"
@@ -56,11 +56,7 @@ jobs:
         run: cabal build ${{ matrix.ghc.proj-file }} lib:shrun
 
       - name: Doctests
-        if: ${{ matrix.ghc == '9.6.7'
-          || matrix.ghc == '9.8.4'
-          || matrix.ghc == '9.10.2'
-          || matrix.ghc == '9.12.2'
-          }}
+        if: ${{ matrix.ghc.vers != '9.12.2' }}
         run: |
           echo "*** Installing doctest ***"
           cabal install --ignore-project doctest --flag cabal-doctest
