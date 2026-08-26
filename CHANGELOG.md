@@ -129,6 +129,9 @@ for versions < 1.
 * Improved `--help` indent.
 * Stdin is silenced, so user keys no longer mess with console logs
   (sudo prompt still overwrites console, however).
+* 'Too many notifications' dbus error now a warning.
+* Notification exceptions are no longer fatal.
+* Log files are now write-protected.
 
 ## [0.9.1] -- 2024-07-27
 ### Changed
