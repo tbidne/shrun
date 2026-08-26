@@ -196,9 +196,6 @@ library
 
   -- NOTE: megaparsec uses semvar, hence only the first component matters
   -- for upper bounds.
-  -- For tuple syntax
-  if impl(ghc >=9.10.1)
-    build-depends: ghc-experimental >=0.1.0.0 && <9.1204.0
 
   hs-source-dirs:  src
 

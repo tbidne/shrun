@@ -1,8 +1,5 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE MagicHash #-}
-
-{- ORMOLU_DISABLE -}
 
 -- | Custom prelude. The idea is to:
 --
@@ -51,16 +48,12 @@ module Shrun.Prelude
     showt,
     displayExceptiont,
 
-#if !MIN_VERSION_base(4, 20, 0)
-
     -- * Anti-punning aliases
     List,
     Tuple2,
     Tuple3,
     Tuple4,
     Tuple5,
-
-#endif
 
     -- * Debug Utils
     todo,
@@ -87,8 +80,6 @@ module Shrun.Prelude
     module X,
   )
 where
-
-{- ORMOLU_ENABLE -}
 
 import Control.Applicative as X
   ( Alternative (empty, many, some, (<|>)),
@@ -188,11 +179,7 @@ import Data.HashSet as X (HashSet)
 import Data.Hashable as X (Hashable (hashWithSalt))
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
-#if MIN_VERSION_base(4, 20, 0)
-import Data.List as X (List, filter, replicate, zip, (++))
-#else
 import Data.List as X (filter, replicate, zip, (++))
-#endif
 import Data.List.NonEmpty as X (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict as X (Map)
@@ -210,12 +197,9 @@ import Data.Singletons (SingI)
 import Data.String as X (IsString (fromString), String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
+import Data.Text.Display as X (Display, display)
 import Data.Traversable as X (Traversable (sequenceA, traverse), for)
 import Data.Tuple as X (fst, snd, uncurry)
-#if MIN_VERSION_base(4, 20, 0)
-import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4, Tuple5)
-#endif
-import Data.Text.Display as X (Display, display)
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Data.Word as X (Word16)
@@ -531,8 +515,6 @@ infixl 4 <<$>>
 (<<&>>) = flip (<<$>>)
 {-# INLINE (<<&>>) #-}
 
-#if !MIN_VERSION_base(4, 20, 0)
-
 -- | Alias for [].
 type List = []
 
@@ -547,8 +529,6 @@ type Tuple4 = (,,,)
 
 -- | Alias for (,,,,).
 type Tuple5 = (,,,,)
-
-#endif
 
 neToList :: NonEmpty a -> List a
 neToList = NE.toList
