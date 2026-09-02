@@ -28,6 +28,7 @@ module Shrun.Prelude
     prettyBytesInt,
     prettyMaybe,
     prettyToText,
+    docToText,
 
     -- * Misc utilities
     Result (..),
@@ -436,11 +437,14 @@ import Prettyprinter as X
   ( Doc,
     Pretty (pretty),
     comma,
+    concatWith,
+    hcat,
     hsep,
     indent,
     nest,
     punctuate,
     vcat,
+    (<+>),
   )
 import Prettyprinter qualified
 import Prettyprinter.Render.Text qualified as PrettyprinterT
@@ -733,10 +737,12 @@ prettyMaybe Nothing = "off"
 prettyMaybe (Just x) = pretty x
 
 prettyToText :: (Pretty a) => a -> Text
-prettyToText =
+prettyToText = docToText . pretty
+
+docToText :: Doc ann -> Text
+docToText =
   PrettyprinterT.renderStrict
     . Prettyprinter.layoutPretty Prettyprinter.defaultLayoutOptions
-    . pretty
 
 foldMapA :: (Applicative m, Foldable t, Monoid b) => (a -> m b) -> t a -> m b
 foldMapA f = getAp <$> foldMap (Ap . f)

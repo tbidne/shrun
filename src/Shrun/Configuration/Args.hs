@@ -11,18 +11,20 @@ import Shrun.Configuration.Args.Parsing
         configPaths,
         coreConfig,
         dryRun,
-        edges
+        edges,
+        expandAliases
       ),
   )
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
-defaultArgs :: NESeq Text -> Args m
+defaultArgs :: List Text -> Args m
 defaultArgs commands =
   MkArgs
     { configPaths = Empty,
       coreConfig = def,
       commands,
       edges = Nothing,
-      dryRun = False
+      dryRun = False,
+      expandAliases = False
     }

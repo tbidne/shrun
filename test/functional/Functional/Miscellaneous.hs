@@ -47,7 +47,8 @@ specs testArgs =
         testDefaultDryRun,
         testDefaultNoCmdLogDryRun,
         testExampleDryRun,
-        testFileLogDryRun
+        testFileLogDryRun,
+        testExampleExpandAliases
       ]
 
 splitNewlineLogs :: ReadStrategyTestParams
@@ -793,6 +794,74 @@ testFileLogDryRun = testCase desc $ do
         "  roots: 1",
         "commands:",
         "  1. cmd"
+      ]
+
+testExampleExpandAliases :: TestTree
+testExampleExpandAliases = testCase desc $ do
+  configLogs <- runExitConfigLogs args
+
+  assertList expected (configLogs >>= T.lines)
+  where
+    desc = "Runs example with --expand-aliases"
+    args =
+      withBaseArgs
+        [ "--expand-aliases"
+        ]
+
+    expected =
+      [ "- key:   a",
+        "  vals:  c",
+        " ",
+        "- key:   all",
+        "  vals:  cmd3, cmd4, echo hi",
+        " ",
+        "- key:   b",
+        "  vals:  a",
+        " ",
+        "- key:   backend",
+        "  vals:  echo \"building backend...\"; sleep 7",
+        " ",
+        "- key:   build",
+        "  vals:  frontend, backend, db",
+        " ",
+        "- key:   c",
+        "  vals:  b",
+        " ",
+        "- key:   cmd1",
+        "  vals:  echo \"command one\"",
+        " ",
+        "- key:   cmd2",
+        "  vals:  cmd1",
+        " ",
+        "- key:   cmd3",
+        "  vals:  cmd2",
+        " ",
+        "- key:   cmd4",
+        "  vals:  command four",
+        " ",
+        "- key:   db",
+        "  vals:  echo \"building database...\"; sleep 4; echo \"database failed\"; sleep 1; exit 1",
+        " ",
+        "- key:   deploy",
+        "  vals:  build, ds",
+        "  edges: 1 & 2",
+        " ",
+        "- key:   ds",
+        "  vals:  echo \"deploying app...\"; sleep 2",
+        " ",
+        "- key:   frontend",
+        "  vals:  echo \"building frontend...\"; sleep 2",
+        " ",
+        "- key:   some-key",
+        "  vals:  echo hi && sleep 2",
+        " ",
+        "- key:   some_aliases",
+        "  vals:  c1, c2, c3, c4",
+        "  edges: 1 & 3, 2 | 4, 2 ; 3",
+        " ",
+        "- key:   stats",
+        "  vals:  echo \"running stats...\"; sleep 3",
+        " "
       ]
 
 readStrategyDefaultCmd :: String

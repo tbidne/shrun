@@ -34,7 +34,7 @@ defaultTests =
 testDefaultArgs :: TestTree
 testDefaultArgs = testPropertyNamed desc "testDefaultArgs" $ do
   let argList = ["command"]
-      expected = Just $ defaultArgs ("command" :<|| Seq.empty)
+      expected = Just $ defaultArgs ["command"]
   U.verifyResult argList expected
   where
     desc = "Parses default args"
@@ -105,14 +105,17 @@ commandTests :: TestTree
 commandTests =
   testGroup
     "Commands"
-    [ emptyCommandsFail,
+    [ emptyCommandsSucceeds,
       testCommands
     ]
 
-emptyCommandsFail :: TestTree
-emptyCommandsFail =
-  testPropertyNamed "Empty commands fail" "emptyCommandsFail"
-    $ U.verifyFailure []
+-- This is a parsing success, though it will be a merge failure.
+emptyCommandsSucceeds :: TestTree
+emptyCommandsSucceeds =
+  testPropertyNamed "Empty commands succeeds" "emptyCommandsSucceeds"
+    $ U.verifyResult [] expected
+  where
+    expected = ((_Just % #commands) .~ []) U.defArgs
 
 testCommands :: TestTree
 testCommands =
@@ -121,7 +124,7 @@ testCommands =
   where
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) U.defArgs
-    cmds = unsafeListToNESeq ["one", "two", "three"]
+    cmds = ["one", "two", "three"]
 
 dryRunTests :: TestTree
 dryRunTests =

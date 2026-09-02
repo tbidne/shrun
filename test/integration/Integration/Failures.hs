@@ -20,7 +20,8 @@ specs :: IO TestArgs -> TestTree
 specs testArgs =
   testGroup
     "Failures"
-    ( [ missingConfig,
+    ( [ missingCommands,
+        missingConfig,
         duplicateKeys,
         duplicateKeysOverride,
         emptyKey,
@@ -32,6 +33,19 @@ specs testArgs =
       ]
         <> osTests
     )
+
+missingCommands :: TestTree
+missingCommands = testCase "Missing commands throws exception" $ do
+  logsRef <- newIORef' []
+  result <- runCaptureError @StringException [] logsRef
+
+  case result of
+    Nothing -> assertFailure "Expected exception"
+    Just ex ->
+      "Shrun requires at least one command." @=? displayException ex
+
+  logs <- readIORef' logsRef
+  logs @=? []
 
 missingConfig :: TestTree
 missingConfig = testCase "Missing explicit config throws exception" $ do

@@ -11,6 +11,9 @@ module Shrun.Configuration.Legend
     -- * Translation
     translateCommands,
     CyclicKeyError (..),
+
+    -- * Misc
+    Toml.Legend.prettyLegendMap,
   )
 where
 
@@ -35,6 +38,7 @@ import Shrun.Configuration.Data.Graph
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
+import Shrun.Configuration.Toml.Legend qualified as Toml.Legend
 import Shrun.Prelude
 
 -- $setup

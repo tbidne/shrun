@@ -39,9 +39,10 @@
     - [Notify Error Urgency](#notify-error-urgency)
     - [Notify System](#notify-system)
     - [Notify Timeout](#notify-timeout)
-  - [Miscellaneous](#miscellaneous)
+  - [Other commands](#other-commands)
     - [Default Config](#default-config)
     - [Dry Run](#dry-run)
+    - [Expand aliases](#expand-aliases)
 
 ---
 
@@ -849,7 +850,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 >
 > Timeouts are subject to the whims of the underlying notification system e.g. some notification systems [ignore the timeout entirely](https://bugs.launchpad.net/ubuntu/+source/notify-osd/+bug/390508). Also, "error notifications" (i.e. `shrun` or command failures) are sent with `urgency = critical` where supported, thus may not timeout at all, per [FDO's specification](https://specifications.freedesktop.org/notification-spec/notification-spec-latest.html).
 
-## Miscellaneous
+## Other commands
 
 ### Default Config
 
@@ -861,4 +862,10 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 **Arg:** `--dry-run`
 
-**Description:** Prints the configuration and commands that would be run to `stdout`, then exits.
+**Description:** Prints the configuration and commands that would be run to `stdout`, then exits. Requires a command.
+
+### Expand aliases
+
+**Arg:** `--expand-aliases`
+
+**Description:** Prints all expanded aliases from the config.

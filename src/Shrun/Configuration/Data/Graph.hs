@@ -59,9 +59,6 @@ import Shrun.Command.Types qualified as Command.Types
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
--- Note that these 'Edge' types all refer to types that are user-facing i.e.
--- parsed. The internal graph operates an pure Ints intead of our CommandIndex.
-
 -------------------------------------------------------------------------------
 --                                User Edges                                 --
 -------------------------------------------------------------------------------
@@ -92,38 +89,6 @@ displayEdgeLabel = \case
   EdgeOr -> "|"
   EdgeAny -> ";"
 
--- | Sequential options.
-data EdgeSequential
-  = -- | Sequential 'and'-edges.
-    EdgeSequentialAnd
-  | -- | Sequential 'or'-edges.
-    EdgeSequentialOr
-  | -- | Sequential 'any'-edges.
-    EdgeSequentialAny
-  deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
-  deriving anyclass (NFData)
-
--- | CLI command graph. The default instance is an "edgeless graph", in the
--- sense that all commands are root nodes without any edges, hence normal
--- behavior.
-data EdgeArgs
-  = -- | Sequential i.e. a linear graph of success edges.
-    EdgeArgsSequential EdgeSequential
-  | -- | Explicit edges.
-    EdgeArgsList Edges
-  deriving stock (Eq, Show)
-
-instance Default EdgeArgs where
-  def = EdgeArgsList mempty
-
-instance IsList EdgeArgs where
-  type Item EdgeArgs = Edge
-
-  fromList = EdgeArgsList . Exts.fromList
-
-  toList (EdgeArgsList xs) = Exts.toList xs
-  toList (EdgeArgsSequential _) = error "Called toList on EdgeArgsSequential"
-
 -- | An edge between two indices.
 type Edge = Tuple3 CommandIndex CommandIndex EdgeLabel
 
@@ -147,11 +112,69 @@ newtype Edges = MkEdges {unEdges :: Seq Edge}
 
 makeFieldLabelsNoPrefix ''Edges
 
+instance Pretty Edges where
+  pretty (MkEdges es) =
+    concatWith (\d1 d2 -> d1 <> comma <+> d2)
+      . fmap pEdge
+      $ es
+    where
+      pEdge (s, d, l) =
+        hcat
+          [ pretty s,
+            " ",
+            pretty l,
+            " ",
+            pretty d
+          ]
+
 sortEdges :: Edges -> Edges
 sortEdges =
   MkEdges
     . Seq.sort
     . view #unEdges
+
+-- | Sequential options.
+data EdgeSequential
+  = -- | Sequential 'and'-edges.
+    EdgeSequentialAnd
+  | -- | Sequential 'or'-edges.
+    EdgeSequentialOr
+  | -- | Sequential 'any'-edges.
+    EdgeSequentialAny
+  deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
+  deriving anyclass (NFData)
+
+instance Pretty EdgeSequential where
+  pretty = \case
+    EdgeSequentialAnd -> "&&"
+    EdgeSequentialOr -> "||"
+    EdgeSequentialAny -> ";;"
+
+-- | CLI command graph. The default instance is an "edgeless graph", in the
+-- sense that all commands are root nodes without any edges, hence normal
+-- behavior.
+data EdgeArgs
+  = -- | Sequential i.e. a linear graph of success edges.
+    EdgeArgsSequential EdgeSequential
+  | -- | Explicit edges.
+    EdgeArgsList Edges
+  deriving stock (Eq, Show)
+
+instance Default EdgeArgs where
+  def = EdgeArgsList mempty
+
+instance IsList EdgeArgs where
+  type Item EdgeArgs = Edge
+
+  fromList = EdgeArgsList . Exts.fromList
+
+  toList (EdgeArgsList xs) = Exts.toList xs
+  toList (EdgeArgsSequential _) = error "Called toList on EdgeArgsSequential"
+
+instance Pretty EdgeArgs where
+  pretty = \case
+    EdgeArgsSequential s -> pretty s
+    EdgeArgsList es -> pretty es
 
 -------------------------------------------------------------------------------
 --                              Command Graph                                --

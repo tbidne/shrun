@@ -56,11 +56,13 @@ data Args m = MkArgs
     -- | Core config.
     coreConfig :: CoreConfigArgs m,
     -- | List of commands.
-    commands :: NESeq Text,
+    commands :: List Text,
     -- | Whether to print the config.
     dryRun :: Bool,
     -- | Command dependencies.
-    edges :: Maybe (WithDisabled EdgeArgs)
+    edges :: Maybe (WithDisabled EdgeArgs),
+    -- | Whether to print expanded aliases.
+    expandAliases :: Bool
   }
   deriving stock (Eq, Show)
 
@@ -190,7 +192,7 @@ argsParser prevKeys = do
       <**> version
       <**> OA.helper
 
-  dryRun <- miscParser
+  ~(dryRun, expandAliases) <- miscParser
 
   commands <- commandsParser prevKeys
 
@@ -200,16 +202,19 @@ argsParser prevKeys = do
         coreConfig,
         commands,
         edges,
-        dryRun
+        dryRun,
+        expandAliases
       }
   where
     -- Want to put this in its own group. We put defaultConfig first for
     -- alphabetical order.
     miscParser =
       OA.parserOptionGroup
-        "Miscellaneous options:"
+        "Other commands:"
         $ defaultConfig
-        <*> dryRunParser
+        <*> p
+
+    p = (,) <$> dryRunParser <*> expandAliasesParser
 
 version :: Parser (a -> a)
 version = OA.infoOption versLong (OA.long "version" <> OA.short 'v' <> OA.hidden)
@@ -314,13 +319,18 @@ configParser =
             "with --config, hence disabled with 'off'."
           ]
 
-commandsParser :: List String -> Parser (NESeq Text)
+-- Morally this is non-empty (i.e. should use 'some'), but we want to delay
+-- the error until later, as no-commands is valid for some options
+-- (--expand-aliases).
+--
+-- Note that no commands is also valid for --default-config, but that succeeds
+-- because it is not part of the usual config parsing.
+commandsParser :: List String -> Parser (List Text)
 commandsParser prevKeys =
-  unsafeListToNESeq
-    <$> OA.some
-      ( T.pack
-          <$> OA.argument OA.str opts
-      )
+  OA.many
+    ( T.pack
+        <$> OA.argument OA.str opts
+    )
   where
     opts =
       mconcat
@@ -334,5 +344,17 @@ dryRunParser =
   OA.switch
     $ mconcat
       [ OA.long "dry-run",
-        Utils.mkHelpNoLine "Prints the configuration and commands that would be run to stdout, then exits."
+        Utils.mkHelp
+          $ mconcat
+            [ "Prints the configuration and commands that would be run to ",
+              "stdout, then exits. Requires a command."
+            ]
+      ]
+
+expandAliasesParser :: Parser Bool
+expandAliasesParser =
+  OA.switch
+    $ mconcat
+      [ OA.long "expand-aliases",
+        Utils.mkHelpNoLine "Prints all expanded aliases from the config."
       ]

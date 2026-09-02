@@ -1,8 +1,10 @@
 module Shrun.Configuration
   ( mergeConfig,
+    tomlToLegendMap,
   )
 where
 
+import Data.Sequence.NonEmpty qualified as NESeq
 import Shrun.Command.Types (CommandP (MkCommandP), fromPositive)
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Core (mergeCoreConfig)
@@ -23,6 +25,7 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default qualified as D
+import Shrun.Configuration.Legend (LegendMap)
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
@@ -51,12 +54,18 @@ mergeConfig ::
   Seq OsPath ->
   m (MergedConfig notifyEnv)
 mergeConfig args toml tomlPaths = do
-  (commands, ea) <- case toml ^. #legend of
+  cmdsText <- case args ^. #commands of
+    [] -> throwText "Shrun requires at least one command."
+    (c : cs) -> pure $ NESeq.fromList (c :| cs)
+
+  let cmdsTextIndexed = Utils.indexPos cmdsText
+
+  mLegendMap <- tomlToLegendMap toml
+  (commands, ea) <- case mLegendMap of
     Nothing -> pure (mkCmd <$> cmdsTextIndexed, cliEdgeArgs)
-    Just aliases -> do
+    Just legendMap -> do
       -- 3. We have a legend. Need to combine CLI and legend
       --    edges config. See NOTE: [CLI and Legend Edges]
-      legendMap <- Legend.linesToMap aliases
       cmdEdges <- case wEdgeArgs of
         -- 3.1. We also have CLI edges; pass it in.
         Just (With ea) -> Legend.translateCommands legendMap cmdsText (Just ea)
@@ -88,12 +97,18 @@ mergeConfig args toml tomlPaths = do
         tomlPaths
       }
   where
-    cmdsText = args ^. #commands
-
-    cmdsTextIndexed = Utils.indexPos (args ^. #commands)
-
     mkCmd (i, t) = MkCommandP (fromPositive i) Nothing t
 
     wEdgeArgs = args ^. #edges
     cliEdgeArgs = D.fromMaybe (wEdgeArgs >>= WD.toMaybe)
 {-# INLINEABLE mergeConfig #-}
+
+-- | Retrieves legend map.
+tomlToLegendMap ::
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
+  Toml notifyEnv ->
+  m (Maybe LegendMap)
+tomlToLegendMap toml = for (toml ^. #legend) Legend.linesToMap
+{-# INLINEABLE tomlToLegendMap #-}

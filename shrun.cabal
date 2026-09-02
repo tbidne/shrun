@@ -294,7 +294,6 @@ test-suite integration
     , env-guard
     , filepath
     , hedgehog
-    , nonempty-containers
     , shrun
     , tasty
     , tasty-hedgehog

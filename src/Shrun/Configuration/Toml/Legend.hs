@@ -7,17 +7,50 @@ module Shrun.Configuration.Toml.Legend
     KeyVal (MkKeyVal),
     mkKeyVal,
     unsafeKeyVal,
+    prettyLegendMap,
   )
 where
 
+import Data.HashMap.Strict qualified as HMap
+import Data.List qualified as L
+import Data.Maybe (catMaybes)
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
+import Data.Text qualified as T
+import Prettyprinter qualified as Pretty
 import Shrun.Configuration.Args.Parsing.Graph (parseEdges)
 import Shrun.Configuration.Data.Graph (EdgeArgs)
 import Shrun.Prelude
 
 -- | Alias for our legend map.
 type LegendMap = HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs))
+
+prettyLegendMap :: HashMap Text (NESeq Text, Maybe EdgeArgs) -> Doc ann
+prettyLegendMap =
+  vcat
+    . fmap pItem
+    . L.sortOn fst
+    . HMap.toList
+  where
+    pItem :: (Text, (NESeq Text, Maybe EdgeArgs)) -> Doc ann
+    pItem (k, (vals, mEdges)) =
+      let pkey = Just $ "- key:   " <> pretty k
+          pvals =
+            Just
+              $ hcat
+                [ "  vals:  ",
+                  pretty (T.intercalate ", " $ toList vals)
+                ]
+          pedges = case mEdges of
+            Nothing -> Nothing
+            Just es -> Just $ "  edges:" <+> pretty es
+       in vcat
+            $ catMaybes
+              [ pkey,
+                pvals,
+                pedges,
+                Just Pretty.softline
+              ]
 
 -- | Holds a map key/val pair. The maintained invariants are:
 --

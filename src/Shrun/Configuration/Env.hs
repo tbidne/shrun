@@ -34,7 +34,7 @@ import Shrun.Command.Types
   ( CommandStatus (CommandWaiting),
     CommandStatusMapP (MkCommandStatusMapP),
   )
-import Shrun.Configuration (mergeConfig)
+import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args.Parsing qualified as P
 import Shrun.Configuration.Data.Core qualified as CoreConfig
 import Shrun.Configuration.Data.LegendKeysCache
@@ -69,6 +69,7 @@ import Shrun.Configuration.Env.Types
       ),
     HasConsoleLogging,
   )
+import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
@@ -168,7 +169,17 @@ getMergedConfig = do
 
   (tomlPaths, finalToml, cwdToml) <- mergeTomls tomls
 
-  merged <- mergeConfig args finalToml tomlPaths
+  when (args ^. #expandAliases) $ do
+    msg <-
+      Configuration.tomlToLegendMap finalToml <&> \case
+        Nothing -> "<no aliases>"
+        Just lm -> Legend.prettyLegendMap lm
+
+    putTextLn $ docToText msg
+
+    throwM ExitSuccess
+
+  merged <- Configuration.mergeConfig args finalToml tomlPaths
 
   saveLegendKeys xdgState cwd (merged ^. #coreConfig % #legendKeysCache) keyCache finalToml cwdToml
 

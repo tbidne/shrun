@@ -114,6 +114,7 @@ for versions < 1.
 * Option `--notify-timeout` can now take `TIME_STR` e.g. `2h3s`.
 * Option `--notify-error-urgency` for setting error urgency level.
 * Option `--common-log-command-index` for showing command index in logs.
+* Option `--expand-aliases` for printing expanded aliases.
 
 ### Fixed
 * Improved final command log formatting with newlines.

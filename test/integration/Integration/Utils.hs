@@ -24,7 +24,6 @@ module Integration.Utils
   )
 where
 
-import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader
   ( MonadPathReader
@@ -264,7 +263,7 @@ makeMergedConfig args toIO = do
 defaultConfig :: (MonadIO m) => m (MergedConfig NotifyEnv)
 defaultConfig = liftIO $ runDefaultIO $ Config.mergeConfig args mempty mempty
   where
-    args = Args.defaultArgs (NESeq.singleton "cmd")
+    args = Args.defaultArgs ["cmd"]
 
 newtype DefaultIO a = MkDefaultIO (IO a)
   deriving

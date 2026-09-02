@@ -20,7 +20,6 @@ module Unit.Shrun.Configuration.Args.Parsing.TestUtils
   )
 where
 
-import Data.Sequence qualified as Seq
 import Data.Text qualified as T
 import Options.Applicative (ParserPrefs, ParserResult)
 import Options.Applicative qualified as OA
@@ -91,8 +90,8 @@ textEq t1 t2 = go (unpack t1) (unpack t2)
 prefs :: ParserPrefs
 prefs = OA.prefs mempty
 
-defCommand :: NESeq Text
-defCommand = "command" :<|| Seq.empty
+defCommand :: [Text]
+defCommand = ["command"]
 
 defArgs :: Maybe (Args NotifyEnv)
 defArgs = Just $ Args.defaultArgs defCommand

@@ -102,7 +102,7 @@ testFileLogShortEmptyFails =
     $ U.verifyFailure argList
   where
     desc = "Parses empty -f as failure"
-    argList = ["-f", "command"]
+    argList = ["-f"]
 
 testFileLogEmptyFails :: TestTree
 testFileLogEmptyFails =
