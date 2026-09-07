@@ -5,9 +5,10 @@
 module Integration.Miscellaneous (specs) where
 
 import Data.Text qualified as T
+import Effectful.Terminal.Dynamic (Terminal (GetTerminalSize, PutStrLn))
 import Integration.Prelude
 import Integration.Utils
-  ( ConfigIO,
+  ( IntEffects,
     makeConfigAndAssertEq,
     makeConfigAndAssertFieldEq,
     notifySystemDBus,
@@ -16,6 +17,7 @@ import Integration.Utils
     (^=@),
     (^?=@),
   )
+import Integration.Utils qualified as Utils
 import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration.Data.CommandLogging
   ( CommandLoggingP
@@ -165,22 +167,22 @@ specs testArgs =
 logFileWarn :: IO TestArgs -> TestTree
 logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
   logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let logsPathStr = unsafeDecode logPath
       contents = T.replicate 1_500 "test "
 
       run = liftIO $ do
-        writeFileUtf8 logPath contents
-        startSize <- getFileSize logPath
+        runEff $ runFileWriter $ writeFileUtf8 logPath contents
+        startSize <- runEff $ runPathReader $ getFileSize logPath
 
-        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv @() pure)
 
-        endSize <- getFileSize logPath
+        endSize <- runEff $ runPathReader $ getFileSize logPath
         pure (startSize, endSize)
 
   (startSize, endSize) <- run
 
-  exists <- liftIO $ doesFileExist logPath
+  exists <- liftIO $ runEff $ runPathReader $ doesFileExist logPath
   assert exists
 
   -- NOTE: [Log file unchanged]
@@ -189,7 +191,7 @@ logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
   -- shrun so the file should stay untouched.
   endSize === startSize
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [warning logsPathStr] === logs
   where
     desc = "Large log file should print warning"
@@ -211,26 +213,26 @@ logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
 logFileDelete :: IO TestArgs -> TestTree
 logFileDelete testArgs = testProp1 desc "logFileDelete" $ do
   logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let logPathStr = unsafeDecode logPath
       contents = T.replicate 1_500 "test "
 
       run = liftIO $ do
-        writeFileUtf8 logPath contents
+        runEff $ runFileWriter $ writeFileUtf8 logPath contents
 
-        flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv @() pure)
 
-        getFileSize logPath
+        runEff $ runPathReader $ getFileSize logPath
 
   endSize <- run
 
-  exists <- liftIO $ doesFileExist logPath
+  exists <- liftIO $ runEff $ runPathReader $ doesFileExist logPath
   assert exists
 
   -- file should have been deleted then recreated with a file size of 0.
   0 === endSize
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [warning logPathStr] === logs
   where
     desc = "Large log file should be deleted"
@@ -252,28 +254,28 @@ logFileDelete testArgs = testProp1 desc "logFileDelete" $ do
 logFileNothing :: IO TestArgs -> TestTree
 logFileNothing testArgs = testProp1 desc "logFileNothing" $ do
   logPath <- liftIO $ (</> [osp|large-file-nothing|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let logsPathStr = unsafeDecode logPath
       contents = T.replicate 1_500 "test "
 
       run = liftIO $ do
-        writeFileUtf8 logPath contents
-        startSize <- getFileSize logPath
+        runEff $ runFileWriter $ writeFileUtf8 logPath contents
+        startSize <- runEff $ runPathReader $ getFileSize logPath
 
-        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv @() pure)
 
-        endSize <- getFileSize logPath
+        endSize <- runEff $ runPathReader $ getFileSize logPath
         pure (startSize, endSize)
 
   (startSize, endSize) <- run
 
-  exists <- liftIO $ doesFileExist logPath
+  exists <- liftIO $ runEff $ runPathReader $ doesFileExist logPath
   assert exists
 
   -- see NOTE: [Log file unchanged]
   endSize === startSize
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "Large log file should print warning"
@@ -287,10 +289,10 @@ logFileNothing testArgs = testProp1 desc "logFileNothing" $ do
 
 usesRecursiveCmdExample :: TestTree
 usesRecursiveCmdExample = testProp1 desc "usesRecursiveCmdExample" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "Uses recursive command from example"
@@ -304,10 +306,10 @@ usesRecursiveCmdExample = testProp1 desc "usesRecursiveCmdExample" $ do
 
 usesRecursiveCmd :: TestTree
 usesRecursiveCmd = testProp1 desc "usesRecursiveCmd" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "Uses recursive commands"
@@ -323,10 +325,10 @@ usesRecursiveCmd = testProp1 desc "usesRecursiveCmd" $ do
 
 testLineTruncDetect :: TestTree
 testLineTruncDetect = testProp1 desc "testLineTruncDetect" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "lineTrunc reads 'detect' string from toml"
@@ -340,10 +342,10 @@ testLineTruncDetect = testProp1 desc "testLineTruncDetect" $ do
 
 testLineTruncDefaults :: TestTree
 testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "lineTrunc defaults"
@@ -360,10 +362,10 @@ testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
 
 testCmdLogLineTruncDefaults :: TestTree
 testCmdLogLineTruncDefaults = testProp1 desc "testCmdLogLineTruncDefaults" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "lineTrunc defaults with --console-log-command off"
@@ -382,10 +384,10 @@ testCmdLogLineTruncDefaults = testProp1 desc "testCmdLogLineTruncDefaults" $ do
 
 testLineTruncDetectTotal :: TestTree
 testLineTruncDetectTotal = testProp1 desc "testLineTruncDetectTotal" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runTermWidthFailIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   case logs of
     [] -> do
       annotate "Expected exactly 1 log"
@@ -414,10 +416,10 @@ testLineTruncDetectTotal = testProp1 desc "testLineTruncDetectTotal" $ do
 
 testFileSizeModeNothing :: TestTree
 testFileSizeModeNothing = testProp1 desc "testFileSizeModeNothing" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "size-mode reads 'nothing'"
@@ -427,10 +429,10 @@ testFileSizeModeNothing = testProp1 desc "testFileSizeModeNothing" $ do
 
 testFileLogDeleteOnSuccess :: TestTree
 testFileLogDeleteOnSuccess = testProp1 desc "testFileLogDeleteOnSuccess" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "delete-on-success reads true"
@@ -440,10 +442,10 @@ testFileLogDeleteOnSuccess = testProp1 desc "testFileLogDeleteOnSuccess" $ do
 
 testFileLogMulti :: TestTree
 testFileLogMulti = testProp1 desc "testFileLogMulti" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "file-log-multi reads true"
@@ -453,10 +455,10 @@ testFileLogMulti = testProp1 desc "testFileLogMulti" $ do
 
 testFileLogMultiOne :: TestTree
 testFileLogMultiOne = testProp1 desc "testFileLogMultiOne" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "file-log-multi reads false for one command"
@@ -466,10 +468,10 @@ testFileLogMultiOne = testProp1 desc "testFileLogMultiOne" $ do
 
 testFileLogMultiAlias :: TestTree
 testFileLogMultiAlias = testProp1 desc "testFileLogMultiAlias" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "file-log-multi reads true for one multi-alias"
@@ -479,10 +481,10 @@ testFileLogMultiAlias = testProp1 desc "testFileLogMultiAlias" $ do
 
 testReadBlockLineBufferReadStrategy :: TestTree
 testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferReadStrategy" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "Read block-line-buffer read-strategy"
@@ -492,10 +494,10 @@ testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferRea
 
 testNotifyTimeoutString :: TestTree
 testNotifyTimeoutString = testProp1 desc "testNotifyTimeoutString" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "Reads notify.timeout time string from toml"
@@ -507,10 +509,10 @@ testNotifyTimeoutString = testProp1 desc "testNotifyTimeoutString" $ do
 
 testConfigsMerged :: TestTree
 testConfigsMerged = testProp1 desc "testConfigsMerged" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expectedMultiConfig
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "Multiple toml files are merged"
@@ -527,10 +529,10 @@ testConfigsMerged = testProp1 desc "testConfigsMerged" $ do
 
 testConfigsMergedDisabled :: TestTree
 testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "Multiple toml files are merged with disabling"
@@ -596,10 +598,10 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
 
 testOverridesDuplicate :: TestTree
 testOverridesDuplicate = testProp1 desc "testOverridesDuplicate" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs === []
   where
     desc = "Config overrides duplicates without error"
@@ -720,34 +722,30 @@ setMany' ::
   p
 setMany' ls s = foldl' (\s' (MkSomeSetter l x) -> set' l x s') s ls
 
-newtype TermWidthFailIO a = MkTermWidthFailIO (ConfigIO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAtomic,
-      MonadCatch,
-      MonadEnv,
-      MonadFileReader,
-      MonadFileWriter,
-      MonadHandleWriter,
-      MonadIO,
-      MonadMask,
-      MonadOptparse,
-      MonadPathReader,
-      MonadPathWriter,
-      MonadIORef,
-      MonadReader (IORef (List Text)),
-      MonadThrow
-    )
-    via ConfigIO
+runTermWidthFailIO ::
+  Eff IntEffects a ->
+  IORef (List Text) ->
+  IO a
+runTermWidthFailIO m ref =
+  runEff
+    . runReader ref
+    . runPrim
+    . runTerminalTermWidth
+    . runPosixFiles
+    . Utils.runPathWriterConfig
+    . Utils.runPathReaderConfig
+    . runOptparse
+    . Utils.runNotifyConfig
+    . runHandleWriter
+    . Utils.runFileWriterConfig
+    . runFileReader
+    . runEnvironment
+    . runConcurrent
+    $ m
 
-instance MonadTerminal TermWidthFailIO where
-  -- capture logs
-  putStrLn t = ask >>= (`modifyIORef'` (T.pack t :))
-
+runTerminalTermWidth :: (Reader (IORef [Text]) :> es, Prim :> es) => Eff (Terminal : es) a -> Eff es a
+runTerminalTermWidth = interpret_ $ \case
+  PutStrLn t -> ask >>= (`modifyIORef` (T.pack t :))
   -- hardcoded so we can test 'detect'
-  getTerminalSize = throwText "windows error"
-
-runTermWidthFailIO :: TermWidthFailIO a -> IORef (List Text) -> IO a
-runTermWidthFailIO (MkTermWidthFailIO cfgIO) = runConfigIO cfgIO
+  GetTerminalSize -> throwText "windows error"
+  other -> error $ "runTerminalConfig: " ++ showEffectCons other

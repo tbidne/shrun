@@ -158,7 +158,6 @@ translateCommands ::
   m (Tuple2 (NESeq CommandP1) Edges)
 translateCommands legendMap commands =
   addCliLegend legendMap commands >=> uncurry translateMap
-{-# INLINEABLE translateCommands #-}
 
 translateMap ::
   forall m s nenv.
@@ -331,7 +330,6 @@ translateMap (MkLegend mp) initKey = do
                 then ""
                 else path <> LTBuilder.fromText line <> " -> "
             neToSet = Set.fromList . toList
-{-# INLINEABLE translateMap #-}
 
 -- | Repairs the paramter @edges@, based on the param @indexMap@. The
 -- fundamental problems is that some edge @src -> dest@ may no longer be
@@ -414,7 +412,6 @@ repairEdges key (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
                   "' is out-of-bounds."
                 ]
           Just (s, e) -> pure (s, e)
-{-# INLINEABLE repairEdges #-}
 
 mkSequentialEdges :: EdgeSequential -> NESeq Text -> Edges
 mkSequentialEdges eseq =
@@ -506,4 +503,3 @@ findUnmappedKey (MkLegend legendMap) commands = go 0
       | otherwise = go (i + 1)
       where
         key = pfx <> showt i
-{-# INLINEABLE findUnmappedKey #-}

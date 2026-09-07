@@ -3,8 +3,8 @@
 -- | Runs integration tests.
 module Main (main) where
 
-import Effects.FileSystem.PathReader qualified as PR
-import Effects.FileSystem.PathWriter qualified as PW
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.PathWriter.Dynamic qualified as PW
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures
@@ -27,7 +27,7 @@ main = do
         ]
 
 setup :: IO TestArgs
-setup = do
+setup = runEff $ runPathReader $ runPathWriter $ do
   rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> [osp|test/integration|]
 
@@ -38,12 +38,14 @@ teardown :: TestArgs -> IO ()
 teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     doNothing =
-      putStrLn
+      runEff
+        $ runTerminal
+        $ putStrLn
         $ "*** Not cleaning up tmp dir: '"
         <> decodeLenient (testArgs ^. #rootTmpDir)
         <> "'"
 
-    cleanup = do
+    cleanup = runEff $ runPathWriter $ runPathReader $ do
       let cwd = testArgs ^. #workingTmpDir
 
       -- NOTE: [Test cleanup]

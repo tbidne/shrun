@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | Provides posix signal utilities.
 module Shrun.IO.Signals
   ( -- * Sending signals
@@ -12,17 +14,17 @@ where
 
 import Control.Monad (filterM)
 import Data.Text qualified as T
-import Effects.Concurrent.Thread (myThreadId, throwTo)
-import Effects.System.Posix.Signals qualified as Signals
-import Effects.System.Process (Pid)
-import Effects.System.Process qualified as P
+import Effectful.Concurrent (myThreadId, throwTo)
+import Effectful.Posix.Signals.Static qualified as Signals
+import Effectful.Process (Pid)
+import Effectful.Process qualified as P
 import Shrun.Configuration.Env.Types
   ( HasCommands (getCleanup),
     HasLogging,
   )
 import Shrun.Data.Text qualified as Text
 import Shrun.Logging qualified as Logging
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
+import Shrun.Logging.RegionLogger (RegionLogger)
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelFatal),
@@ -38,19 +40,18 @@ import Text.Read qualified as TR
 -- which ensures that cleanup is handled normally (i.e. subcommands killed).
 -- By default, subthreads are __not__ killed when the RTS handles SIGTERM.
 installTermHandler ::
-  forall m env.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadHandleWriter m,
-    MonadPosixSignals m,
-    MonadRegionLogger m,
-    MonadReader env m,
-    MonadThread m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    PosixSignals :> es,
+    RegionLogger r :> es,
+    Reader env :> es,
+    Time :> es
   ) =>
-  m ()
+  Eff es ()
 installTermHandler = do
   tid <- myThreadId
   let handler = Signals.CatchInfo $ \si -> do
@@ -65,7 +66,7 @@ installTermHandler = do
                   mode = LogModeFinish
                 }
 
-        Logging.putRegionLogDirect baseLog
+        Logging.putRegionLogDirect @env @r baseLog
 
         -- Need to throw exception to main thread since this handler is run
         -- in a different thread.
@@ -75,45 +76,44 @@ installTermHandler = do
 
 -- | Kills children for the given pid.
 killChildPids ::
-  forall env m.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   Maybe Pid ->
-  m ()
-killChildPids Nothing = Logging.putDebugLogDirect "killChildPids: No pid given"
+  Eff es ()
+killChildPids Nothing = Logging.putDebugLogDirect @env @r "killChildPids: No pid given"
 killChildPids (Just pid) = do
-  pidsStr <- getChildPids False (Just pid)
-  pidsToKill <- filterM canKillPid pidsStr
-  killPids pidsToKill
+  pidsStr <- getChildPids @env @r False (Just pid)
+  pidsToKill <- filterM (canKillPid @env @r) pidsStr
+  killPids @env @r pidsToKill
 
 getChildPids ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Is multithreaded. Used for logging.
   Bool ->
   Maybe Pid ->
-  m (List Pid)
+  Eff es (List Pid)
 getChildPids _ Nothing = pure []
 getChildPids multiThreads (Just pid) = do
-  asks getCleanup >>= \case
+  asks @env getCleanup >>= \case
     Nothing -> pure []
     Just cleanup -> do
       (ec, stdout, stderr) <-
@@ -165,65 +165,63 @@ getChildPids multiThreads (Just pid) = do
       -- OTOH, this must have been called during termination when the queues
       -- are already shutdown, hence we should log directly.
       if multiThreads
-        then Logging.putDebugLog
-        else Logging.putDebugLogDirect
+        then Logging.putDebugLog @env @r
+        else Logging.putDebugLogDirect @env @r
 
 -- | Sends 'kill -15' to the list of pids.
 killPids ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   List Pid ->
-  m ()
+  Eff es ()
 killPids [] = pure ()
 killPids pids =
   void
-    . runKill "-15"
+    . runKill @env @r "-15"
     $ pids
 
 canKillPid ::
-  forall env m.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   Pid ->
-  m Bool
-canKillPid = runKill "-0" . (: [])
+  Eff es Bool
+canKillPid = runKill @env @r "-0" . (: [])
 
 runKill ::
-  forall env m.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   String ->
   List Pid ->
-  m Bool
+  Eff es Bool
 runKill signal pids = do
-  asks getCleanup >>= \case
+  asks @env getCleanup >>= \case
     Nothing -> pure False
     Just cleanup -> do
       (ec, stdout, stderr) <-
@@ -255,7 +253,7 @@ runKill signal pids = do
                     stderr,
                     "'"
                   ]
-      Logging.putDebugLogDirect msg
+      Logging.putDebugLogDirect @env @r msg
 
       case ec of
         ExitSuccess -> pure True
@@ -266,13 +264,12 @@ runKill signal pids = do
 
 readProcessTotal ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadProcess m
+    Process :> es
   ) =>
   FilePath ->
   [String] ->
   String ->
-  m (ExitCode, String, String)
+  Eff es (ExitCode, String, String)
 readProcessTotal exe args str = do
   tryMySync (P.readProcessWithExitCode exe args str) >>= \case
     Left ex -> pure (ExitFailure 1, "", mkExeErr exe args $ displayException ex)

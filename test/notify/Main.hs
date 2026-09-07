@@ -21,21 +21,21 @@ import Shrun.Configuration.Env.Types
     HasNotifyConfig (getNotifyConfig),
     HasTimeout (getHasTimedOut, getTimeout),
   )
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        displayRegions,
-        logGlobal,
-        logRegion,
-        regionList,
-        withRegion
+import Shrun.Logging.RegionLogger
+  ( RegionLogger
+      ( DisplayRegions,
+        LogGlobal,
+        LogRegion,
+        RegionList,
+        WithRegion
       ),
   )
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
-import Shrun.ShellT (ShellT, runShellT)
+import System.Environment qualified as Env
 import System.Environment.Guard (guardOrElse')
 import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
+import System.IO qualified as IO
 import Test.Tasty (TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit (assertFailure, testCase)
 
@@ -44,10 +44,10 @@ main :: IO ()
 main = guardOrElse' "TEST_NOTIFY" ExpectEnvSet runTests dontRun
   where
     runTests = do
-      setUncaughtExceptionHandler (putStrLn . displayException)
+      setUncaughtExceptionHandler (IO.putStrLn . displayException)
       defaultMain tests
 
-    dontRun = putStrLn "*** Notify tests disabled. Enable with TEST_NOTIFY=1 ***"
+    dontRun = IO.putStrLn "*** Notify tests disabled. Enable with TEST_NOTIFY=1 ***"
 
 tests :: TestTree
 tests = do
@@ -171,42 +171,39 @@ instance HasTimeout NotificationsEnv where
 
   getHasTimedOut = getHasTimedOut . (.unNotificationsEnv)
 
-liftNotify :: ShellT (Env NotifyEnv ()) IO a -> ShellT NotificationsEnv IO a
-liftNotify m = do
-  MkNotificationsEnv env _ _ <- ask
-  liftIO $ runShellT m env
-
-instance MonadRegionLogger (ShellT NotificationsEnv IO) where
-  type Region (ShellT NotificationsEnv IO) = ()
-
-  logGlobal t = asks (.logsRef) >>= \ref -> modifyIORef' ref (t :)
-  logRegion _ _ t = asks (.logsRef) >>= \ref -> modifyIORef' ref (t :)
-  withRegion _ onRegion = onRegion ()
-  displayRegions m = m
-  regionList = atomically $ newTMVar []
+runRegionLogger ::
+  ( Concurrent :> es,
+    Reader NotificationsEnv :> es,
+    IOE :> es,
+    Prim :> es
+  ) =>
+  Eff (RegionLogger () : es) a ->
+  Eff es a
+runRegionLogger = interpret $ \env -> \case
+  LogGlobal t -> asks @NotificationsEnv (.logsRef) >>= \ref -> modifyIORef ref (t :)
+  LogRegion _ _ t -> asks @NotificationsEnv (.logsRef) >>= \ref -> modifyIORef ref (t :)
+  WithRegion _ onRegion -> localSeqUnliftIO env $ \unlift -> unlift $ onRegion ()
+  DisplayRegions m -> localSeqUnliftIO env $ \unlift -> unlift m
+  RegionList -> atomically $ newTMVar []
 
 runShrunNoConfig :: List String -> IO ()
 runShrunNoConfig = runShrun . (["--config", "off"] ++)
 
 runShrun :: List String -> IO ()
 runShrun args = do
-  consoleQueue <- newTBQueueA 1
-  logsRef <- newIORef' []
-  eSomeEx <-
-    tryMySync
-      $ withArgs
-        args
-        ( withEnv
-            ( \env ->
-                runShellT shrun
-                  $ MkNotificationsEnv env consoleQueue logsRef
-            )
-        )
+  logsRef <- runEff $ runPrim $ newIORef []
+
+  eSomeEx <- tryMySync $ Env.withArgs args $ runner $ withEnv $ \env -> do
+    consoleQueue <- newTBQueueA 1
+    let notifyEnv = MkNotificationsEnv env consoleQueue logsRef
+    runReader notifyEnv
+      . runRegionLogger
+      $ shrun @NotificationsEnv @NotifyEnv @()
 
   case eSomeEx of
     Right () -> pure ()
     Left ex -> do
-      logs <- readIORef' logsRef
+      logs <- runEff $ runPrim $ readIORef logsRef
 
       let formatted = T.intercalate "\n" logs
           err =
@@ -219,3 +216,22 @@ runShrun args = do
               ]
 
       assertFailure err
+  where
+    runner =
+      runEff
+        . runConcurrent
+        . runEnvironment
+        . runProcess
+        . runPrim
+        . runNotify
+        . runOptparse
+        . runTime
+        . runFileReader
+        . runFileWriter
+        . runHandleReader
+        . runHandleWriter
+        . runPathReader
+        . runPathWriter
+        . runPosixFiles
+        . runPosixSignals
+        . runTerminal

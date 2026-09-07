@@ -6,15 +6,17 @@ module Test.Shrun.Installer
   )
 where
 
-import Effects.FileSystem.PathReader qualified as PR
+import Effectful (runEff)
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
 import FileSystem.OsPath (OsPath, osp, unsafeDecode, (</>))
 import GHC.Stack.Types (HasCallStack)
 import Test.Shrun.Process qualified as Test.Process
 
 installShrunOnce :: (HasCallStack) => OsPath -> IO ()
-installShrunOnce testDir =
-  PR.findExecutable exeExpectedPath >>= \case
-    Just _ -> putStrLn "*** shrun exe exists, skipping installation. ***"
+installShrunOnce testDir = do
+  runEff (PR.runPathReader $ PR.findExecutable exeExpectedPath) >>= \case
+    Just _ ->
+      putStrLn "*** shrun exe exists, skipping installation. ***"
     Nothing -> installShrun testDir
   where
     exeExpectedPath = testDir </> [osp|shrun|]

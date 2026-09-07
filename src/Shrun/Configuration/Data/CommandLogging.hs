@@ -76,7 +76,6 @@ parseBufferLength getNat = do
   case convertIntegral n of
     Left err -> fail err
     Right x -> pure $ MkBufferLength x
-{-# INLINEABLE parseBufferLength #-}
 
 declareFieldLabels
   [d|
@@ -98,7 +97,6 @@ parseBufferTimeout ::
   f BufferTimeout
 parseBufferTimeout getNat getTxt =
   MkBufferTimeout <$> Timeout.parseTimeout getNat getTxt
-{-# INLINEABLE parseBufferTimeout #-}
 
 declareFieldLabels
   [d|

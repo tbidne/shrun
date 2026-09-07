@@ -138,14 +138,13 @@ instance Default ConsoleLoggingArgs where
 -- | Merges args and toml configs.
 mergeConsoleLogging ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadIORef m,
-    MonadTerminal m
+    Prim :> es,
+    Terminal :> es
   ) =>
   IORef DetectResult ->
   ConsoleLoggingArgs ->
   Maybe ConsoleLoggingToml ->
-  m ConsoleLoggingMerged
+  Eff es ConsoleLoggingMerged
 mergeConsoleLogging detectRef args mToml = do
   let commandLogging =
         args
@@ -169,7 +168,6 @@ mergeConsoleLogging detectRef args mToml = do
       }
   where
     toml = fromMaybe mempty mToml
-{-# INLINEABLE mergeConsoleLogging #-}
 
 instance DecodeTOML ConsoleLoggingToml where
   tomlDecoder =

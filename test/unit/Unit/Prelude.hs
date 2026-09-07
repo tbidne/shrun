@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 module Unit.Prelude
   ( module X,
 
@@ -16,10 +14,6 @@ module Unit.Prelude
   )
 where
 
-import Data.Foldable qualified as F
-import Data.Sequence.NonEmpty qualified as NESeq
-import GHC.Base (errorWithoutStackTrace)
-import GHC.Exts qualified as Exts
 import Hedgehog as X
   ( Gen,
     GenBase,
@@ -94,12 +88,3 @@ assertList toStr = go
               toStr y
             ]
       go xs ys
-
--- TODO: Remove if our PR is ever merged.
-instance Exts.IsList (NESeq a) where
-  type Item (NESeq a) = a
-
-  fromList (a : as) = NESeq.fromList (a :| as)
-  fromList [] = errorWithoutStackTrace "Data.Sequence.NonEmpty.fromList: empty list"
-
-  toList = F.toList

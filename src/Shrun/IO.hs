@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides the low-level `IO` functions for running shell commands.
@@ -13,11 +14,10 @@ where
 
 import Data.List qualified as L
 import Data.Time.Relative (RelativeTime)
-import Effects.FileSystem.Handle qualified as H
-import Effects.FileSystem.HandleWriter qualified as HW
-import Effects.System.Process (ProcessHandle)
-import Effects.System.Process qualified as P
-import Effects.Time (MonadTime (getMonotonicTime))
+import Effectful.FileSystem.Handle qualified as H
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.Process (ProcessHandle)
+import Effectful.Process qualified as P
 import Shrun.Command.Types
   ( CommandP1,
     CommandStatus (CommandFailure, CommandRunning, CommandSuccess),
@@ -56,12 +56,10 @@ import Shrun.IO.Handle qualified as Handle
 import Shrun.IO.Signals qualified as Signals
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        withRegion
-      ),
+import Shrun.Logging.RegionLogger
+  ( RegionLogger,
     restoreTimerRegion,
+    withRegion,
   )
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
@@ -94,30 +92,29 @@ data CommandResult
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
 tryCommandLogging ::
-  forall m env.
-  ( HasAnyError env,
+  forall env r es.
+  ( Eq r,
+    HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasInit env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadHandleReader m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadProcess m,
-    MonadMask m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadThread m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleReader :> es,
+    HandleWriter :> es,
+    Prim :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Command to run.
   CommandP1 ->
   -- | Result.
-  m CommandResult
+  Eff es CommandResult
 tryCommandLogging command = do
   -- NOTE: We do not want tryCommandLogging to throw sync exceptions, as that
   -- will take down the whole app. tryCommandStream and tryShExitCode should be
@@ -136,9 +133,9 @@ tryCommandLogging command = do
   -- Thus the most reasonable course of action is to let shrun die and print
   -- the actual error so it can be fixed.
 
-  commonLogging <- asks getCommonLogging
-  (consoleLogging, consoleLogQueue, timerRegion) <- asks getConsoleLogging
-  mFileLogging <- asks getFileLogging
+  commonLogging <- asks @env getCommonLogging
+  (consoleLogging, consoleLogQueue, timerRegion) <- asks @env getConsoleLogging
+  mFileLogging <- asks @env getFileLogging
 
   -- NOTE: [Restore Timer Region]
   --
@@ -167,7 +164,7 @@ tryCommandLogging command = do
       -- to be overridden by command logs.
       cmdFn = case (consoleLogSwitch, mFileLogging) of
         -- 1. No CommandLogging and no FileLogging: No logging at all.
-        (False, Nothing) -> tryCommandStream (\_ _ -> pure ())
+        (False, Nothing) -> tryCommandStream @env @r (\_ _ -> pure ())
         -- 2. CommandLogging but no FileLogging. Stream.
         (True, Nothing) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
@@ -178,7 +175,7 @@ tryCommandLogging command = do
 
             logFn Nothing hello
 
-            tryCommandStream logFn cmd
+            tryCommandStream @env logFn cmd
         -- 3. No CommandLogging but FileLogging: Stream (to file) but no console
         --    region.
         (False, Just fileLogging) -> \cmd -> do
@@ -190,7 +187,7 @@ tryCommandLogging command = do
 
           withFileLogging cmdIndex keyHide fileLogging logConsoleRegion $ \logFn -> do
             logFn Nothing hello
-            tryCommandStream logFn cmd
+            tryCommandStream @env logFn cmd
 
         -- 4. CommandLogging and FileLogging: Stream (to both) and create console
         --    region.
@@ -204,33 +201,33 @@ tryCommandLogging command = do
 
             withFileLogging cmdIndex keyHide fileLogging logConsoleRegion $ \logFn -> do
               logFn Nothing hello
-              tryCommandStream logFn cmd
+              tryCommandStream @env logFn cmd
 
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
-      updateCommandStatus command CommandSuccess
+      updateCommandStatus @env command CommandSuccess
 
       pure $ CommandResultSuccess $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
-      updateCommandStatus command CommandFailure
+      updateCommandStatus @env command CommandFailure
 
       -- update anyError
-      setAnyErrorTrue
+      setAnyErrorTrue @env
 
       pure $ CommandResultFailure (U.timeSpecToRelTime rt) err
   where
     logConsole cmdIndex keyHide consoleQueue region consoleLogging log = do
-      formatted <- formatConsoleLog cmdIndex keyHide consoleLogging log
+      formatted <- formatConsoleLog @env cmdIndex keyHide consoleLogging log
       writeTBQueueA' consoleQueue (LogRegion (log ^. #mode) region formatted)
 
     logMainFile cmdIndex keyHide fileLogging log = do
-      formatted <- formatFileLog cmdIndex keyHide fileLogging log
+      formatted <- formatFileLog @env cmdIndex keyHide fileLogging log
       writeTBQueueA' (fileLogging ^. #file % #queue) formatted
 
     logMultiFile fileHandle cmdIndex keyHide fileLogging log = do
-      formatted <- formatFileLog cmdIndex keyHide fileLogging log
+      formatted <- formatFileLog @env cmdIndex keyHide fileLogging log
       Logging.logFile fileHandle formatted
 
     -- Augments an existing logger with a file logging.
@@ -242,10 +239,10 @@ tryCommandLogging command = do
       -- file logging env
       FL.FileLoggingEnv ->
       -- console logger
-      (Maybe (Region m) -> Log -> m ()) ->
+      (Maybe r -> Log -> Eff es ()) ->
       -- continuation on combined logger
-      ((Maybe (Region m) -> Log -> m ()) -> m (Maybe Stderr)) ->
-      m (Maybe Stderr)
+      ((Maybe r -> Log -> Eff es ()) -> Eff es (Maybe Stderr)) ->
+      Eff es (Maybe Stderr)
     withFileLogging cmdIndex keyHide fileLogging consoleLog m = do
       -- 1. Multi log is on. Need to do extra steps.
       case fileLogging ^. #multi of
@@ -293,33 +290,31 @@ tryCommandLogging command = do
           lvl = LevelCommand,
           mode = LogModeSet
         }
-{-# INLINEABLE tryCommandLogging #-}
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.
 tryCommandStream ::
+  forall env r es.
   ( HasInit env,
     HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadHandleReader m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadThread m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleReader :> es,
+    HandleWriter :> es,
+    Prim :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Function to apply to streamed logs.
-  (Maybe (Region m) -> Log -> m ()) ->
+  (Maybe r -> Log -> Eff es ()) ->
   -- | Command to run.
   CommandP1 ->
   -- | Error, if any. Note that this will be 'Just' iff the command exited
   -- with an error, even if the error message itself is blank.
-  m (Maybe Stderr)
+  Eff es (Maybe Stderr)
 tryCommandStream logFn cmd = do
   let liftHandle ::
         Tuple2 IO.Handle IO.Handle ->
@@ -385,8 +380,8 @@ tryCommandStream logFn cmd = do
             P.close_fds = False
           }
 
-  procConfig <- initToConfig <$> asks getInit
-  logDebugCmd cmd procConfig (logFn . Just)
+  procConfig <- initToConfig <$> asks @env getInit
+  logDebugCmd @env cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
     -- Store the process PID and potential child PIDs. This is potentially
@@ -395,38 +390,36 @@ tryCommandStream logFn cmd = do
     --
     -- See NOTE: [Command cleanup]
     mPid <- P.getPid ph
-    childPids <- Signals.getChildPids True mPid
-    updateCommandStatus cmd (CommandRunning (mPid, childPids))
-    streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
+    childPids <- Signals.getChildPids @env @r True mPid
+    updateCommandStatus @env cmd (CommandRunning (mPid, childPids))
+    streamOutput @_ @env (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
     ExitFailure _ -> Just $ readHandleResultToStderr finalData
-{-# INLINEABLE tryCommandStream #-}
 
 type ProcessParams p = Tuple3 (Handle p) (Handle p) ProcessHandle
 
 streamOutput ::
-  forall p m env.
+  forall p env es.
   ( CanRead p,
     HasCallStack,
     HasCommandLogging env,
-    MonadCatch m,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadThread m,
-    MonadTime m
+    Concurrent :> es,
+    HandleReader :> es,
+    Prim :> es,
+    Process :> es,
+    Reader env :> es,
+    Time :> es
   ) =>
   -- | Function to apply to streamed logs.
-  (Log -> m ()) ->
+  (Log -> Eff es ()) ->
   -- | Command that was run.
   CommandP1 ->
   -- | Running process params.
   ProcessParams p ->
   -- | Exit code along w/ any leftover data.
-  m (ExitCode, ReadHandleResult)
+  Eff es (ExitCode, ReadHandleResult)
 streamOutput logFn cmd processParams = do
   -- NOTE: [Saving final error message]
   --
@@ -434,7 +427,7 @@ streamOutput logFn cmd processParams = do
   -- report it to the user. Programs can be inconsistent where they report
   -- errors, so we read both stdout and stderr, prioritizing the latter when
   -- both exist.
-  commandLogging <- asks getCommandLogging
+  commandLogging <- asks @env getCommandLogging
 
   let bufferLength = commandLogging ^. #bufferLength
       bufferTimeout = commandLogging ^. #bufferTimeout
@@ -443,7 +436,7 @@ streamOutput logFn cmd processParams = do
       pollInterval :: Natural
       pollInterval = commandLogging ^. (#pollInterval % #unPollInterval)
 
-      sleepFn :: m ()
+      sleepFn :: Eff es ()
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
 
       blockSize :: Int
@@ -453,11 +446,12 @@ streamOutput logFn cmd processParams = do
 
       handleToParams ::
         Handle p ->
-        m
+        Eff
+          es
           ( Tuple3
               (IORef HandleResult)
               (IORef (Maybe UnlinedText))
-              (m HandleResult)
+              (Eff es HandleResult)
           )
       handleToParams =
         Handle.mkHandleParams
@@ -497,8 +491,8 @@ streamOutput logFn cmd processParams = do
     P.getProcessExitCode processHandle
 
   -- These are the final reads while the process was running.
-  lastReadOut <- readIORef' lastReadOutRef
-  lastReadErr <- readIORef' lastReadErrRef
+  lastReadOut <- readIORef lastReadOutRef
+  lastReadErr <- readIORef lastReadErrRef
 
   -- Leftover data. We need this as the process can exit before everything
   -- is read.
@@ -558,17 +552,15 @@ streamOutput logFn cmd processParams = do
   pure (exitCode, finalData)
   where
     (outHandle, errHandle, processHandle) = processParams
-{-# INLINEABLE streamOutput #-}
 
 -- | Final read after the process has exited, to retrieve leftover data.
 -- Only used with the read-block-line-buffer strategy.
 readFinalWithPrev ::
   ( CanRead p,
     HasCallStack,
-    MonadCatch m,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadTime m
+    HandleReader :> es,
+    Prim :> es,
+    Time :> es
   ) =>
   -- | Block size.
   Int ->
@@ -577,7 +569,7 @@ readFinalWithPrev ::
   -- | Previous partial read.
   IORef (Maybe UnlinedText) ->
   -- | Result.
-  m HandleResult
+  Eff es HandleResult
 readFinalWithPrev blockSize handle prevReadRef = do
   readTime <- getMonotonicTime
   fmap (readTime,) $ Handle.readHandleRaw blockSize handle >>= \case
@@ -586,7 +578,6 @@ readFinalWithPrev blockSize handle prevReadRef = do
     -- here, but it seems minor.
     Left _ -> Handle.readAndUpdateRefFinal prevReadRef ""
     Right bs -> Handle.readAndUpdateRefFinal prevReadRef bs
-{-# INLINEABLE readFinalWithPrev #-}
 
 -- We occasionally get invalid reads here -- usually when the command
 -- exits -- likely due to a race condition. It would be nice to
@@ -598,15 +589,13 @@ readFinalWithPrev blockSize handle prevReadRef = do
 --
 -- See Note [EOF / blocking error]
 writeLog ::
-  ( HasCallStack,
-    MonadIORef m
-  ) =>
-  (Log -> m ()) ->
+  (Prim :> es) =>
+  (Log -> Eff es ()) ->
   ReportReadErrorsSwitch ->
   CommandP1 ->
   IORef HandleResult ->
   HandleResult ->
-  m ()
+  Eff es ()
 writeLog = \cases
   -- 1. No data: Do nothing.
   _ _ _ _ (_, ReadNoData) -> pure ()
@@ -624,20 +613,17 @@ writeLog = \cases
     writeLogHelper logFn cmd lastReadRef r messages
   where
     getReadErrors = view #unReportReadErrorsSwitch
-{-# INLINEABLE writeLog #-}
 
 writeLogHelper ::
-  ( HasCallStack,
-    MonadIORef m
-  ) =>
-  (Log -> m b) ->
+  (Prim :> es) =>
+  (Log -> Eff es b) ->
   CommandP1 ->
   IORef HandleResult ->
   HandleResult ->
   NonEmpty UnlinedText ->
-  m ()
+  Eff es ()
 writeLogHelper logFn cmd lastReadRef handleResult messages = do
-  writeIORef' lastReadRef handleResult
+  writeIORef lastReadRef handleResult
   for_ messages $ \msg ->
     logFn
       $ MkLog
@@ -646,19 +632,19 @@ writeLogHelper logFn cmd lastReadRef handleResult messages = do
           lvl = LevelCommand,
           mode = LogModeSet
         }
-{-# INLINEABLE writeLogHelper #-}
 
 logDebugCmd ::
-  ( HasCommonLogging r,
-    MonadReader r m,
-    MonadRegionLogger m
+  forall env r es.
+  ( HasCommonLogging env,
+    Reader env :> es,
+    RegionLogger r :> es
   ) =>
   CommandP1 ->
   CreateProcess ->
-  (Region m -> Log -> m ()) ->
-  m ()
+  (r -> Log -> Eff es ()) ->
+  Eff es ()
 logDebugCmd cmd procConfig logFn = do
-  Logging.logDebug $ \lvl -> do
+  Logging.logDebug @env $ \lvl -> do
     let cs = show $ P.cmdspec procConfig
         lg =
           MkLog

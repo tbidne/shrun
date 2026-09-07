@@ -229,7 +229,7 @@ fileLogDeleteOnSuccess testArgs = testCase "Runs file-log-delete-on-success exam
   resultsConsole <- run args
   V.verifyExpected resultsConsole expectedConsole
 
-  exists <- doesFileExist outFile
+  exists <- doesFileExistIO outFile
 
   assertBool "File should not exist" (not exists)
   where
@@ -255,7 +255,7 @@ fileLogDeleteOnSuccessFail testArgs = testCase "Runs file-log-delete-on-success 
   resultsConsole <- runExitFailure args
   V.verifyExpected resultsConsole expectedConsole
 
-  exists <- doesFileExist outFile
+  exists <- doesFileExistIO outFile
 
   assertBool "File should exist" exists
 
@@ -293,14 +293,14 @@ fileLogMultiDeleteOnSuccess testArgs = testCase "file-log-multi with --delete-on
   resultsConsole <- runExitFailure args
   V.verifyExpected resultsConsole expectedConsole
 
-  exists <- doesFileExist outMain
+  exists <- doesFileExistIO outMain
   assertBool "Main file should exist" exists
 
   resultsFile <- readLogFile outMain
   V.verifyExpected resultsFile expectedFile
 
-  out1Exists <- doesFileExist out1
-  out2Exists <- doesFileExist out2
+  out1Exists <- doesFileExistIO out1
+  out2Exists <- doesFileExistIO out2
   resultsFileMulti <-
     if out1Exists
       then do
@@ -412,7 +412,7 @@ fileLogModeAppend testArgs = testCase "Runs file-log-mode append" $ do
 
   let log = mkLogPath tmpDir baseName Nothing
 
-  exists <- doesFileExist log
+  exists <- doesFileExistIO log
   assertBool ("File should exist: " <> decodeLenient log) exists
   resultsFile <- readLogFile log
   V.verifyExpectedN resultsFile expectedFile
@@ -424,7 +424,7 @@ fileLogModeAppend testArgs = testCase "Runs file-log-mode append" $ do
       log3 = mkLogPath tmpDir baseName (Just 2)
 
   for_ [log2, log3] $ \badLog -> do
-    badExists <- doesFileExist badLog
+    badExists <- doesFileExistIO badLog
     assertBool ("File should not exist: " <> decodeLenient badLog) (not badExists)
   where
     baseName = [osp|fileLogModeAppend_|]
@@ -457,7 +457,7 @@ fileLogModeRename testArgs = testCase "Runs file-log-mode rename" $ do
       log3 = mkLogPath tmpDir baseName (Just 2)
 
   for_ [log1, log2, log3] $ \log -> do
-    exists <- doesFileExist log
+    exists <- doesFileExistIO log
     assertBool ("File should exist: " <> decodeLenient log) exists
 
     resultsFile <- readLogFile log
@@ -466,7 +466,7 @@ fileLogModeRename testArgs = testCase "Runs file-log-mode rename" $ do
     3 @=? length resultsFile
 
   let badLog = mkLogPath tmpDir baseName (Just 3)
-  exists <- doesFileExist badLog
+  exists <- doesFileExistIO badLog
   assertBool ("File should not exist: " <> decodeLenient badLog) (not exists)
   where
     baseName = [osp|fileLogModeRename|]
@@ -496,7 +496,7 @@ fileLogModeWrite testArgs = testCase "Runs file-log-mode write" $ do
 
   let log = mkLogPath tmpDir baseName Nothing
 
-  exists <- doesFileExist log
+  exists <- doesFileExistIO log
   assertBool ("File should exist: " <> decodeLenient log) exists
   resultsFile <- readLogFile log
   V.verifyExpected resultsFile expectedFile
@@ -507,7 +507,7 @@ fileLogModeWrite testArgs = testCase "Runs file-log-mode write" $ do
       log3 = mkLogPath tmpDir baseName (Just 2)
 
   for_ [log2, log3] $ \badLog -> do
-    badExists <- doesFileExist badLog
+    badExists <- doesFileExistIO badLog
     assertBool ("File should not exist: " <> decodeLenient badLog) (not badExists)
   where
     baseName = [osp|fileLogModeWrite|]
@@ -682,7 +682,7 @@ fileLogMultiRename testArgs = testCase "Multi respects mode (rename)" $ do
   -- need the multi names to clash. The easiest way is to simply delete
   -- the main log file, so that shrun happily uses the same name, and
   -- the multi logs collide.
-  removeFileIfExists_ outMain
+  removeFileIfExistsIO_ outMain
 
   -- 2 ASSERTS
   resultsConsole2 <- run args2
@@ -919,11 +919,11 @@ fileLogDirPathFail _testArgs = testCase desc $ do
   V.verifyExpected resultsConsole []
 
   -- Checking we didn't do anything here...
-  dirExists <- doesDirectoryExist [osp|documentation|]
+  dirExists <- doesDirectoryExistIO [osp|documentation|]
   assertBool "Dir should exist" dirExists
   for_ expectedFiles $ \p -> do
     let fp = [osp|documentation|] </> p
-    fileExists <- doesFileExist fp
+    fileExists <- doesFileExistIO fp
     assertBool ("File " ++ show fp ++ " should exist") fileExists
 
   expected @=? displayException ex

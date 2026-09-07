@@ -1,6 +1,6 @@
 module Functional.Examples.Notify (tests) where
 
-import Effects.Notify qualified as Notify
+import Effectful.Notify.Dynamic qualified as Notify
 import Functional.Prelude
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!

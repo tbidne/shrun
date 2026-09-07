@@ -1,4 +1,4 @@
-index-state: 2025-12-14T18:03:17Z
+index-state: 2026-09-10T20:11:06Z
 
 packages:
   .
@@ -46,22 +46,19 @@ source-repository-package
 
 source-repository-package
     type: git
-    location: https://github.com/tbidne/monad-effects.git
-    tag: ebb962e4d3b41d352cb3f24fbe12488cad5f0bef
+    location: https://github.com/tbidne/effectful-libs.git
+    tag: 8b7f71a267e09fc8cb6797162f937e75368bb0b8
     subdir:
-      lib/effects-async
-      lib/effects-env
-      lib/effects-evaluate
-      lib/effects-fs
-      lib/effects-ioref
-      lib/effects-notify
-      lib/effects-optparse
-      lib/effects-process
-      lib/effects-stm
-      lib/effects-time
-      lib/effects-terminal
-      lib/effects-thread
-      lib/effects-unix
+      lib/concurrent-effectful
+      lib/effectful-utils
+      lib/environment-effectful
+      lib/fs-effectful
+      lib/notify-effectful
+      lib/optparse-effectful
+      lib/stm-effectful
+      lib/terminal-effectful
+      lib/time-effectful
+      lib/unix-effectful
 
 source-repository-package
     type: git

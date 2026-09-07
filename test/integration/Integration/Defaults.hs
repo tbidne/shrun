@@ -172,22 +172,22 @@ specs testArgs =
 
 defaultEnv :: TestTree
 defaultEnv = testProp1 desc "defaultEnv" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
 
   expected <- defaultConfig
   makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "No arguments and empty config path should return default Env"
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertEq ["cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "No arguments should use config from default file"
@@ -255,12 +255,12 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
   logPath <- liftIO $ (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let logPathStr = unsafeDecode logPath
 
   makeConfigAndAssertEq (args logPathStr) (`runConfigIO` logsRef) (expected logPath)
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "CLI args overrides config file"
@@ -389,11 +389,11 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testProp1 desc "cliOverridesConfigFileCmdLog" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
 
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "CLI overrides config file command-log fields even when CLI --console-log-command is not specified"
@@ -416,11 +416,11 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
   $ withTests 1
   $ property
   $ do
-    logsRef <- liftIO $ newIORef' []
+    logsRef <- iorefIO $ newIORef []
 
     makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef' logsRef
+    logs <- iorefIO $ readIORef logsRef
     [] === logs
   where
     desc = "CLI overrides config file file-log fields even when CLI --file-log is not specified"
@@ -457,12 +457,12 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
 
 fileLogStripControlDefaultsAll :: TestTree
 fileLogStripControlDefaultsAll = testProp1 desc "fileLogStripControlDefaultsAll" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
 
   -- Test that no toml defaults to All
   makeConfigAndAssertFieldEq args1 (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
 
   -- Test that with toml defaults to All
@@ -489,18 +489,18 @@ fileLogStripControlDefaultsAll = testProp1 desc "fileLogStripControlDefaultsAll"
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testProp1 desc "ignoresDefaultConfigFile" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   expected <- liftIO defaultConfig
   makeConfigAndAssertEq ["--config", "off", "cmd"] (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "--config off should ignore config file"
 
 cliDisabledToml :: TestTree
 cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
 
   expected <-
     defaultConfig
@@ -508,7 +508,7 @@ cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
 
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "CLI disables toml options"

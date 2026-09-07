@@ -263,19 +263,19 @@ cycleCmdFail = testCase "Should fail on cycle" $ do
 
 translateCommandsSuccess :: LegendMapTest -> NESeq Text -> IO (NESeq CommandP1)
 translateCommandsSuccess map cmds =
-  tryMySync (Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
+  tryMySync (runEff $ Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
     Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
     Right (x, _) -> pure x
 
 translateCommandsSuccessEdges :: LegendMapTest -> NESeq Text -> EdgeArgs -> IO (Tuple2 (NESeq CommandP1) Edges)
 translateCommandsSuccessEdges map cmds edges =
-  tryMySync (Legend.translateCommands (MkLegend map) cmds (Just edges)) >>= \case
+  tryMySync (runEff $ Legend.translateCommands (MkLegend map) cmds (Just edges)) >>= \case
     Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
     Right (x, es) -> pure (x, es)
 
 translateCommandsEx :: forall e. (Exception e) => LegendMapTest -> NESeq Text -> IO e
 translateCommandsEx map cmds =
-  try @_ @e (Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
+  try @_ @e (runEff $ Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
     Left ex -> pure ex
     Right x -> assertFailure $ "Unexpected success: " ++ show x
 

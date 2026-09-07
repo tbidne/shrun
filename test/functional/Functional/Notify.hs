@@ -1,7 +1,7 @@
 -- | Functional tests for notifications
 module Functional.Notify (specs) where
 
-import Effects.Notify qualified as Notify
+import Effectful.Notify.Dynamic qualified as Notify
 import Functional.Prelude
 
 specs :: TestTree

@@ -10,8 +10,9 @@ where
 
 import Data.List qualified as L
 import Data.Text qualified as T
-import Effects.FileSystem.FileWriter (ByteString)
-import Effects.FileSystem.FileWriter qualified as FW
+import Effectful (runEff)
+import Effectful.FileSystem.FileWriter.Dynamic (ByteString)
+import Effectful.FileSystem.FileWriter.Dynamic qualified as FW
 import FileSystem.OsPath (OsPath, osp, (</>))
 import FileSystem.UTF8 qualified as UTF8
 
@@ -43,7 +44,7 @@ putLogHeader p s =
     num = max 80 (L.length s)
 
 writeStr :: OsPath -> String -> IO ()
-writeStr p = FW.appendBinaryFile p' . strToBs
+writeStr p = runEff . FW.runFileWriter . FW.appendBinaryFile p' . strToBs
   where
     p' = mkLogPath p
 

@@ -153,7 +153,11 @@ displayUnixTime var unixTimeOsStr = do
 
 defaultToml :: Code Q Text
 defaultToml = liftIOToTH $ do
-  contents <- readFileUtf8ThrowM [ospPathSep|examples/config.toml|]
+  contents <-
+    runEff
+      . runFileReader
+      . readFileUtf8ThrowM
+      $ [ospPathSep|examples/config.toml|]
   pure
     . T.unlines
     . fmap prependComment

@@ -55,7 +55,6 @@ readBlockLineBufferNotAllowed fileLogOn fileLogMultiOn cmdGraph =
 -- | Parses 'ReadStrategy'.
 parseReadStrategy :: (MonadFail m) => m Text -> m ReadStrategy
 parseReadStrategy = (>>= Utils.inversePrettyFail "read-strategy" readStrategyMeta)
-{-# INLINEABLE parseReadStrategy #-}
 
 -- | Available 'ReadStrategy' strings.
 readStrategyMeta :: (IsString a) => Tuple2 Bool (List a)

@@ -1,13 +1,10 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Integration.Utils
   ( -- * Running
-    ConfigIO (..),
     runConfigIO,
-    NoConfigIO (..),
     runNoConfigIO,
 
     -- * Assertions
@@ -21,22 +18,33 @@ module Integration.Utils
     defaultConfig,
     notifySystemDBus,
     notifySystemNotifySend,
+
+    -- * Effects
+    IntEffects,
+    runFileWriterConfig,
+    runNotifyConfig,
+    runPathReaderConfig,
+    runPathWriterConfig,
   )
 where
 
 import Data.Text qualified as T
-import Effects.FileSystem.PathReader
-  ( MonadPathReader
-      ( doesPathExist,
-        getCurrentDirectory,
-        getHomeDirectory,
-        getXdgDirectory
+import Effectful.FileSystem.FileWriter.Dynamic (FileWriter (WriteBinaryFile))
+import Effectful.FileSystem.PathReader.Dynamic
+  ( PathReader
+      ( DoesDirectoryExist,
+        DoesFileExist,
+        DoesPathExist,
+        GetCurrentDirectory,
+        GetFileSize,
+        GetXdgDirectory
       ),
   )
-import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
-import Effects.Notify qualified as Notify
-import Effects.System.Terminal
-  ( MonadTerminal (getChar),
+import Effectful.FileSystem.PathWriter.Dynamic (PathWriter (CreateDirectoryIfMissing, RemoveFile))
+import Effectful.Notify.Dynamic (Notify (InitNotifyEnv))
+import Effectful.Notify.Dynamic qualified as Notify
+import Effectful.Terminal.Dynamic
+  ( Terminal (GetTerminalSize, PutStrLn),
   )
 import Integration.Prelude as X
 import Shrun.Configuration qualified as Config
@@ -45,132 +53,135 @@ import Shrun.Configuration.Data.MergedConfig (MergedConfig)
 import Shrun.Configuration.Env qualified as Env
 import System.OsPath qualified as OsP
 
+type IntEffects :: List Effect
+type IntEffects =
+  [ Concurrent,
+    Environment,
+    FileReader,
+    FileWriter,
+    HandleWriter,
+    Notify (),
+    Optparse,
+    PathReader,
+    PathWriter,
+    PosixFiles,
+    Terminal,
+    Prim,
+    Reader (IORef (List Text)),
+    IOE
+  ]
+
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
-newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAtomic,
-      MonadCatch,
-      MonadEnv,
-      MonadFileReader,
-      MonadHandleWriter,
-      MonadIO,
-      MonadMask,
-      MonadOptparse,
-      MonadPosixFiles,
-      MonadIORef,
-      MonadReader (IORef (List Text)),
-      MonadThrow
-    )
-    via (ReaderT (IORef (List Text))) IO
+runConfigIO ::
+  Eff IntEffects a ->
+  IORef (List Text) ->
+  IO a
+runConfigIO m ref =
+  runEff
+    . runReader ref
+    . runPrim
+    . runTerminalConfig
+    . runPosixFiles
+    . runPathWriterConfig
+    . runPathReaderConfig
+    . runOptparse
+    . runNotifyConfig
+    . runHandleWriter
+    . runFileWriterConfig
+    . runFileReader
+    . runEnvironment
+    . runConcurrent
+    $ m
 
-runConfigIO :: ConfigIO a -> IORef (List Text) -> IO a
-runConfigIO (MkConfigIO rdr) = runReaderT rdr
+runNotifyConfig :: Eff (Notify () : es) a -> Eff es a
+runNotifyConfig = interpret_ $ \case
+  InitNotifyEnv _ -> pure ()
+  other -> error $ "runNotifyConfig: " ++ showEffectCons other
 
-instance MonadFileWriter ConfigIO where
-  writeBinaryFile _ _ = pure ()
+runFileWriterConfig :: Eff (FileWriter : es) a -> Eff es a
+runFileWriterConfig = interpret_ $ \case
+  WriteBinaryFile {} -> pure ()
+  other -> error $ "runFileWriterConfig: " ++ showEffectCons other
 
--- HACK: Listing all the MonadPathReader methods is tedious and unnecessary,
--- so rather than list all of them like @foo = error "todo"@, we simply
--- disable the warning with -Wno-missing-methods
+runPathReaderConfig :: (IOE :> es) => Eff (PathReader : es) a -> Eff es a
+runPathReaderConfig = reinterpret_ runPathReader $ \case
+  GetCurrentDirectory -> getCurrentDirectory
+  GetFileSize p -> getFileSize p
+  DoesFileExist p -> doesFileExistIgnoreLocalShrun p
+  DoesDirectoryExist p -> doesDirectoryExist p
+  DoesPathExist p -> doesFileExistIgnoreLocalShrun p
+  GetXdgDirectory {} -> pure xdgDirPathOS
+  other -> error $ "runPathReaderConfig: " ++ showEffectCons other
 
-instance MonadPathReader ConfigIO where
-  getCurrentDirectory = liftIO getCurrentDirectory
-
-  getFileSize = liftIO . getFileSize
-
-  doesFileExist = doesFileExistIgnoreLocalShrun
-
-  doesDirectoryExist = liftIO . doesDirectoryExist
-
-  doesPathExist = doesFileExist
-
-  getXdgDirectory _ _ = pure xdgDirPathOS
-
--- Paranoid, only delete files we know about for the tests.
-instance MonadPathWriter ConfigIO where
-  removeFile p = do
+runPathWriterConfig :: (IOE :> es) => Eff (PathWriter : es) a -> Eff es a
+runPathWriterConfig = reinterpret_ runPathWriter $ \case
+  CreateDirectoryIfMissing {} -> pure ()
+  -- Paranoid, only delete files we know about for the tests.
+  RemoveFile p -> do
     when ("large-file-del" `T.isInfixOf` pTxt) $ do
-      liftIO $ removeFile p
+      removeFile p
     where
       pTxt = pack $ decodeLenient p
+  other -> error $ "runPathWriterConfig: " ++ showEffectCons other
 
-  createDirectoryIfMissing _ _ = pure ()
-
-instance MonadTerminal ConfigIO where
-  putStr = error "putStr: unimplemented"
-
-  -- capture logs
-  putStrLn t = ask >>= (`modifyIORef'` (T.pack t :))
-
-  getChar = error "getChar: unimplemented"
-
+runTerminalConfig :: (Reader (IORef [Text]) :> es, Prim :> es) => Eff (Terminal : es) a -> Eff es a
+runTerminalConfig = interpret_ $ \case
+  PutStrLn t -> ask >>= (`modifyIORef` (T.pack t :))
   -- hardcoded so we can test 'detect'
-  getTerminalSize = pure (Window 23 87)
+  GetTerminalSize -> pure (Window 23 87)
+  other -> error $ "runTerminalConfig: " ++ showEffectCons other
 
-instance MonadNotify ConfigIO where
-  initNotifyEnv _ = pure $ error "initNotifyEnv: unimplemented"
-  notify = error "notify: unimplemented"
+runPathReaderNoConfig :: (IOE :> es) => Eff (PathReader : es) a -> Eff es a
+runPathReaderNoConfig = reinterpret_ runPathReader $ \case
+  GetCurrentDirectory -> getCurrentDirectory
+  DoesFileExist p -> doesFileExistIgnoreLocalShrun p
+  DoesPathExist p -> doesFileExistIgnoreLocalShrun p
+  GetXdgDirectory {} -> pure [osp|./|]
+  other -> error $ "runPathReaderNoConfig: " ++ showEffectCons other
 
--- IO with no default config file
-newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAtomic,
-      MonadCatch,
-      MonadEnv,
-      MonadFileReader,
-      MonadHandleWriter,
-      MonadIO,
-      MonadIORef,
-      MonadMask,
-      MonadOptparse,
-      MonadPosixFiles,
-      MonadThrow
-    )
-    via (ReaderT (IORef (List Text))) IO
-  deriving (MonadNotify) via ConfigIO
+runPathWriterNoConfig :: Eff (PathWriter : es) a -> Eff es a
+runPathWriterNoConfig = interpret_ $ \case
+  CreateDirectoryIfMissing {} -> pure ()
+  other -> error $ "runPathWriterNoConfig: " ++ showEffectCons other
 
-runNoConfigIO :: NoConfigIO a -> IORef (List Text) -> IO a
-runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
-
-instance MonadFileWriter NoConfigIO where
-  writeBinaryFile _ _ = pure ()
-
-instance MonadPathReader NoConfigIO where
-  getCurrentDirectory = liftIO getCurrentDirectory
-  getXdgDirectory _ _ = pure [osp|./|]
-  getHomeDirectory = error "getHomeDirectory: unimplemented"
-  doesFileExist = doesFileExistIgnoreLocalShrun
-  doesPathExist = doesFileExist
-
-instance MonadPathWriter NoConfigIO where
-  createDirectoryIfMissing _ _ = pure ()
-
-deriving via ConfigIO instance MonadTerminal NoConfigIO
+runNoConfigIO ::
+  Eff IntEffects a ->
+  IORef (List Text) ->
+  IO a
+runNoConfigIO m ref =
+  runEff
+    . runReader ref
+    . runPrim
+    . runTerminalConfig
+    . runPosixFiles
+    . runPathWriterNoConfig
+    . runPathReaderNoConfig
+    . runOptparse
+    . runNotifyConfig
+    . runHandleWriter
+    . runFileWriterConfig
+    . runFileReader
+    . runEnvironment
+    . runConcurrent
+    $ m
 
 -- | Makes a 'MergedConfig' for the given monad and compares the result with
 -- the expectation.
 makeConfigAndAssertEq ::
-  forall m.
-  ( MonadEnv m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+  forall es.
+  ( Environment :> es,
+    FileReader :> es,
+    FileWriter :> es,
+    Prim :> es,
+    Optparse :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    Terminal :> es
   ) =>
   -- | List of CLI arguments.
   List String ->
-  -- | Natural transformation from m to IO.
-  (forall x. m x -> IO x) ->
+  -- | Natural transformation from Eff to IO.
+  (forall x. Eff es x -> IO x) ->
   -- | Expectation.
   MergedConfig NotifyEnv ->
   PropertyT IO ()
@@ -204,21 +215,20 @@ infix 1 ^?=@
 
 -- | Like 'makeConfigAndAssertEq' except we only compare select fields.
 makeConfigAndAssertFieldEq ::
-  forall m.
-  ( MonadEnv m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+  forall es.
+  ( Environment :> es,
+    FileReader :> es,
+    FileWriter :> es,
+    Prim :> es,
+    Optparse :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    Terminal :> es
   ) =>
   -- | List of CLI arguments.
   List String ->
   -- | Natural transformation from m to IO.
-  (forall x. m x -> IO x) ->
+  (forall x. Eff es x -> IO x) ->
   -- | List of expectations.
   List CompareField ->
   PropertyT IO ()
@@ -230,21 +240,20 @@ makeConfigAndAssertFieldEq args toIO comparisons = do
     MkCompareFieldMaybe l expected -> expected === result ^? l
 
 makeMergedConfig ::
-  forall m.
-  ( MonadEnv m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+  forall es.
+  ( Environment :> es,
+    FileReader :> es,
+    FileWriter :> es,
+    Prim :> es,
+    Optparse :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    Terminal :> es
   ) =>
   -- | List of CLI arguments.
   List String ->
   -- | Natural transformation from m to IO.
-  (forall x. m x -> IO x) ->
+  (forall x. Eff es x -> IO x) ->
   PropertyT IO (MergedConfig NotifyEnv)
 makeMergedConfig args toIO = do
   eResult <- tryMySync $ liftIO $ toIO $ withArgs args Env.getMergedConfig
@@ -265,34 +274,19 @@ defaultConfig = liftIO $ runDefaultIO $ Config.mergeConfig args mempty mempty
   where
     args = Args.defaultArgs ["cmd"]
 
-newtype DefaultIO a = MkDefaultIO (IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAtomic,
-      MonadCatch,
-      MonadEnv,
-      MonadFileReader,
-      MonadHandleWriter,
-      MonadIO,
-      MonadIORef,
-      MonadMask,
-      MonadOptparse,
-      MonadThrow
-    )
-    via IO
-
-runDefaultIO :: DefaultIO a -> IO a
-runDefaultIO (MkDefaultIO io) = io
-
--- Essentially, derive MonadTerminal from NoConfigIO. This ensures we have the
--- same windows size, which matters because 'detect' is the default line
--- trunc.
-instance MonadTerminal DefaultIO where
-  getTerminalSize = do
-    r <- newIORef' []
-    liftIO $ runNoConfigIO getTerminalSize r
+runDefaultIO ::
+  Eff [Terminal, Reader (IORef [Text]), Prim, IOE] a ->
+  IO a
+runDefaultIO m = do
+  ref <- iorefIO $ newIORef []
+  runEff
+    . runPrim
+    . runReader ref
+    -- Essentially, derive MonadTerminal from NoConfigIO. This ensures we have the
+    -- same windows size, which matters because 'detect' is the default line
+    -- trunc.
+    . runTerminalConfig
+    $ m
 
 notifySystemDBus :: NotifySystem
 #if OSX
@@ -309,10 +303,10 @@ notifySystemNotifySend = Notify.NotifySystemNotifySend
 #endif
 
 -- Ignore these so that local files do not interfere with tests.
-doesFileExistIgnoreLocalShrun :: (HasCallStack, MonadIO m) => OsPath -> m Bool
+doesFileExistIgnoreLocalShrun :: (HasCallStack, PathReader :> es) => OsPath -> Eff es Bool
 doesFileExistIgnoreLocalShrun p
   | pName == [osp|shrun.toml|] = pure False
   | pName == [osp|.shrun.toml|] = pure False
-  | otherwise = liftIO $ doesFileExist p
+  | otherwise = doesFileExist p
   where
     pName = OsP.takeFileName p

@@ -53,7 +53,6 @@ instance Pretty TimerFormat where
 -- | Parse timer format.
 parseTimerFormat :: (MonadFail m) => m Text -> m TimerFormat
 parseTimerFormat = (>>= Utils.inversePrettyFail "timer-format" timerFormatMeta)
-{-# INLINEABLE parseTimerFormat #-}
 
 -- | Available 'TimerFormat' strings.
 timerFormatMeta :: (IsString a) => Tuple2 Bool (List a)

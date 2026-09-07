@@ -28,7 +28,7 @@ tests =
 
 testCommandGraphSuccess :: TestTree
 testCommandGraphSuccess = testCase "Runs with --edges" $ do
-  (ts, resultsConsole) <- withTiming $ run args
+  (ts, resultsConsole) <- withTimingIO $ run args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
 
@@ -69,7 +69,7 @@ testCommandGraphSuccess = testCase "Runs with --edges" $ do
 
 testCommandGraphSuccessOr :: TestTree
 testCommandGraphSuccessOr = testCase "Runs with or --edges" $ do
-  (ts, resultsConsole) <- withTiming $ runExitFailure args
+  (ts, resultsConsole) <- withTimingIO $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
 
@@ -119,7 +119,7 @@ testCommandGraphSuccessOr = testCase "Runs with or --edges" $ do
 
 testCommandGraphSuccessAny :: TestTree
 testCommandGraphSuccessAny = testCase "Runs with any --edges" $ do
-  (ts, resultsConsole) <- withTiming $ runExitFailure args
+  (ts, resultsConsole) <- withTimingIO $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
 
@@ -166,7 +166,7 @@ testCommandGraphSuccessAny = testCase "Runs with any --edges" $ do
 
 testCommandGraphRunsAtMostOnce :: TestTree
 testCommandGraphRunsAtMostOnce = testCase desc $ do
-  (ts, resultsConsole) <- withTiming $ run args
+  (ts, resultsConsole) <- withTimingIO $ run args
 
   V.verifyExpectedN resultsConsole expected
 
@@ -208,7 +208,7 @@ testCommandGraphRunsAtMostOnce = testCase desc $ do
 
 testCommandGraphComplex :: TestTree
 testCommandGraphComplex = testCase desc $ do
-  (ts, resultsConsole) <- withTiming $ run args
+  (ts, resultsConsole) <- withTimingIO $ run args
 
   V.verifyExpectedN resultsConsole expected
 
@@ -243,7 +243,7 @@ testCommandGraphComplex = testCase desc $ do
 
 testCommandGraphFailure :: TestTree
 testCommandGraphFailure = testCase "Runs with --edges failure" $ do
-  (ts, resultsConsole) <- withTiming $ runExitFailure args
+  (ts, resultsConsole) <- withTimingIO $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
 
@@ -277,7 +277,7 @@ testCommandGraphFailure = testCase "Runs with --edges failure" $ do
 
 testCommandGraphBlockedFailure :: TestTree
 testCommandGraphBlockedFailure = testCase desc $ do
-  (ts, resultsConsole) <- withTiming $ runExitFailure args
+  (ts, resultsConsole) <- withTimingIO $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
 
@@ -314,7 +314,7 @@ testCommandGraphBlockedFailure = testCase desc $ do
 
 testCommandGraphSeqAnd :: TestTree
 testCommandGraphSeqAnd = testCase "Runs with --edges '&&'" $ do
-  (ts, resultsConsole) <- withTiming $ run args
+  (ts, resultsConsole) <- withTimingIO $ run args
 
   V.verifyExpected resultsConsole expected
 
@@ -350,7 +350,7 @@ testCommandGraphSeqAnd = testCase "Runs with --edges '&&'" $ do
 
 testCommandGraphSeqOr :: TestTree
 testCommandGraphSeqOr = testCase "Runs with --edges '||'" $ do
-  (ts, resultsConsole) <- withTiming $ runExitFailure args
+  (ts, resultsConsole) <- withTimingIO $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
 
@@ -384,7 +384,7 @@ testCommandGraphSeqOr = testCase "Runs with --edges '||'" $ do
 
 testCommandGraphSeqAny :: TestTree
 testCommandGraphSeqAny = testCase "Runs with --edges ';;'" $ do
-  (ts, resultsConsole) <- withTiming $ runExitFailure args
+  (ts, resultsConsole) <- withTimingIO $ runExitFailure args
 
   V.verifyExpected resultsConsole expected
 
@@ -414,7 +414,7 @@ testCommandGraphSeqAny = testCase "Runs with --edges ';;'" $ do
 
 testCommandGraphLegend :: TestTree
 testCommandGraphLegend = testCase "Runs with --legend edges" $ do
-  (ts, resultsConsole) <- withTiming $ run args
+  (ts, resultsConsole) <- withTimingIO $ run args
 
   V.verifyExpectedOrder resultsConsole expected
 
@@ -450,7 +450,7 @@ testCommandGraphLegend = testCase "Runs with --legend edges" $ do
 
 testCommandGraphLegendAndEdge :: TestTree
 testCommandGraphLegendAndEdge = testCase desc $ do
-  (ts, resultsConsole) <- withTiming $ run args
+  (ts, resultsConsole) <- withTimingIO $ run args
 
   V.verifyExpectedOrder resultsConsole expected
 

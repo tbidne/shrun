@@ -144,13 +144,13 @@ testEdgelessGraphProp = testProp desc "testEdgelessGraphProp" $ do
 
   -- Probably unnecessary, but it doesn't slow down the tests, so whatever.
   for_ gvertices $ \gv -> do
-    ctx1 <- liftIO $ CDG.context g gv
-    ctx2 <- liftIO $ CDG.context t gv
+    ctx1 <- liftIO $ runEff $ CDG.context g gv
+    ctx2 <- liftIO $ runEff $ CDG.context t gv
     ctx1 === ctx2
 
   for_ tvertices $ \tv -> do
-    ctx1 <- liftIO $ CDG.context g tv
-    ctx2 <- liftIO $ CDG.context t tv
+    ctx1 <- liftIO $ runEff $ CDG.context g tv
+    ctx2 <- liftIO $ runEff $ CDG.context t tv
     ctx1 === ctx2
   where
     desc = "mkGraph [] === mkEdgelessGraph"
@@ -166,7 +166,7 @@ testVertexCommandIndexRel = testProp desc "testVertexCommandIndexRel" $ do
     toVertex (cmd ^. #index) === v
 
     -- Sanity check: this is presumably an fgl invariant.
-    (node, cmd2) <- liftIO $ CDG.labVertex cdg v
+    (node, cmd2) <- liftIO $ runEff $ CDG.labVertex cdg v
     cmd === cmd2
     v === node
   where
