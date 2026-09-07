@@ -36,7 +36,8 @@ edgesParser =
   where
     opts =
       [ OA.long "edges",
-        helpTxt
+        helpTxt,
+        OA.hidden
       ]
 
     helpTxt =

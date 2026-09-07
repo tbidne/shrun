@@ -136,7 +136,8 @@ switchParserHelper mkHelpFn opts cons name helpTxt = fmap cons <$> mainParser
                 OA.long name,
                 OA.metavar "(on | off)",
                 OA.completeWith ["on", "off"],
-                mkHelpFn helpTxt
+                mkHelpFn helpTxt,
+                OA.hidden
               ]
           )
 

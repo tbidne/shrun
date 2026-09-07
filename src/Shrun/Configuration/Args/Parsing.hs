@@ -261,7 +261,7 @@ defaultConfig :: Parser (a -> a)
 defaultConfig =
   OA.infoOption
     (unpack $$TH.defaultToml)
-    (OA.long "default-config" <> Utils.mkHelp help)
+    (OA.long "default-config" <> Utils.mkHelp help <> OA.hidden)
   where
     help = "Writes a default toml config file to stdout."
 
@@ -279,7 +279,8 @@ configParser =
         OA.metavar "(PATH | off)...",
         OA.completer EOC.compgenCwdPathsCompleter,
         OA.completeWith ["off"],
-        helpTxt
+        helpTxt,
+        OA.hidden
       ]
 
     helpTxt =
@@ -348,7 +349,8 @@ dryRunParser =
           $ mconcat
             [ "Prints the configuration and commands that would be run to ",
               "stdout, then exits. Requires a command."
-            ]
+            ],
+        OA.hidden
       ]
 
 expandAliasesParser :: Parser Bool
@@ -356,5 +358,6 @@ expandAliasesParser =
   OA.switch
     $ mconcat
       [ OA.long "expand-aliases",
-        Utils.mkHelpNoLine "Prints all expanded aliases from the config."
+        Utils.mkHelpNoLine "Prints all expanded aliases from the config.",
+        OA.hidden
       ]

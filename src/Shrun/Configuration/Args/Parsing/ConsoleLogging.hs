@@ -71,7 +71,8 @@ commandNameTruncParser =
   where
     opts =
       [ OA.long "console-log-command-name-trunc",
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt =
       mconcat
@@ -89,7 +90,8 @@ lineTruncParser =
     opts =
       [ OA.long "console-log-line-trunc",
         OA.completeWith ["detect"],
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt =
       mconcat
@@ -111,7 +113,8 @@ stripControlParser = mainParser
               [ OA.long "console-log-strip-control",
                 OA.completeWith ["all", "smart", "off"],
                 helpTxt,
-                OA.metavar (SUtils.mkMetaStr StripControl.stripControlMeta)
+                OA.metavar (SUtils.mkMetaStr StripControl.stripControlMeta),
+                OA.hidden
               ]
           )
 
@@ -147,7 +150,8 @@ timerFormatParser = mainParser
           [ OA.long "console-log-timer-format",
             OA.completeWith ["digital_compact", "digital_full", "prose_compact", "prose_full"],
             OA.metavar "TIME_FMT",
-            helpTxt
+            helpTxt,
+            OA.hidden
           ]
     helpTxt =
       Utils.itemizeNoLine
