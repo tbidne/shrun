@@ -122,7 +122,6 @@ translateCommands ::
   m (Tuple2 (NESeq CommandP1) Edges)
 translateCommands legendMap commands =
   addCliLegend legendMap commands >=> uncurry translateMap
-{-# INLINEABLE translateCommands #-}
 
 translateMap ::
   forall m.
@@ -293,7 +292,6 @@ translateMap mp initKey = do
                 then ""
                 else path <> LTBuilder.fromText line <> " -> "
             neToSet = Set.fromList . toList
-{-# INLINEABLE translateMap #-}
 
 -- | Adds indexes to the NESeq.
 indexSeq :: NESeq a -> NESeq (Tuple2 CommandIndex a)
@@ -380,7 +378,6 @@ repairEdges key (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
                   "' is out-of-bounds."
                 ]
           Just (s, e) -> pure (s, e)
-{-# INLINEABLE repairEdges #-}
 
 mkSequentialEdges :: EdgeSequential -> NESeq Text -> Edges
 mkSequentialEdges eseq =
@@ -448,7 +445,6 @@ addCliLegend ::
 addCliLegend legendMap commands mCliEdgeArgs = do
   unmappedKey <- findUnmappedKey legendMap commands
   pure (Map.insert unmappedKey (commands, mCliEdgeArgs) legendMap, unmappedKey)
-{-# INLINEABLE addCliLegend #-}
 
 -- | Finds a key that does not exist in the map or as a command name
 -- (The latter is to avoid cycles).
@@ -482,4 +478,3 @@ findUnmappedKey legendMap commands = go 0
       | otherwise = go (i + 1)
       where
         key = pfx <> showt i
-{-# INLINEABLE findUnmappedKey #-}

@@ -27,9 +27,9 @@ import Data.List qualified as L
 import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
-import Effects.FileSystem.PathReader qualified as PR
-import Effects.FileSystem.PathWriter qualified as PW
-import Shrun (runShellT, shrun)
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.PathWriter.Dynamic qualified as PW
+import Shrun (shrun)
 import Shrun.Command.Types
   ( CommandStatus (CommandWaiting),
     CommandStatusMapP (MkCommandStatusMapP),
@@ -72,79 +72,69 @@ import Shrun.Configuration.Env.Types
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Configuration.Toml qualified as Toml
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
+import Shrun.Logging.RegionLogger (RegionLogger)
 import Shrun.Prelude
-import Shrun.ShellT (ShellT)
 
 -- | 'withEnv' with 'shrun'.
 makeEnvAndShrun ::
-  forall m notifyEnv r.
-  ( HasCallStack,
-    HasConsoleLogging (Env notifyEnv r) (Region (ShellT (Env notifyEnv r) m)),
-    MonadAsync m,
-    MonadAtomic m,
-    MonadEvaluate m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadHandleReader m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadMVar m,
-    MonadNotify m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadPosixSignals m,
-    MonadProcess m,
-    MonadRegionLogger m,
-    MonadTerminal m,
-    MonadThread m,
-    MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+  forall notifyEnv r es.
+  ( Eq r,
+    HasCallStack,
+    HasConsoleLogging (Env notifyEnv r) r,
+    Concurrent :> es,
+    FileReader :> es,
+    FileWriter :> es,
+    HandleReader :> es,
+    HandleWriter :> es,
+    Prim :> es,
+    Notify notifyEnv :> es,
+    Optparse :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    PosixSignals :> es,
+    Process :> es,
+    RegionLogger r :> es,
+    Terminal :> es,
+    Time :> es
   ) =>
-  m ()
-makeEnvAndShrun = withEnv @m @notifyEnv @r (runShellT shrun)
-{-# INLINEABLE makeEnvAndShrun #-}
+  Eff es ()
+makeEnvAndShrun = withEnv @notifyEnv @r $ \env ->
+  runReader env (shrun @(Env notifyEnv r) @notifyEnv @r)
 
 -- | Creates an 'Env' from CLI args and TOML config to run with a monadic
 -- action.
 withEnv ::
-  forall m notifyEnv r a.
+  forall notifyEnv r a es.
   ( HasCallStack,
-    MonadAtomic m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadNotify m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadTerminal m,
-    NotifyEnvF m ~ notifyEnv
+    Concurrent :> es,
+    FileReader :> es,
+    FileWriter :> es,
+    HandleWriter :> es,
+    Prim :> es,
+    Notify notifyEnv :> es,
+    Optparse :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    Terminal :> es
   ) =>
-  (Env notifyEnv r -> m a) ->
-  m a
+  (Env notifyEnv r -> Eff es a) ->
+  Eff es a
 withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
-{-# INLINEABLE withEnv #-}
 
 -- | Creates a 'MergedConfig' from CLI args and TOML config.
 getMergedConfig ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadIORef m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+    FileReader :> es,
+    FileWriter :> es,
+    Prim :> es,
+    Optparse :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    Terminal :> es
   ) =>
-  m (MergedConfig r)
+  Eff es (MergedConfig r)
 getMergedConfig = do
   xdgState <- getShrunXdgState
 
@@ -186,7 +176,6 @@ getMergedConfig = do
   pure merged
   where
     containsDisabled = L.elem Disabled
-{-# INLINEABLE getMergedConfig #-}
 
 data TomlPath
   = TomlCwd OsPath
@@ -205,10 +194,10 @@ unTomlPath = \case
 -- - cwd/shrun.toml
 findImplicitConfigs ::
   ( HasCallStack,
-    MonadPathReader m
+    PathReader :> es
   ) =>
   OsPath ->
-  m (Seq TomlPath)
+  Eff es (Seq TomlPath)
 findImplicitConfigs cwd = do
   xdgConfig <- getShrunXdgConfig
   let paths =
@@ -223,9 +212,8 @@ findImplicitConfigs cwd = do
       [ d </> [osp|.shrun.toml|],
         d </> [osp|shrun.toml|]
       ]
-{-# INLINEABLE findImplicitConfigs #-}
 
-configExists :: (HasCallStack, MonadPathReader m) => TomlPath -> m (Maybe TomlPath)
+configExists :: (HasCallStack, PathReader :> es) => TomlPath -> Eff es (Maybe TomlPath)
 configExists = \case
   TomlCwd p -> (fmap . fmap) TomlCwd (f p)
   TomlOther p -> (fmap . fmap) TomlOther (f p)
@@ -236,7 +224,6 @@ configExists = \case
         $ if exists
           then Just path
           else Nothing
-{-# INLINEABLE configExists #-}
 
 -- | Merges several toml files together.
 --
@@ -262,13 +249,12 @@ configExists = \case
 -- semigroups are left-biased, and we want @tk@ to override @ti@ whenever
 -- @i < k@. Hence we can leave the reverse order and foldr.
 mergeTomls ::
-  forall m notifyEnv.
+  forall notifyEnv es.
   ( HasCallStack,
-    MonadFileReader m,
-    MonadThrow m
+    FileReader :> es
   ) =>
   Seq (WithDisabled TomlPath) ->
-  m (Tuple3 (Seq OsPath) (Toml notifyEnv) (Toml notifyEnv))
+  Eff es (Tuple3 (Seq OsPath) (Toml notifyEnv) (Toml notifyEnv))
 mergeTomls tomlPaths = do
   pathsWithTomls <- traverse (\t -> (t,) <$> readConfig (unTomlPath t)) toRead
 
@@ -313,11 +299,10 @@ instance Exception TomlPathError where
 
 readConfig ::
   ( HasCallStack,
-    MonadFileReader m,
-    MonadThrow m
+    FileReader :> es
   ) =>
   OsPath ->
-  m (Toml notifyEnv)
+  Eff es (Toml notifyEnv)
 readConfig fp = do
   contents <- readFileUtf8ThrowM fp
   case decode contents of
@@ -326,21 +311,19 @@ readConfig fp = do
 
 fromMergedConfig ::
   ( HasCallStack,
-    MonadAtomic m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadMask m,
-    MonadNotify m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadTerminal m,
-    NotifyEnvF m ~ notifyEnv
+    Concurrent :> es,
+    FileWriter :> es,
+    HandleWriter :> es,
+    Prim :> es,
+    Notify notifyEnv :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    Terminal :> es
   ) =>
   MergedConfig notifyEnv ->
-  (Env notifyEnv r -> m a) ->
-  m a
+  (Env notifyEnv r -> Eff es a) ->
+  Eff es a
 fromMergedConfig cfg onEnv = do
   when (cfg ^. #dryRun) $ do
     putTextLn
@@ -357,7 +340,7 @@ fromMergedConfig cfg onEnv = do
   anyError <- newTVarA' False
   consoleLogQueue <- newTBQueueA 1_000
   hasTimedOut <- newTVarA' False
-  timerRegion <- newIORef' Nothing
+  timerRegion <- newIORef Nothing
 
   mKillExe <- mFindExe [osp|kill|]
   mPGrepExe <- mFindExe [osp|pgrep|]
@@ -394,23 +377,20 @@ fromMergedConfig cfg onEnv = do
       tryMySync (PR.findExecutable p) <&> \case
         Left _ -> Nothing
         Right mPath -> mPath >>= decodeThrowM
-{-# INLINEABLE fromMergedConfig #-}
 
-getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgConfig :: (HasCallStack, PathReader :> es) => Eff es OsPath
 getShrunXdgConfig = getXdgConfig [osp|shrun|]
-{-# INLINEABLE getShrunXdgConfig #-}
 
 -- | Given the xdg state dir, reads the legend key cache, if it exists.
 readPreviousLegendKeys ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadFileReader m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+    FileReader :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    Terminal :> es
   ) =>
   OsPath ->
-  m KeyCache
+  Eff es KeyCache
 readPreviousLegendKeys xdgState = do
   exists <- PR.doesFileExist keysPath
   if exists
@@ -430,15 +410,14 @@ readPreviousLegendKeys xdgState = do
     else pure mempty
   where
     keysPath = mkLegendKeysPath xdgState
-{-# INLINEABLE readPreviousLegendKeys #-}
 
 -- | Saves the legend keys from the currently loaded legend file, depending on
 -- the 'LegendKeysCache' parameter.
 saveLegendKeys ::
   ( HasCallStack,
-    MonadFileWriter m,
-    MonadPathReader m,
-    MonadPathWriter m
+    FileWriter :> es,
+    PathReader :> es,
+    PathWriter :> es
   ) =>
   -- | Shrun xdg state.
   OsPath ->
@@ -452,7 +431,7 @@ saveLegendKeys ::
   Toml notifyEnv ->
   -- | Current directory toml, for saving local keys.
   Toml notifyEnv ->
-  m ()
+  Eff es ()
 saveLegendKeys xdgState cwd cacheAction keyCache finalToml cwdToml =
   case cacheAction of
     -- 1. Do nothing.
@@ -489,7 +468,6 @@ saveLegendKeys xdgState cwd cacheAction keyCache finalToml cwdToml =
         { confIndent = Spaces 2,
           confTrailingNewline = True
         }
-{-# INLINEABLE saveLegendKeys #-}
 
 getCurrentKeys :: OsPath -> KeyCache -> Set Text
 getCurrentKeys p kc = Set.union (kc ^. #global) localKeys
@@ -499,5 +477,5 @@ getCurrentKeys p kc = Set.union (kc ^. #global) localKeys
 mkLegendKeysPath :: OsPath -> OsPath
 mkLegendKeysPath xdgState = xdgState </> [osp|legend-keys.json|]
 
-getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgState :: (HasCallStack, PathReader :> es) => Eff es OsPath
 getShrunXdgState = PR.getXdgState [osp|shrun|]

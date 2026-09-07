@@ -4,21 +4,28 @@
 
 module Functional.Prelude.FuncEnv
   ( -- * Potential IO wrapper
-    ConfigIO (..),
     unConfigIO,
     ConfigIOEnv (..),
 
     -- * Shrun environment for functional tests
     FuncEnv (..),
+    runRegionLoggerFuncEnv,
+    runNotifyFuncEnv,
   )
 where
 
-import Effects.FileSystem.PathReader
-  ( MonadPathReader (doesPathExist, getCurrentDirectory, getXdgDirectory),
+import Effectful.FileSystem.PathReader.Dynamic
+  ( PathReader
+      ( DoesFileExist,
+        DoesPathExist,
+        GetCurrentDirectory,
+        GetFileSize,
+        GetXdgDirectory
+      ),
     XdgDirectory,
   )
-import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
-import Effects.System.Posix.Signals qualified as Signals
+import Effectful.Notify.Dynamic (Notify (InitNotifyEnv, Notify))
+import Effectful.Terminal.Dynamic (Terminal (GetTerminalSize, PutStr, PutStrLn))
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
@@ -31,18 +38,16 @@ import Shrun.Configuration.Env.Types
     HasNotifyConfig (getNotifyConfig),
     HasTimeout (getHasTimedOut, getTimeout),
   )
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        displayRegions,
-        logGlobal,
-        logRegion,
-        regionList,
-        withRegion
+import Shrun.Logging.RegionLogger
+  ( RegionLogger
+      ( DisplayRegions,
+        LogGlobal,
+        LogRegion,
+        RegionList,
+        WithRegion
       ),
   )
 import Shrun.Prelude
-import Shrun.ShellT (ShellT)
 
 -- | Enviroment used by 'ConfigIO'. For when we want some IO behavior mocked.
 data ConfigIOEnv = MkConfigIOEnv
@@ -73,69 +78,100 @@ makeFieldLabelsNoPrefix ''ConfigIOEnv
 --
 -- This is generally IO, so ConfigIO exists so we can instead inject ConfigIO,
 -- and use its instances.
-newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
-  deriving newtype
-    ( Functor,
-      Applicative,
-      Monad,
-      MonadAsync,
-      MonadAtomic,
-      MonadCatch,
-      MonadEnv,
-      MonadEvaluate,
-      MonadFileReader,
-      MonadFileWriter,
-      MonadHandleReader,
-      MonadHandleWriter,
-      MonadIO,
-      MonadIORef,
-      MonadMask,
-      MonadMVar,
-      MonadNotify,
-      MonadOptparse,
-      MonadPathWriter,
-      MonadPosixFiles,
-      MonadProcess,
-      MonadReader ConfigIOEnv,
-      MonadThread,
-      MonadTime,
-      MonadThrow
-    )
+type ConfigEffects =
+  [ Concurrent,
+    Environment,
+    FileReader,
+    FileWriter,
+    HandleReader,
+    HandleWriter,
+    Notify (),
+    Optparse,
+    PathReader,
+    PathWriter,
+    PosixFiles,
+    Process,
+    Terminal,
+    Time,
+    Prim,
+    Reader ConfigIOEnv,
+    IOE
+  ]
 
-unConfigIO :: ConfigIO a -> ReaderT ConfigIOEnv IO a
-unConfigIO (MkConfigIO rdr) = rdr
+-- Note that we have two notification effects: One in ConfigEffects
+-- (runNotifyConfigIO), and one that is used while running Shrun with
+-- FuncEnv (runNotifyFuncEnv). Both stages require a notification effect,
+-- so while we /could/ supply a single one in the "outer" config stage,
+-- the ConfigIOEnv does not have the notifications data on it.
+--
+-- IOW, we'd have to unify the notifications data in order to use a single
+-- effect. Doable, but for now the easiest thing to do is just have two
+-- handlers, knowing that the config handler just throws away data,
+-- and isn't really used anyway (all it does is "init").
 
-instance MonadPathReader ConfigIO where
-  doesFileExist = liftIO . doesFileExist
-  doesPathExist = liftIO . doesPathExist
+unConfigIO ::
+  Eff ConfigEffects a ->
+  Eff [Reader ConfigIOEnv, IOE] a
+unConfigIO =
+  runPrim
+    . runTime
+    . runTerminalConfigIO
+    . runProcess
+    . runPosixFiles
+    . runPathWriter
+    . runPathReaderConfigIO
+    . runOptparse
+    . runNotifyConfigIO
+    . runHandleWriter
+    . runHandleReader
+    . runFileWriter
+    . runFileReader
+    . runEnvironment
+    . runConcurrent
 
-  getCurrentDirectory = do
-    mCwd <- asks (view #cwdDir)
+runNotifyConfigIO ::
+  () =>
+  Eff (Notify () : es) a ->
+  Eff es a
+runNotifyConfigIO = interpret_ $ \case
+  InitNotifyEnv _ -> pure ()
+  Notify _ _ -> pure ()
+
+runPathReaderConfigIO ::
+  ( IOE :> es,
+    Reader ConfigIOEnv :> es
+  ) =>
+  Eff (PathReader : es) a ->
+  Eff es a
+runPathReaderConfigIO = reinterpret_ runPathReader $ \case
+  DoesFileExist p -> doesFileExist p
+  DoesPathExist p -> doesPathExist p
+  GetCurrentDirectory -> do
+    mCwd <- asks @ConfigIOEnv (view #cwdDir)
     case mCwd of
-      Nothing -> liftIO getCurrentDirectory
+      Nothing -> getCurrentDirectory
       Just cwd -> pure cwd
-
-  getFileSize = liftIO . getFileSize
-
-  getXdgDirectory xdg p = do
-    mOnXdg <- asks (view #xdgDir)
+  GetFileSize p -> getFileSize p
+  GetXdgDirectory xdg p -> do
+    mOnXdg <- asks @ConfigIOEnv (view #xdgDir)
     case mOnXdg of
-      Nothing -> liftIO (getXdgDirectory xdg p)
+      Nothing -> getXdgDirectory xdg p
       Just onXdg -> pure $ onXdg xdg </> p
+  other -> error $ "runPathReaderConfigIO: " ++ showEffectCons other
 
-instance MonadPosixSignals ConfigIO where
-  installHandler s h m = MkConfigIO $ do
-    hFromM <$> installHandler s (hToM h) m
-    where
-      hFromM = Signals.mapHandler MkConfigIO
-      hToM = Signals.mapHandler unConfigIO
-
-instance MonadTerminal ConfigIO where
-  putStr s = do
-    logsRef <- asks (view #logs)
-    modifyIORef' logsRef (pack s :)
-  putStrLn = putStr . (<> "\n")
-
+runTerminalConfigIO ::
+  ( Prim :> es,
+    Reader ConfigIOEnv :> es
+  ) =>
+  Eff (Terminal : es) a ->
+  Eff es a
+runTerminalConfigIO = interpret_ $ \case
+  PutStr s -> do
+    logsRef <- asks @ConfigIOEnv (view #logs)
+    modifyIORef logsRef (pack s :)
+  PutStrLn s -> do
+    logsRef <- asks @ConfigIOEnv (view #logs)
+    modifyIORef logsRef (pack s :)
   -- Give this a large width so that test logs do not get cut off. We want
   -- to mock this anyway, as we do not want real, non-deterministic detection
   -- to be used in the tests, but there is an even greater urgency for mocking
@@ -149,13 +185,14 @@ instance MonadTerminal ConfigIO where
   -- why; ultimately, the reason is that our upstream dependency terminal-size
   -- returns Nothing. It seems the getTerminalSize call, when run via
   -- process, does not work.
-  getTerminalSize = pure $ Window 100 150
+  GetTerminalSize -> pure $ Window 100 150
+  other -> error $ "runTerminalConfigIO: " ++ showEffectCons other
 
 -- NOTE: FuncEnv is essentially the real Env w/ an IORef for logs and a
 -- simplified logging
 
 data FuncEnv = MkFuncEnv
-  { coreEnv :: Env NotifyEnv (),
+  { coreEnv :: Env () (),
     logs :: IORef (List Text),
     shrunNotes :: IORef (List Note)
   }
@@ -189,26 +226,36 @@ instance HasConsoleLogging FuncEnv () where
 instance HasFileLogging FuncEnv where
   getFileLogging = getFileLogging . view #coreEnv
 
-instance HasNotifyConfig FuncEnv NotifyEnv where
+instance HasNotifyConfig FuncEnv () where
   getNotifyConfig = getNotifyConfig . view #coreEnv
 
-instance (MonadIO m) => MonadRegionLogger (ShellT FuncEnv m) where
-  type Region (ShellT FuncEnv m) = ()
+runRegionLoggerFuncEnv ::
+  ( Concurrent :> es,
+    Prim :> es,
+    Reader FuncEnv :> es
+  ) =>
+  Eff (RegionLogger () : es) a ->
+  Eff es a
+runRegionLoggerFuncEnv = interpret $ \env -> \case
+  LogGlobal txt -> do
+    ls <- asks @FuncEnv $ view #logs
+    modifyIORef ls (txt :)
+  LogRegion _ _ txt -> do
+    ls <- asks @FuncEnv $ view #logs
+    modifyIORef ls (txt :)
+  WithRegion _layout regionToShell -> localSeqUnlift env $ \unlift ->
+    unlift (regionToShell ())
+  DisplayRegions m -> localSeqUnlift env $ \unlift -> unlift m
+  RegionList -> atomically $ newTMVar []
 
-  logGlobal txt = do
-    ls <- asks $ view #logs
-    liftIO $ modifyIORef' ls (txt :)
-
-  logRegion _ _ = logGlobal
-
-  withRegion _layout regionToShell = regionToShell ()
-
-  displayRegions = id
-
-  regionList = liftIO $ atomically $ newTMVar []
-
-instance {-# OVERLAPS #-} (MonadIO m) => MonadNotify (ShellT FuncEnv m) where
-  notify _ note = do
-    notesRef <- asks (view #shrunNotes)
-    liftIO $ modifyIORef' notesRef (note :)
-    pure ()
+runNotifyFuncEnv ::
+  ( Prim :> es,
+    Reader FuncEnv :> es
+  ) =>
+  Eff (Notify () : es) a ->
+  Eff es a
+runNotifyFuncEnv = interpret_ $ \case
+  InitNotifyEnv _ -> pure ()
+  Notify _ note -> do
+    notesRef <- asks @FuncEnv (view #shrunNotes)
+    modifyIORef notesRef (note :)

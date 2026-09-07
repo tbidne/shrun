@@ -196,7 +196,6 @@ instance DecodeTOML NotifyErrUrgency where
 -- | Parses 'NotifySystemOs'.
 parseNotifyErrUrgency :: (MonadFail m) => m Text -> m NotifyErrUrgency
 parseNotifyErrUrgency = (>>= Utils.inverseMapFail display "error-urgency" notifyErrUrgencyMeta)
-{-# INLINEABLE parseNotifyErrUrgency #-}
 
 notifyErrUrgencyMeta :: (IsString a) => Tuple2 Bool (List a)
 notifyErrUrgencyMeta = (False, ["low", "normal", "critical"])
@@ -339,12 +338,10 @@ instance DecodeTOML (NotifyToml r) where
 
 toEnv ::
   ( HasCallStack,
-    MonadNotify m,
-    MonadThrow m,
-    NotifyEnvF m ~ r
+    Notify r :> es
   ) =>
   NotifyMerged r ->
-  m (NotifyP ConfigPhaseEnv r)
+  Eff es (NotifyP ConfigPhaseEnv r)
 toEnv notifyMerged = do
   system <- case notifySystemToOs systemMerged of
     Left ex -> throwM ex
@@ -353,7 +350,6 @@ toEnv notifyMerged = do
   pure $ mkNotify notifyMerged notifyEnv
   where
     systemMerged = notifyMerged ^. #system
-{-# INLINEABLE toEnv #-}
 
 mkNotify :: NotifyMerged r -> NotifySystemF ConfigPhaseEnv r -> NotifyP ConfigPhaseEnv r
 mkNotify notifyToml systemP2 =

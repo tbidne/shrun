@@ -40,8 +40,8 @@ module Shrun.Command.Types
 where
 
 import Data.Text qualified as T
-import Effects.System.Process (Pid)
-import Effects.System.Process qualified as P
+import Effectful.Process (Pid)
+import Effectful.Process qualified as P
 import Shrun.Command.Types.Internal (CommandIndex)
 import Shrun.Command.Types.Internal qualified as Internal
 import Shrun.Prelude
@@ -162,10 +162,8 @@ makeFieldLabelsNoPrefix ''CommandStatusMapP
 
 -- | Reads a map of TVars into a pure map via a single STM transaction.
 readCommandStatus ::
-  ( HasCallStack,
-    MonadAtomic m
-  ) =>
+  (Concurrent :> es) =>
   TCommandStatusMap ->
-  m CommandStatusMap
+  Eff es CommandStatusMap
 readCommandStatus (MkCommandStatusMapP mp) =
   MkCommandStatusMapP <$> atomically (for mp (traverse readTVar'))

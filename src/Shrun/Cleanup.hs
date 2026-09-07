@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | Provides cleanup logic.
 module Shrun.Cleanup
   ( teardown,
@@ -5,7 +7,7 @@ module Shrun.Cleanup
   )
 where
 
-import Effects.Time qualified as Time
+import Effectful.Time.Dynamic qualified as Time
 import Shrun.Command.Types (CommandStatus (CommandRunning))
 import Shrun.Configuration.Data.Notify
   ( _NotifyActionsActiveCompleteAny,
@@ -21,7 +23,7 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.IO.Signals qualified as Signals
 import Shrun.Logging qualified as Logging
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
+import Shrun.Logging.RegionLogger (RegionLogger)
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel
@@ -36,47 +38,45 @@ import Shrun.Prelude
 -- | Cancels running commands and prints a final log message about going
 -- down. Intended to be used when shrun has been cancelled.
 teardown ::
-  forall m env notifyEnv.
+  forall env r notifyEnv es.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
-    HasLogging env m,
+    HasLogging env r,
     HasNotifyConfig env notifyEnv,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadNotify m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    Concurrent :> es,
+    HandleWriter :> es,
+    Notify notifyEnv :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   Double ->
-  m ()
+  Eff es ()
 teardown startTime = do
   endTime <- Time.getMonotonicTime
   let totalTime = Time.fromSeconds $ endTime - startTime
-  timeFormatted <- formatTimeSpec totalTime
+  timeFormatted <- formatTimeSpec @env @r totalTime
 
   let cancelTasksMsg = "Received cancel"
       finalErrMsg = cancelTasksMsg <> " after running for: " <> timeFormatted
 
   -- update anyError
-  setAnyErrorTrue
+  setAnyErrorTrue @env
 
-  (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
+  (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs @env
 
   -- NOTE: Manual logging because the logging queues have been shutdown at this
   -- point. We must write to the console (logRegion) and file (logFile)
   -- directly.
 
   -- 1. Send message about cancelling commands.
-  traverse_ Logging.putRegionMultiLineLogDirect mWaitingLog
-  traverse_ Logging.putRegionMultiLineLogDirect mRunningLog
+  traverse_ (Logging.putRegionMultiLineLogDirect @env @r) mWaitingLog
+  traverse_ (Logging.putRegionMultiLineLogDirect @env @r) mRunningLog
 
   -- Clean up remaining commands.
-  cleanupCommands
+  cleanupCommands @env @r
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 
@@ -89,18 +89,17 @@ teardown startTime = do
             mode = LogModeFinish
           }
 
-  Logging.putRegionLogDirect finalLog
+  Logging.putRegionLogDirect @env @r finalLog
 
   -- 3. Send notification
-  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
+  mCfg <- asks @env (getNotifyConfig @_ @notifyEnv)
   for_ mCfg $ \cfg -> do
     let urgency = cfg ^. #errUrgency % #unNotifyErrUrgency
 
     case cfg ^? (#actions % _NotifyActionsActiveCompleteAny) of
       -- If complete notifcations are on at all, send one
-      Just _ -> Notify.sendNotif notifyBody "" urgency
+      Just _ -> Notify.sendNotif @env @r @notifyEnv notifyBody "" urgency
       _ -> pure ()
-{-# INLINEABLE teardown #-}
 
 -- NOTE: [Command cleanup]
 --
@@ -144,18 +143,18 @@ teardown startTime = do
 -- logic is only intended for handling the case where our spawned /bin/sh
 -- does not forward the kill signal to its child.
 cleanupCommands ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadHandleWriter m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Process :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
-  m ()
+  Eff es ()
 cleanupCommands = do
   -- Read all commands in a single transaction, then process. This should be
   -- safe in the sense that the command status map should not receive any
@@ -169,7 +168,7 @@ cleanupCommands = do
   --
   -- We cannot process the status in the same transaction -- in any case --
   -- because that would involve mixing IO effects in STM.
-  commandsStatusMap <- getReadCommandStatus <&> view #unCommandStatusMap
+  commandsStatusMap <- getReadCommandStatus @env <&> view #unCommandStatusMap
 
   for_ commandsStatusMap $ \(_cmd, status) ->
     case status of
@@ -182,7 +181,7 @@ cleanupCommands = do
         -- For platforms that end the /bin/sh immediately, this generally
         -- does nothing (which is fine, as then some_command will receive
         -- the normal terminate signal).
-        Signals.killPids childPids
+        Signals.killPids @env @r childPids
 
         -- 2. Needed for CI OSX to pass the test_script.sh test. That is,
         -- the spawned sleep commands are not cancelled. We have the log:
@@ -194,10 +193,10 @@ cleanupCommands = do
         -- Either there is a bug in getChildPids, or the child's PPID has
         -- been reassigned by the time we run getChildPids, which seems
         -- more likely.
-        Signals.killChildPids mPid
+        Signals.killChildPids @env @r mPid
 
         -- 3. Needed for CI Linux to pass the test_script.sh test.
         for_ childPids killChildPids
       _ -> pure ()
   where
-    killChildPids = Signals.killChildPids . Just
+    killChildPids = Signals.killChildPids @env @r . Just

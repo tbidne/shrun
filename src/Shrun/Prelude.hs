@@ -30,6 +30,10 @@ module Shrun.Prelude
     prettyToText,
     docToText,
 
+    -- * IORef
+    newIORefIO,
+    readIORefIO,
+
     -- * Misc utilities
     Result (..),
     fromFoldable,
@@ -132,11 +136,6 @@ import Control.Monad.Catch as X
 import Control.Monad.Catch.Pure qualified as C
 import Control.Monad.Fail as X (MonadFail (fail))
 import Control.Monad.IO.Class as X (MonadIO (liftIO))
-import Control.Monad.Reader as X
-  ( MonadReader (ask, local),
-    ReaderT (runReaderT),
-    asks,
-  )
 import Control.Monad.Trans as X (MonadTrans (lift))
 import Data.Aeson as X (FromJSON (parseJSON), ToJSON (toJSON))
 import Data.Bifunctor as X (Bifunctor (bimap, first, second))
@@ -204,48 +203,80 @@ import Data.Tuple as X (fst, snd, uncurry)
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Data.Word as X (Word16)
-import Effects.Concurrent.Async as X (MonadAsync)
-import Effects.Concurrent.STM as X
-  ( MonadAtomic (atomically),
-    TBQueue,
-    TVar,
+import Effectful as X
+  ( Dispatch (Dynamic),
+    DispatchOf,
+    Eff,
+    Effect,
+    IOE,
+    runEff,
+    runPureEff,
+    type (:>),
+  )
+import Effectful.Concurrent.Async as X (Concurrent, runConcurrent)
+import Effectful.Concurrent.MVar.Strict as X
+  ( MVar,
+    newMVar,
+    putMVar,
+    tryTakeMVar,
+  )
+import Effectful.Concurrent.STM as X (atomically)
+import Effectful.Concurrent.STM.TBQueue.Static as X
+  ( TBQueue,
     flushTBQueueA',
-    modifyTVarA',
     newTBQueue,
     newTBQueueA,
-    newTVar',
-    newTVarA',
     readTBQueueA',
-    readTVar',
-    readTVarA',
     tryReadTBQueueA',
     writeTBQueue',
     writeTBQueueA',
+  )
+import Effectful.Concurrent.STM.TVar.Static as X
+  ( TVar,
+    modifyTVarA',
+    newTVar',
+    newTVarA',
+    readTVar',
+    readTVarA',
     writeTVar',
     writeTVarA',
   )
-import Effects.Concurrent.Thread as X
-  ( MVar,
-    MonadMVar (newMVar', putMVar', tryTakeMVar'),
-    MonadThread,
-    microsleep,
+import Effectful.Concurrent.Static as X
+  ( microsleep,
     sleep,
   )
-import Effects.Evaluate as X (MonadEvaluate (evaluate))
-import Effects.FileSystem.FileReader as X
-  ( MonadFileReader,
+import Effectful.Dispatch.Dynamic as X
+  ( interpret,
+    interpret_,
+    localSeqUnlift,
+    localSeqUnliftIO,
+    reinterpret,
+    reinterpret_,
+    send,
+  )
+import Effectful.Dynamic.Utils as X (ShowEffect (showEffectCons))
+import Effectful.Environment.Static as X
+  ( Environment,
+    runEnvironment,
+    withArgs,
+  )
+import Effectful.Exception as X (evaluate)
+import Effectful.FileSystem.FileReader.Dynamic as X
+  ( FileReader,
     decodeUtf8Lenient,
     readBinaryFile,
     readFileUtf8Lenient,
     readFileUtf8ThrowM,
+    runFileReader,
   )
-import Effects.FileSystem.FileWriter as X
-  ( MonadFileWriter,
+import Effectful.FileSystem.FileWriter.Dynamic as X
+  ( FileWriter,
     appendFileUtf8,
+    runFileWriter,
     writeBinaryFile,
     writeFileUtf8,
   )
-import Effects.FileSystem.Handle as X
+import Effectful.FileSystem.Handle as X
   ( CanRead,
     CanWrite,
     Handle,
@@ -257,40 +288,51 @@ import Effects.FileSystem.Handle as X
     LockedHandleRW,
     LockedHandleW,
   )
-import Effects.FileSystem.HandleReader as X (MonadHandleReader)
-import Effects.FileSystem.HandleWriter as X
-  ( LockedHandle,
-    MonadHandleWriter (hClose, hFlush, openBinaryFile),
+import Effectful.FileSystem.HandleReader.Static as X
+  ( HandleReader,
+    hGetNonBlocking,
+    hIsClosed,
+    hIsReadable,
+    runHandleReader,
+  )
+import Effectful.FileSystem.HandleWriter.Static as X
+  ( HandleWriter,
+    LockedHandle,
+    die,
+    hClose,
+    hFlush,
     hPutUtf8,
     liftLocked,
+    openBinaryFile,
+    runHandleWriter,
+    withBinaryFile,
     withLockedFile,
     withTryLockedFile,
   )
-import Effects.FileSystem.PathReader as X
-  ( MonadPathReader (doesDirectoryExist, doesFileExist, getFileSize),
+import Effectful.FileSystem.PathReader.Dynamic as X
+  ( PathReader,
+    doesDirectoryExist,
+    doesFileExist,
+    doesPathExist,
+    getCurrentDirectory,
+    getFileSize,
     getXdgConfig,
+    getXdgDirectory,
     getXdgState,
+    runPathReader,
   )
-import Effects.FileSystem.PathWriter as X
-  ( MonadPathWriter,
+import Effectful.FileSystem.PathWriter.Dynamic as X
+  ( PathWriter,
+    createDirectoryIfMissing,
     removeDirectoryIfExists,
     removeFile,
     removeFileIfExists,
     removeFileIfExists_,
+    runPathWriter,
   )
-import Effects.IORef as X
-  ( IORef,
-    MonadIORef
-      ( atomicModifyIORef',
-        modifyIORef',
-        newIORef',
-        readIORef',
-        writeIORef'
-      ),
-  )
-import Effects.Notify as X
-  ( MonadNotify (NotifyEnvF, initNotifyEnv, notify),
-    Note,
+import Effectful.Notify.Dynamic as X
+  ( Note,
+    Notify,
     NotifyEnv,
     NotifyParseException,
     NotifySystem
@@ -308,23 +350,49 @@ import Effects.Notify as X
       ),
     defaultNotifySystem,
     defaultNotifySystemOs,
+    initNotifyEnv,
+    notify,
     notifySystemToOs,
+    runNotify,
   )
-import Effects.Optparse as X (MonadOptparse (customExecParser, execParser))
-import Effects.System.Environment as X (MonadEnv (withArgs))
-import Effects.System.Posix.Files as X (MonadPosixFiles)
-import Effects.System.Posix.Signals as X (MonadPosixSignals)
-import Effects.System.Process as X (CreateProcess, MonadProcess)
-import Effects.System.Terminal as X
-  ( MonadTerminal,
+import Effectful.Optparse.Static as X
+  ( Optparse,
+    customExecParser,
+    execParser,
+    runOptparse,
+  )
+import Effectful.Posix.Files.Static as X (PosixFiles, runPosixFiles)
+import Effectful.Posix.Signals.Static as X (PosixSignals, runPosixSignals)
+import Effectful.Prim.IORef.Strict as X
+  ( IORef,
+    Prim,
+    atomicModifyIORef,
+    modifyIORef,
+    newIORef,
+    readIORef,
+    runPrim,
+    writeIORef,
+  )
+import Effectful.Process as X (CreateProcess, Process, runProcess)
+import Effectful.Reader.Static as X (Reader, ask, asks, local, runReader)
+import Effectful.Terminal.Dynamic as X
+  ( Terminal,
     Window (Window),
     getTerminalSize,
     putStr,
     putStrLn,
     putText,
     putTextLn,
+    runTerminal,
   )
-import Effects.Time as X (MonadTime, withTiming)
+import Effectful.Time.Dynamic as X
+  ( Time (GetMonotonicTime, GetSystemZonedTime),
+    TimeSpec,
+    getMonotonicTime,
+    getSystemZonedTime,
+    runTime,
+    withTiming,
+  )
 import FileSystem.OsPath as X
   ( OsPath,
     decodeFail,
@@ -501,7 +569,6 @@ headMaybe = foldr (\x _ -> Just x) Nothing
 -- | From foldable.
 fromFoldable :: (Foldable f) => a -> f a -> a
 fromFoldable x = fromMaybe x . headMaybe
-{-# INLINEABLE fromFoldable #-}
 
 -- | Lifted fmap.
 --
@@ -607,7 +674,10 @@ traceSem = unsafePerformIO (CC.newQSem 1)
 traceFile :: FilePath -> Text -> a -> a
 traceFile path txt x = writeFn `seq` x
   where
-    io = appendFileUtf8 (OsPath.unsafeEncode path) txt
+    io =
+      runEff
+        . runFileWriter
+        $ appendFileUtf8 (OsPath.unsafeEncode path) txt
 
     -- Guard writes behind a mutex. This is technically overkill for different
     -- files, but it is in fact necessary when we have multiple threads
@@ -755,13 +825,12 @@ makeFieldLabelsNoPrefixReadOnly =
 withLockedFileOrDie ::
   ( CanWrite p,
     HasCallStack,
-    MonadHandleWriter m,
-    MonadMask m
+    HandleWriter :> es
   ) =>
   OsPath ->
   Handle p ->
-  (LockedHandle p -> m a) ->
-  m a
+  (LockedHandle p -> Eff es a) ->
+  Eff es a
 withLockedFileOrDie p h k =
   withTryLockedFile h k >>= \case
     Just r -> pure r
@@ -773,3 +842,32 @@ withLockedFileOrDie p h k =
                 "'. Is another process writing to it?"
               ]
       throwText msg
+
+-- We only want to have one IORef type in use, but there are currently two:
+--
+-- - Strict IORef from strict-mutable-base (re-exported by Effectful).
+-- - Lazy IORef from base.
+--
+-- As we are using the Effectful variant in main application, that means
+-- we want to use this everywhere e.g. IO tests, hence providing the
+-- convenient utilities below.
+--
+-- There is a proposal to add the strict IORef to base, so eventually these
+-- types should be merged (then strict-mutable-base / effectful would just
+-- be re-exporting the new base variant).
+--
+-- When that happens, we will still want the below functions to prevent
+-- name clashes, but they will likely just re-export functions from base
+-- with no Eff, e.g. Data.IORef.Strict.newIORef.
+--
+-- Note that MVar has the same idiosyncrasies, but it's less impactful here
+-- since we are not using MVar outside of Eff.
+--
+-- https://github.com/haskell/core-libraries-committee/issues/341
+-- https://gitlab.haskell.org/ghc/ghc/-/merge_requests/15450
+
+newIORefIO :: a -> IO (IORef a)
+newIORefIO = runEff . runPrim . newIORef
+
+readIORefIO :: IORef a -> IO a
+readIORefIO = runEff . runPrim . readIORef

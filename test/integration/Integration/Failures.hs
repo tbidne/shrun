@@ -36,7 +36,7 @@ specs testArgs =
 
 missingCommands :: TestTree
 missingCommands = testCase "Missing commands throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   result <- runCaptureError @StringException [] logsRef
 
   case result of
@@ -44,12 +44,12 @@ missingCommands = testCase "Missing commands throws exception" $ do
     Just ex ->
       "Shrun requires at least one command." @=? displayException ex
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
 
 missingConfig :: TestTree
 missingConfig = testCase "Missing explicit config throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["-c", "bad-file.toml", "cmd"]
   result <- runCaptureError @IOException args logsRef
 
@@ -60,7 +60,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
       assertBool ("Exception: " ++ exMsg) (expectedStart `L.isPrefixOf` displayException ex)
       assertBool ("Exception: " ++ exMsg) (expectedEnd `L.isSuffixOf` displayException ex)
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     expectedStart = "bad-file.toml"
@@ -68,7 +68,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
 
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   -- '-c off' is out of paranoia, checking that a single config file can
   -- still have duplicate keys.
   let args = ["-c", "off", "-c", getIntConfig "duplicate-keys", "cmd"]
@@ -79,12 +79,12 @@ duplicateKeys = testCase "Duplicate keys throws exception" $ do
       "key1" @=? k
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
 
 duplicateKeysOverride :: TestTree
 duplicateKeysOverride = testCase "Duplicate keys throws exception with override" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   result <- runCaptureError args logsRef
 
   -- Tests that even though duplicate-keys2.toml "fixes" the
@@ -94,7 +94,7 @@ duplicateKeysOverride = testCase "Duplicate keys throws exception with override"
       "key2" @=? k
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     args =
@@ -107,7 +107,7 @@ duplicateKeysOverride = testCase "Duplicate keys throws exception with override"
 
 emptyKey :: TestTree
 emptyKey = testCase "Empty key throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["-c", getIntConfig "empty-key", "cmd"]
   result <- runCaptureError @TomlPathError args logsRef
 
@@ -115,7 +115,7 @@ emptyKey = testCase "Empty key throws exception" $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     expectedErr =
@@ -126,7 +126,7 @@ emptyKey = testCase "Empty key throws exception" $ do
 
 emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["-c", getIntConfig "empty-value", "cmd"]
   result <- runCaptureError @TomlPathError args logsRef
 
@@ -134,7 +134,7 @@ emptyValue = testCase "Empty value throws exception" $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Exception exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     expectedErr =
@@ -145,7 +145,7 @@ emptyValue = testCase "Empty value throws exception" $ do
 
 cyclicKeys :: TestTree
 cyclicKeys = testCase "Cyclic keys throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   -- using config.toml, which has cyclic definition
   let args = ["a"]
   result <- runCaptureError args logsRef
@@ -154,12 +154,12 @@ cyclicKeys = testCase "Cyclic keys throws exception" $ do
     Just (MkCyclicKeyError path) -> "a -> b -> c -> a" @=? path
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
 
 cyclicKeysMultiLegend :: TestTree
 cyclicKeysMultiLegend = testCase desc $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   -- using config.toml, which has cyclic definition
   result <- runCaptureError args logsRef
 
@@ -167,7 +167,7 @@ cyclicKeysMultiLegend = testCase desc $ do
     Just (MkCyclicKeyError path) -> "a -> b -> c -> a" @=? path
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     desc = "Cyclic keys across multiple legends throws exception"
@@ -185,7 +185,7 @@ cyclicKeysMultiLegend = testCase desc $ do
 
 emptyFileLog :: TestTree
 emptyFileLog = testCase "Empty file log throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["-c", getIntConfig "empty-file-log", "cmd"]
   result <- runCaptureError @TomlPathError args logsRef
 
@@ -193,7 +193,7 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     expectedErr =
@@ -206,7 +206,7 @@ testReadStrategyFailure :: IO TestArgs -> TestTree
 testReadStrategyFailure testArgs = testCase desc $ do
   logPath <- liftIO $ (</> [osp|read-strategy-failure|]) . view #workingTmpDir <$> testArgs
   let logsPathStr = unsafeDecode logPath
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
 
   result <- runCaptureError @ReadStrategyException (args logsPathStr) logsRef
 
@@ -214,7 +214,7 @@ testReadStrategyFailure testArgs = testCase desc $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
-  logs <- readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   logs @=? []
   where
     desc = "Read strategy block-line-buffer w/ multiple commands and file-logging throws error"
@@ -245,7 +245,7 @@ osTests =
 
 osxNotifyConfigError :: TestTree
 osxNotifyConfigError = testCase "OSX with linux notify config throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", p, "cmd"]
@@ -265,7 +265,7 @@ osxNotifyConfigError = testCase "OSX with linux notify config throws exception" 
 
 osxDBusError :: TestTree
 osxDBusError = testCase "OSX with dbus throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["--notify-system", "dbus" ,"cmd"]
   result <- runCaptureError @NotifyParseException args logsRef
 
@@ -281,7 +281,7 @@ osxDBusError = testCase "OSX with dbus throws exception" $ do
 
 osxNotifySendError :: TestTree
 osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["--notify-system", "notify-send" ,"cmd"]
   result <- runCaptureError @NotifyParseException args logsRef
 
@@ -303,7 +303,7 @@ osTests =
 
 linuxNotifyConfigError :: TestTree
 linuxNotifyConfigError = testCase "Linux with osx notify config throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", p, "cmd"]
@@ -327,7 +327,7 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
 
 linuxAppleScriptError :: TestTree
 linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
-  logsRef <- newIORef' []
+  logsRef <- iorefIO $ newIORef []
   let args = ["--notify-system", "apple-script", "cmd"]
   result <- runCaptureError @NotifyParseException args logsRef
 
@@ -346,7 +346,7 @@ linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
 runCaptureError :: (Exception e) => List String -> IORef (List Text) -> IO (Maybe e)
 runCaptureError args logsRef =
   flip runConfigIO logsRef
-    $ withArgs args (withEnv pure $> Nothing)
+    $ withArgs args (withEnv @() pure $> Nothing)
     `catch` \(ex :: e) -> pure (Just ex)
 
 exContains :: (Exception e) => Text -> e -> Assertion

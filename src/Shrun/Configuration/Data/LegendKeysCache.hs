@@ -50,7 +50,6 @@ instance Pretty LegendKeysCache where
 
 parseLegendKeysCache :: (MonadFail m) => m Text -> m LegendKeysCache
 parseLegendKeysCache = (>>= Utils.inversePrettyFail "legend-key-cache" lksMeta)
-{-# INLINEABLE parseLegendKeysCache #-}
 
 -- | Available 'LegendKeysCache' strings.
 lksMeta :: (IsString a) => Tuple2 Bool (List a)

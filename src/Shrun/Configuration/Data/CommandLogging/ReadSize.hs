@@ -113,4 +113,3 @@ parseReadSize getTxt = do
       Left err -> fail $ "Could not convert read-size: " ++ err
       Right b' -> pure $ MkReadSize b'
     Left err -> fail $ "Could not parse --command-log-read-size size: " <> unpack err
-{-# INLINEABLE parseReadSize #-}

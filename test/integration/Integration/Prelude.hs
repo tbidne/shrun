@@ -19,6 +19,9 @@ module Integration.Prelude
     testProp,
     testProp1,
     testPropN,
+
+    -- * Misc
+    iorefIO,
   )
 where
 
@@ -135,3 +138,6 @@ osPathExt = id
 
 mkIdx :: Int -> CommandIndex
 mkIdx = fromPositive . unsafePositive
+
+iorefIO :: (MonadIO m) => Eff [Prim, IOE] a -> m a
+iorefIO = liftIO . runEff . runPrim

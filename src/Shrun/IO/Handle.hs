@@ -20,12 +20,6 @@ import Data.ByteString qualified as BS
 #if MIN_VERSION_base (4, 19, 0)
 import Data.List qualified as L
 #endif
-import Effects.FileSystem.HandleReader
-  ( MonadHandleReader (hIsClosed),
-    hGetNonBlocking,
-    hIsReadable,
-  )
-import Effects.Time (MonadTime (getMonotonicTime))
 import GHC.Real (RealFrac (floor))
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
@@ -133,15 +127,14 @@ type BufferParams =
 readHandle ::
   ( CanRead p,
     HasCallStack,
-    MonadCatch m,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadTime m
+    HandleReader :> es,
+    Prim :> es,
+    Time :> es
   ) =>
   Maybe BufferParams ->
   Int ->
   Handle p ->
-  m (Tuple2 Double ReadHandleResult)
+  Eff es (Tuple2 Double ReadHandleResult)
 readHandle mBufferParams blockSize handle = do
   readTime <- getMonotonicTime
   fmap (readTime,) $ readHandleRaw blockSize handle >>= \case
@@ -149,7 +142,7 @@ readHandle mBufferParams blockSize handle = do
       -- If we encountered an error but are holding onto a previous log,
       -- let's print it too.
       onJust (pure $ ReadErr err) mBufferParams $ \(prevReadRef, _, _, _) ->
-        readIORef' prevReadRef >>= \case
+        readIORef prevReadRef >>= \case
           Nothing -> pure $ ReadErr err
           Just prevRead -> do
             resetPrevReadRef prevReadRef
@@ -163,19 +156,17 @@ readHandle mBufferParams blockSize handle = do
           [] -> ReadNoData
           (x : xs) -> ReadSuccess (x :| xs)
       Just bufferParams -> readAndUpdateRef bufferParams bs
-{-# INLINEABLE readHandle #-}
 
 -- | Attempts to read from the handle. Returns Left error or Right
 -- success.
 readHandleRaw ::
   ( CanRead p,
     HasCallStack,
-    MonadCatch m,
-    MonadHandleReader m
+    HandleReader :> es
   ) =>
   Int ->
   Handle p ->
-  m (Either (NonEmpty UnlinedText) ByteString)
+  Eff es (Either (NonEmpty UnlinedText) ByteString)
 readHandleRaw blockSize handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as
   -- the former can also throw.
@@ -224,7 +215,6 @@ readHandleRaw blockSize handle = do
           if not isReadable
             then pure $ Just "Handle is not readable"
             else pure Nothing
-{-# INLINEABLE readHandleRaw #-}
 
 -- NOTE: [EOF / blocking error] We would like to check hIsEOF (definitely
 -- causes errors at the end) and probably hReady as well, but these both
@@ -233,17 +223,17 @@ readHandleRaw blockSize handle = do
 
 -- | General handler for combining reads with previous read data.
 readAndUpdateRef ::
-  forall m.
+  forall es.
   ( HasCallStack,
-    MonadIORef m,
-    MonadTime m
+    Prim :> es,
+    Time :> es
   ) =>
   -- | Buffer params.
   BufferParams ->
   -- | Current read.
   ByteString ->
   -- | Result.
-  m ReadHandleResult
+  Eff es ReadHandleResult
 readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) =
   readByteStringPrevHandler
     onNoData
@@ -252,9 +242,9 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
     prevReadRef
   where
     -- 1. No data: Send the prevRead if it exists and breaks the thresholds.
-    onNoData :: m ReadHandleResult
+    onNoData :: Eff es ReadHandleResult
     onNoData =
-      readIORef' prevReadRef
+      readIORef prevReadRef
         >>= \case
           Nothing -> pure ReadNoData
           Just prevRead ->
@@ -263,9 +253,9 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
 
     -- 2. Partial read: Send the data if it breaks the thresholds, prepending
     -- prevRead if it exists.
-    onPartialRead :: UnlinedText -> m ReadHandleResult
+    onPartialRead :: UnlinedText -> Eff es ReadHandleResult
     onPartialRead finalPartialRead =
-      readIORef' prevReadRef >>= \case
+      readIORef prevReadRef >>= \case
         Nothing ->
           maybeToReadHandleResult
             <$> prepareSendIfExceedsThresholds updateRef finalPartialRead
@@ -275,7 +265,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
             <$> prepareSendIfExceedsThresholds updateRef combinedRead
 
     -- 3. Completed reads and partial read.
-    onCompletedAndPartialRead :: NonEmpty UnlinedText -> UnlinedText -> m ReadHandleResult
+    onCompletedAndPartialRead :: NonEmpty UnlinedText -> UnlinedText -> Eff es ReadHandleResult
     onCompletedAndPartialRead completedReads finalPartialRead = do
       completedReads' <- mPrependPrevRead prevReadRef completedReads
       finalPartialResult <- prepareSendIfExceedsThresholds updateRef finalPartialRead
@@ -295,23 +285,23 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
       -- Callback for __not__ sending any data. This is used by
       -- onPartialRead to update its IORef, since the reference will be new.
       -- onNoData does not need it since the reference is already up-to-date.
-      (UnlinedText -> m ()) ->
+      (UnlinedText -> Eff es ()) ->
       -- The data to check.
       UnlinedText ->
-      m (Maybe UnlinedText)
+      Eff es (Maybe UnlinedText)
     prepareSendIfExceedsThresholds onNoSend readData = do
       exceeds <- exceedsThreshold readData
       if exceeds
         then do
           resetPrevReadRef'
           currTime <- getMonotonicTime
-          writeIORef' bufferWriteTimeRef currTime
+          writeIORef bufferWriteTimeRef currTime
           pure $ Just readData
         else do
           onNoSend readData
           pure Nothing
 
-    exceedsThreshold :: UnlinedText -> m Bool
+    exceedsThreshold :: UnlinedText -> Eff es Bool
     exceedsThreshold t =
       if bufferExceedsLength t
         then pure True
@@ -323,10 +313,10 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
         tLen = ShrunText.length t
         bufLen = bufferLength ^. #unBufferLength
 
-    bufferExceedsTime :: m Bool
+    bufferExceedsTime :: Eff es Bool
     bufferExceedsTime = do
       currTime <- getMonotonicTime
-      bufferWriteTime <- readIORef' bufferWriteTimeRef
+      bufferWriteTime <- readIORef bufferWriteTimeRef
 
       let diffTime = floor (currTime - bufferWriteTime)
 
@@ -336,24 +326,21 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
 
-    updateRef = writeIORef' prevReadRef . Just
+    updateRef = writeIORef prevReadRef . Just
 
     maybeToReadHandleResult Nothing = ReadNoData
     maybeToReadHandleResult (Just read) = ReadSuccess (ne read)
-{-# INLINEABLE readAndUpdateRef #-}
 
 -- | Intended for a final read that handles previous read data.
 readAndUpdateRefFinal ::
-  forall m.
-  ( HasCallStack,
-    MonadIORef m
-  ) =>
+  forall es.
+  (Prim :> es) =>
   -- | Previous read.
   IORef (Maybe UnlinedText) ->
   -- | Current read.
   ByteString ->
   -- | Result.
-  m ReadHandleResult
+  Eff es ReadHandleResult
 readAndUpdateRefFinal prevReadRef =
   readByteStringPrevHandler
     onNoData
@@ -362,59 +349,55 @@ readAndUpdateRefFinal prevReadRef =
     prevReadRef
   where
     -- 1. No data: Final read, so send off prevRead if it exists, and reset the ref.
-    onNoData :: m ReadHandleResult
+    onNoData :: Eff es ReadHandleResult
     onNoData =
-      readIORef' prevReadRef >>= \case
+      readIORef prevReadRef >>= \case
         Nothing -> resetPrevReadRef' $> ReadNoData
         Just prevRead -> resetPrevReadRef' $> ReadSuccess (ne prevRead)
 
     -- 2. Partial read: Combine if prevRead exists, send off result.
-    onPartialRead :: UnlinedText -> m ReadHandleResult
+    onPartialRead :: UnlinedText -> Eff es ReadHandleResult
     onPartialRead finalPartialRead = do
-      readIORef' prevReadRef >>= \case
+      readIORef prevReadRef >>= \case
         Nothing -> resetPrevReadRef' $> ReadSuccess (ne finalPartialRead)
         Just prevRead -> resetPrevReadRef' $> ReadSuccess (ne $ prevRead <> finalPartialRead)
 
     -- 3. Completed and partial reads: Combine, send off result.
-    onCompletedAndPartialRead :: NonEmpty UnlinedText -> UnlinedText -> m ReadHandleResult
+    onCompletedAndPartialRead :: NonEmpty UnlinedText -> UnlinedText -> Eff es ReadHandleResult
     onCompletedAndPartialRead completedReads finalPartialRead = do
       completedReads' <- mPrependPrevRead prevReadRef completedReads
       resetPrevReadRef'
       pure $ ReadSuccess $ completedReads' <> ne finalPartialRead
 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
-{-# INLINEABLE readAndUpdateRefFinal #-}
 
 mPrependPrevRead ::
-  (HasCallStack, MonadIORef m) =>
+  (Prim :> es) =>
   IORef (Maybe UnlinedText) ->
   NonEmpty UnlinedText ->
-  m (NonEmpty UnlinedText)
+  Eff es (NonEmpty UnlinedText)
 mPrependPrevRead ref cr@(r :| rs) =
-  readIORef' ref >>= \case
+  readIORef ref >>= \case
     Nothing -> pure cr
     Just prevRead -> resetPrevReadRef' $> prevRead <> r :| rs
   where
     resetPrevReadRef' = resetPrevReadRef ref
-{-# INLINEABLE mPrependPrevRead #-}
 
 -- | Helper for reading a bytestring and handling a previous, partial read.
 readByteStringPrevHandler ::
-  forall m.
-  ( HasCallStack,
-    MonadIORef m
-  ) =>
+  forall es.
+  (Prim :> es) =>
   -- | Callback for no data.
-  m ReadHandleResult ->
+  Eff es ReadHandleResult ->
   -- | Callback for a partial, final read.
-  (UnlinedText -> m ReadHandleResult) ->
+  (UnlinedText -> Eff es ReadHandleResult) ->
   -- | Callback for completed reads _and_ a partial, final read.
-  (NonEmpty UnlinedText -> UnlinedText -> m ReadHandleResult) ->
+  (NonEmpty UnlinedText -> UnlinedText -> Eff es ReadHandleResult) ->
   -- | Reference that stores the previous, partial read.
   IORef (Maybe UnlinedText) ->
   -- | The bytestring for the current read.
   ByteString ->
-  m ReadHandleResult
+  Eff es ReadHandleResult
 readByteStringPrevHandler
   onNoData
   onPartialRead
@@ -430,7 +413,6 @@ readByteStringPrevHandler
     ([], Just finalPartialRead) -> onPartialRead finalPartialRead
     (c : cs, Just finalPartialRead) ->
       onCompletedAndPartialRead (c :| cs) finalPartialRead
-{-# INLINEABLE readByteStringPrevHandler #-}
 
 -- | Reads a bytestring, distinguishing between _complete_ and _partial_
 -- reads. A bytestring is considered _complete_ iff it is terminated with a
@@ -478,9 +460,8 @@ readByteString bs = case BS.unsnoc bs of
   where
     decodeRead = ShrunText.fromText . decodeUtf8Lenient
 
-resetPrevReadRef :: (HasCallStack, MonadIORef m) => IORef (Maybe a) -> m ()
-resetPrevReadRef prevReadRef = writeIORef' prevReadRef Nothing
-{-# INLINEABLE resetPrevReadRef #-}
+resetPrevReadRef :: (Prim :> es) => IORef (Maybe a) -> Eff es ()
+resetPrevReadRef prevReadRef = writeIORef prevReadRef Nothing
 
 -- TODO: Remove once we are past GHC 9.6
 unsnoc :: List a -> Maybe (List a, a)
@@ -495,7 +476,7 @@ unsnoc = L.unsnoc
 -- and not to be prone to stack overflows.
 -- Expressing the recursion via 'foldr' provides for list fusion.
 unsnoc = foldr (\x -> Just . maybe ([], x) (\(~(a, b)) -> (x : a, b))) Nothing
-{-# INLINEABLE unsnoc #-}
+
 
 #endif
 
@@ -506,10 +487,9 @@ ne x = x :| []
 mkHandleParams ::
   ( CanRead p,
     HasCallStack,
-    MonadCatch m,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadTime m
+    HandleReader :> es,
+    Prim :> es,
+    Time :> es
   ) =>
   -- | Read block size.
   Int ->
@@ -527,18 +507,19 @@ mkHandleParams ::
   --  2. Ref for previous partial read (only for read-block-line-buffer
   --     strategy).
   --  3. Read function.
-  m
+  Eff
+    es
     ( Tuple3
         (IORef HandleResult)
         (IORef (Maybe UnlinedText))
-        (m HandleResult)
+        (Eff es HandleResult)
     )
 mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
-  lastReadRef <- newIORef' (0, ReadNoData)
-  prevReadRef <- newIORef' Nothing
+  lastReadRef <- newIORef (0, ReadNoData)
+  prevReadRef <- newIORef Nothing
 
   currTime <- getMonotonicTime
-  bufFlushTimeRef <- newIORef' currTime
+  bufFlushTimeRef <- newIORef currTime
 
   let readFn = case readStrategy of
         ReadBlock -> readHandle Nothing blockSize handle
@@ -547,4 +528,3 @@ mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
            in readHandle (Just outBufferParams) blockSize handle
 
   pure (lastReadRef, prevReadRef, readFn)
-{-# INLINEABLE mkHandleParams #-}

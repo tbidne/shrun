@@ -354,7 +354,7 @@ labVertices :: CommandGraph -> List (LVertex CommandP1)
 labVertices = G.labNodes . view #graph
 
 -- | Finds a labeled vertex. Can fail.
-labVertex :: (HasCallStack, MonadEvaluate m) => CommandGraph -> Vertex -> m (LVertex CommandP1)
+labVertex :: CommandGraph -> Vertex -> Eff es (LVertex CommandP1)
 labVertex cg = fmap G.labNode' . context cg
 
 -- | Retrieves all vertices.
@@ -380,12 +380,9 @@ ctxOutVertices = G.suc'
 
 -- | Given a vertex, retrieves its context.
 context ::
-  ( HasCallStack,
-    MonadEvaluate m
-  ) =>
   CommandGraph ->
   Vertex ->
-  m (Context CommandP1 EdgeLabel)
+  Eff es (Context CommandP1 EdgeLabel)
 context cg = evaluate . force . G.context (cg ^. #graph)
 
 displayCommandIndex :: CommandIndex -> Text

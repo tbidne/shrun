@@ -42,7 +42,6 @@ instance Default (WithDisabled Timeout) where
 parseTimeout :: (Alternative f, MonadFail f) => f Natural -> f Text -> f Timeout
 parseTimeout getNat getTxt =
   (MkTimeout <$> getNat) <|> (getTxt >>= parseTimeoutStr)
-{-# INLINEABLE parseTimeout #-}
 
 parseTimeoutStr :: (MonadFail f) => Text -> f Timeout
 parseTimeoutStr txt = case RT.fromString str of
@@ -55,7 +54,6 @@ parseTimeoutStr txt = case RT.fromString str of
         bad
   where
     str = unpack txt
-{-# INLINEABLE parseTimeoutStr #-}
 
 timeoutMeta :: (IsString a) => Tuple2 Bool (List a)
 timeoutMeta = (True, ["NATURAL", "TIME_STR"])

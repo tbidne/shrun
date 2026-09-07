@@ -9,9 +9,8 @@ import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Time (midday)
 import Data.Time.LocalTime (utc)
-import Effects.Time
+import Effectful.Time.Dynamic
   ( LocalTime (LocalTime),
-    MonadTime (getMonotonicTime, getSystemZonedTime),
     ZonedTime (ZonedTime),
   )
 import Shrun.Command.Types
@@ -123,7 +122,13 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
   cmdIndex <- forAll LGens.genCommandIndex
   keyHide <- forAll LGens.genKeyHide
 
-  let fmt = runFmtConsole . Formatting.formatConsoleLog cmdIndex keyHide baseConsoleLoggingEnv
+  let fmt =
+        runFmtConsole
+          . Formatting.formatConsoleLog
+            @MockEnv
+            cmdIndex
+            keyHide
+            baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
@@ -165,8 +170,20 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmtKeyHideOff = runFmtConsole . Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) baseConsoleLoggingEnv
-      fmtKeyHideOn = runFmtConsole . Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) baseConsoleLoggingEnv
+  let fmtKeyHideOff =
+        runFmtConsole
+          . Formatting.formatConsoleLog
+            @MockEnv
+            (MkCommandIndexSwitch False)
+            (MkKeyHideSwitch False)
+            baseConsoleLoggingEnv
+      fmtKeyHideOn =
+        runFmtConsole
+          . Formatting.formatConsoleLog
+            @MockEnv
+            (MkCommandIndexSwitch False)
+            (MkKeyHideSwitch True)
+            baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -227,7 +244,13 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmt = runFmtConsole . Formatting.formatConsoleLog (MkCommandIndexSwitch False) keyHide baseConsoleLoggingEnv
+  let fmt =
+        runFmtConsole
+          . Formatting.formatConsoleLog
+            @MockEnv
+            (MkCommandIndexSwitch False)
+            keyHide
+            baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -279,8 +302,18 @@ testFormatsCLCommandNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n =
+      Formatting.formatConsoleLog
+        @MockEnv
+        (MkCommandIndexSwitch False)
+        (MkKeyHideSwitch False)
+        (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n =
+      Formatting.formatConsoleLog
+        @MockEnv
+        (MkCommandIndexSwitch False)
+        (MkKeyHideSwitch True)
+        (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLLineTrunc :: TestTree
 testFormatsCLLineTrunc = testCase desc $ do
@@ -313,8 +346,18 @@ testFormatsCLLineTrunc = testCase desc $ do
     desc = "Formats with line truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n =
+      Formatting.formatConsoleLog
+        @MockEnv
+        (MkCommandIndexSwitch False)
+        (MkKeyHideSwitch False)
+        (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n =
+      Formatting.formatConsoleLog
+        @MockEnv
+        (MkCommandIndexSwitch False)
+        (MkKeyHideSwitch True)
+        (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLSpecs :: TestTree
 testFormatsCLSpecs = testCase "Specific specs" $ do
@@ -327,7 +370,11 @@ testFormatsCLSpecs = testCase "Specific specs" $ do
   where
     fmtKeyHideOn =
       runFmtConsole
-        . Formatting.formatConsoleLog (MkCommandIndexSwitch False) (MkKeyHideSwitch True) baseConsoleLoggingEnv
+        . Formatting.formatConsoleLog
+          @MockEnv
+          (MkCommandIndexSwitch False)
+          (MkKeyHideSwitch True)
+          baseConsoleLoggingEnv
 
 testFormatsCLMultiLine :: TestTree
 testFormatsCLMultiLine = testCase "Formats multiline" $ do
@@ -341,11 +388,15 @@ testFormatsCLMultiLine = testCase "Formats multiline" $ do
   where
     fmt =
       runFmtConsole
-        . Formatting.formatConsoleMultiLineLogs (MkCommandIndexSwitch False) (MkKeyHideSwitch False) baseConsoleLoggingEnv
+        . Formatting.formatConsoleMultiLineLogs
+          @MockEnv
+          (MkCommandIndexSwitch False)
+          (MkKeyHideSwitch False)
+          baseConsoleLoggingEnv
 
     expected = "\ESC[91m[Error][] some error\n  more output\ESC[0m"
 
-runFmtConsole :: MockFormat ConsoleLog -> IO Text
+runFmtConsole :: Eff [Reader MockEnv, Concurrent, IOE] ConsoleLog -> IO Text
 runFmtConsole mf = do
   log <- runMockFormat mf
   pure $ log ^. #unConsoleLog
@@ -573,7 +624,7 @@ testFormatsFLLineTrunc = testCase desc $ do
 
 runFormatFileLog :: CommandIndexSwitch -> KeyHideSwitch -> FileLoggingEnv -> Log -> IO Text
 runFormatFileLog cmdIndex keyHide env log = do
-  flog <- runMockTime $ Formatting.formatFileLog @_ @MockTime cmdIndex keyHide env log
+  flog <- runMockTime $ Formatting.formatFileLog @MockEnv cmdIndex keyHide env log
   pure $ flog ^. #unFileLog
 
 -- The mock time our 'MonadTime' returns. Needs to be kept in sync with
@@ -592,7 +643,7 @@ newtype MockEnv = MkMockEnv
 
 mkMockEnv :: IO MockEnv
 mkMockEnv = do
-  tvars <- atomically $ for statuses $ \(i, s) -> do
+  tvars <- runEff $ runConcurrent $ atomically $ for statuses $ \(i, s) -> do
     let idx = toEnum i
         cmd = MkCommandP idx Nothing ("cmd" <> showt i)
     ts <- newTVar' s
@@ -626,38 +677,28 @@ instance HasCommands MockEnv where
 
   getCommandStatusMap = view #commandStatusMap
 
--- Monad with mock implementation for 'MonadTime'.
-newtype MockTime a = MkMockTime (ReaderT MockEnv IO a)
-  deriving newtype
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAtomic,
-      MonadReader MockEnv
-    )
-
-runMockTime :: MockTime a -> IO a
-runMockTime (MkMockTime io) = do
+runMockTime :: Eff [Time, Reader MockEnv, Concurrent, IOE] a -> IO a
+runMockTime m = do
   env <- mkMockEnv
-  runReaderT io env
+  runEff
+    . runConcurrent
+    . runReader env
+    . runTimeMock
+    $ m
 
-instance MonadTime MockTime where
-  getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
-  getMonotonicTime = pure 0
+runTimeMock :: Eff (Time : es) a -> Eff es a
+runTimeMock = interpret_ $ \case
+  GetSystemZonedTime -> pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
+  GetMonotonicTime -> pure 0
+  other -> error $ "runTimeMock unimplemented: " <> showEffectCons other
 
-newtype MockFormat a = MkMockFormat (ReaderT MockEnv IO a)
-  deriving newtype
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAtomic,
-      MonadReader MockEnv
-    )
-
-runMockFormat :: MockFormat a -> IO a
-runMockFormat (MkMockFormat io) = do
+runMockFormat :: Eff [Reader MockEnv, Concurrent, IOE] a -> IO a
+runMockFormat m = do
   env <- mkMockEnv
-  runReaderT io env
+  runEff
+    . runConcurrent
+    . runReader env
+    $ m
 
 baseFileLoggingEnv :: FileLoggingEnv
 baseFileLoggingEnv =

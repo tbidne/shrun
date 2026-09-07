@@ -16,8 +16,8 @@ where
 import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Version (showVersion)
-import Effects.Optparse (validOsPath)
-import Effects.Optparse.Completer qualified as EOC
+import Effectful.Optparse.Completer qualified as EOC
+import Effectful.Optparse.Static (validOsPath)
 import FileSystem.OsString (OsString)
 import FileSystem.OsString qualified as OsString
 import Options.Applicative

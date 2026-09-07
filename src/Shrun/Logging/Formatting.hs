@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | Provides 'Log' formatting functionality.
 module Shrun.Logging.Formatting
   ( -- * High-level
@@ -28,7 +30,7 @@ import Data.Foldable qualified as F
 import Data.List.NonEmpty qualified as NE
 import Data.Monoid (Sum, getSum)
 import Data.Text qualified as T
-import Effects.Time (getSystemTimeString)
+import Effectful.Time.Dynamic (getSystemTimeString)
 import Shrun.Command.Types
   ( CommandP1,
     CommandStatus
@@ -87,19 +89,21 @@ import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
 formatConsoleLog ::
+  forall env es.
   ( HasCallStack,
     HasCommands env,
-    MonadAtomic m,
-    MonadReader env m
+    Concurrent :> es,
+    Reader env :> es
   ) =>
   CommandIndexSwitch ->
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   Log ->
-  m ConsoleLog
+  Eff es ConsoleLog
 formatConsoleLog cmdIndex keyHide consoleLogging log = do
   line <-
     coreFormatting
+      @env
       False
       ((,Nothing) <$> consoleLogging ^. #lineTrunc)
       (consoleLogging ^. #commandNameTrunc)
@@ -125,16 +129,17 @@ formatConsoleLog cmdIndex keyHide consoleLogging log = do
 -- | Like 'formatConsoleLog', but for multiple logs. Concatenates all
 -- together with a newline.
 formatConsoleMultiLineLogs ::
+  forall env es.
   ( HasCallStack,
     HasCommands env,
-    MonadAtomic m,
-    MonadReader env m
+    Concurrent :> es,
+    Reader env :> es
   ) =>
   CommandIndexSwitch ->
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   NonEmpty Log ->
-  m ConsoleLog
+  Eff es ConsoleLog
 formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs@(l :| _) =
   fmap
     ( UnsafeConsoleLog
@@ -149,6 +154,7 @@ formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs@(l :| _) =
   where
     mkLine (prefixSpace, log) =
       coreFormatting
+        @env
         prefixSpace
         ((,Nothing) <$> consoleLogging ^. #lineTrunc)
         (consoleLogging ^. #commandNameTrunc)
@@ -165,17 +171,18 @@ maybeApply = maybe id
 
 -- | Formats a 'Log' into a 'FileLog'. Applies prefix and timestamp.
 formatFileLog ::
+  forall env es.
   ( HasCallStack,
     HasCommands env,
-    MonadAtomic m,
-    MonadReader env m,
-    MonadTime m
+    Concurrent :> es,
+    Reader env :> es,
+    Time :> es
   ) =>
   CommandIndexSwitch ->
   KeyHideSwitch ->
   FileLoggingEnv ->
   Log ->
-  m FileLog
+  Eff es FileLog
 formatFileLog cmdIndex keyHide fileLogging log = do
   currTime <- getSystemTimeString
   let timestamp = brackets (pack currTime)
@@ -183,6 +190,7 @@ formatFileLog cmdIndex keyHide fileLogging log = do
 
   line <-
     coreFormatting
+      @env
       False
       ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
       (fileLogging ^. #commandNameTrunc)
@@ -200,7 +208,6 @@ formatFileLog cmdIndex keyHide fileLogging log = do
           ]
 
   pure $ UnsafeFileLog withTimestamp
-{-# INLINEABLE formatFileLog #-}
 
 zipMultilineSpacePrefix :: NonEmpty a -> NonEmpty (Bool, a)
 zipMultilineSpacePrefix = NE.zip (False :| [True, True ..])
@@ -208,17 +215,18 @@ zipMultilineSpacePrefix = NE.zip (False :| [True, True ..])
 -- | Like 'formatFileLog', but for multiple logs. Concatenates all
 -- together.
 formatFileMultiLineLogs ::
+  forall env es.
   ( HasCallStack,
     HasCommands env,
-    MonadAtomic m,
-    MonadReader env m,
-    MonadTime m
+    Concurrent :> es,
+    Reader env :> es,
+    Time :> es
   ) =>
   CommandIndexSwitch ->
   KeyHideSwitch ->
   FileLoggingEnv ->
   NonEmpty Log ->
-  m FileLog
+  Eff es FileLog
 formatFileMultiLineLogs cmdIndex keyHide fileLogging logs = do
   currTime <- getSystemTimeString
   let timestamp = brackets (pack currTime)
@@ -231,6 +239,7 @@ formatFileMultiLineLogs cmdIndex keyHide fileLogging logs = do
                 else withTimestamp
         withTs
           <$> coreFormatting
+            @env
             prefixSpace
             ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
             (fileLogging ^. #commandNameTrunc)
@@ -261,7 +270,6 @@ formatFileMultiLineLogs cmdIndex keyHide fileLogging logs = do
     . traverse mkLine
     . zipMultilineSpacePrefix
     $ logs
-{-# INLINEABLE formatFileMultiLineLogs #-}
 
 -- | Core formatting, shared by console and file logs. Basic idea:
 --
@@ -277,10 +285,11 @@ formatFileMultiLineLogs cmdIndex keyHide fileLogging logs = do
 --    line truncation is 15, then we only have 5 chars for the message before
 --    truncation kicks in.
 coreFormatting ::
+  forall env t es.
   ( HasCallStack,
     HasCommands env,
-    MonadAtomic m,
-    MonadReader env m
+    Concurrent :> es,
+    Reader env :> es
   ) =>
   -- | If true, the prefix is replaced with whitespace. This is for multiline,
   -- final logs, where we only want the prefix on the first line. Normal usage
@@ -310,7 +319,7 @@ coreFormatting ::
   KeyHideSwitch ->
   -- | Log to format
   Log ->
-  m Text
+  Eff es Text
 coreFormatting
   spacePrefix
   mLineTrunc
@@ -357,7 +366,7 @@ coreFormatting
     pure $ concatWithLineTrunc mLineTrunc finalPrefix (msgStripped ^. #unLogMessage)
     where
       mkStatus = do
-        statusMap <- getReadCommandStatus <&> view #unCommandStatusMap
+        statusMap <- getReadCommandStatus @env <&> view #unCommandStatusMap
         let countStatuses (_, status) = case status of
               CommandWaiting -> (1, 0, 0, 0)
               CommandRunning _ -> (0, 1, 0, 0)

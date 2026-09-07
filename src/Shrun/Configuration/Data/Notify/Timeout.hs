@@ -50,7 +50,6 @@ parseNotifyTimeout getTxt = do
   case U.readStripUnderscores @_ @Natural txt of
     Just nNat -> pure $ NotifyTimeoutMillis $ unsafeFromNatSec nNat
     Nothing -> parseNotifyTimeoutStr txt
-{-# INLINEABLE parseNotifyTimeout #-}
 
 unsafeFromNatSec :: Natural -> Int
 unsafeFromNatSec = unsafeConvertIntegral . (* 1_000)
@@ -72,7 +71,6 @@ parseNotifyTimeoutStr txt = case RT.fromString str of
         bad
   where
     str = unpack txt
-{-# INLINEABLE parseNotifyTimeoutStr #-}
 
 notifyTimeoutMeta :: (IsString a) => Tuple2 Bool (List a)
 notifyTimeoutMeta = (True, ["NATURAL", "TIME_STR"])

@@ -5,7 +5,7 @@ module Functional.Examples.Core (tests) where
 
 import Data.Aeson qualified as Asn
 import Data.Set qualified as Set
-import Effects.FileSystem.PathReader (XdgDirectory (XdgState))
+import Effectful.FileSystem.PathReader.Dynamic (XdgDirectory (XdgState))
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Shrun.Configuration.Data.LegendKeysCache
@@ -177,8 +177,8 @@ testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr
         mkPath p = [ospPathSep|test/functional/|] </> p
 
 mkEnv :: OsPath -> IO ConfigIOEnv
-mkEnv d = do
-  logs <- newIORef' []
+mkEnv d = runEff $ runPrim $ do
+  logs <- newIORef []
   pure
     $ MkConfigIOEnv
       { cwdDir = Nothing,
@@ -189,7 +189,7 @@ mkEnv d = do
       }
 
 readLines :: OsPath -> IO KeyCache
-readLines p = do
+readLines p = runEff $ runFileReader $ runPathReader $ do
   exists <- doesFileExist p
   if exists
     then do

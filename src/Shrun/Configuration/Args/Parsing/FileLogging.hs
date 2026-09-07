@@ -4,7 +4,7 @@ module Shrun.Configuration.Args.Parsing.FileLogging
   )
 where
 
-import Effects.Optparse.Completer qualified as EOC
+import Effectful.Optparse.Completer qualified as EOC
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils

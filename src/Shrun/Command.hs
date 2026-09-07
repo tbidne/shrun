@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 module Shrun.Command
   ( -- * Primary
     runCommands,
@@ -9,7 +11,7 @@ where
 
 import Data.HashMap.Strict qualified as Map
 import Data.Text qualified as T
-import Effects.Concurrent.Async qualified as Async
+import Effectful.Concurrent.Async qualified as Async
 import Shrun.Command.Types
   ( CommandP1,
     CommandStatus
@@ -35,7 +37,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as Formatting
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
+import Shrun.Logging.RegionLogger (RegionLogger, withRegion)
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelError, LevelWarn),
@@ -46,54 +48,45 @@ import Shrun.Prelude
 
 -- | Responsible for scheduling commands.
 runCommands ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAsync m,
-    MonadAtomic m,
-    MonadEvaluate m,
-    MonadMVar m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadThrow m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Individual command runner.
-  ((HasCallStack) => CommandP1 -> m ()) ->
-  m ()
+  ((HasCallStack) => CommandP1 -> Eff es ()) ->
+  Eff es ()
 runCommands runner = do
-  cdg <- asks getCommandDepGraph
-  commandStatusMap <- asks getCommandStatusMap
+  cdg <- asks @env getCommandDepGraph
+  commandStatusMap <- asks @env getCommandStatusMap
   let roots = cdg ^. #roots
   vtxSemMap <- mkVertexSemMap cdg
-  Async.mapConcurrently_ (runCommand runner cdg commandStatusMap vtxSemMap) roots
-{-# INLINEABLE runCommands #-}
+  Async.mapConcurrently_ (runCommand @env @r runner cdg commandStatusMap vtxSemMap) roots
 
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
 -- each command at most once.
-mkVertexSemMap :: (MonadMVar m) => CommandGraph -> m (HashMap Vertex (MVar ()))
+mkVertexSemMap :: (Concurrent :> es) => CommandGraph -> Eff es (HashMap Vertex (MVar ()))
 mkVertexSemMap =
   fmap Map.fromList
-    . traverse (\v -> (v,) <$> newMVar' ())
+    . traverse (\v -> (v,) <$> newMVar ())
     . Graph.vertices
-{-# INLINEABLE mkVertexSemMap #-}
 
 runCommand ::
-  forall m env.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAsync m,
-    MonadAtomic m,
-    MonadEvaluate m,
-    MonadMVar m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadThrow m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Individual command runner.
-  ((HasCallStack) => CommandP1 -> m ()) ->
+  ((HasCallStack) => CommandP1 -> Eff es ()) ->
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
@@ -103,7 +96,7 @@ runCommand ::
   HashMap Vertex (MVar ()) ->
   -- | Vertex to run.
   Vertex ->
-  m ()
+  Eff es ()
 runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
   where
     go prevVertex vertex = do
@@ -111,14 +104,14 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
       status <- getPredecessorsStatus cdg commandStatusMap vertex
       case status of
         PredecessorUnfinished depV ->
-          Logging.logDebug $ \lvl -> do
-            logCommandAction cdg lvl prevVertex debugMsg (Just depV) vertex
+          Logging.logDebug @env $ \lvl -> do
+            logCommandAction @env @r cdg lvl prevVertex debugMsg (Just depV) vertex
         PredecessorFailure failExpected depV -> do
           if failExpected
             then
-              logCommandAction cdg LevelWarn prevVertex failOkMsg (Just depV) vertex
+              logCommandAction @env @r cdg LevelWarn prevVertex failOkMsg (Just depV) vertex
             else
-              logCommandAction cdg LevelError prevVertex errMsg (Just depV) vertex
+              logCommandAction @env @r cdg LevelError prevVertex errMsg (Just depV) vertex
         PredecessorSuccess -> do
           case Map.lookup vertex vtxSemMap of
             Nothing ->
@@ -154,11 +147,11 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
               -- We never restore the MVar (because a command should only
               -- be run at most once), so the only sensible thing we can do
               -- is exit.
-              tryTakeMVar' mvar >>= \case
+              tryTakeMVar mvar >>= \case
                 Nothing ->
                   -- No MVar, print a message and leave.
-                  Logging.logDebug $ \lvl -> do
-                    logCommandAction cdg lvl prevVertex alreadyRunningMsg Nothing vertex
+                  Logging.logDebug @env $ \lvl -> do
+                    logCommandAction @env @r cdg lvl prevVertex alreadyRunningMsg Nothing vertex
                 Just () -> do
                   -- We are not blocked. Run the command and kick off all
                   -- successors.
@@ -166,8 +159,8 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
                   let (_, cmd) = Graph.ctxLabVertex ctx
                       outNodes = Graph.ctxOutVertices ctx
 
-                  Logging.logDebug $ \lvl -> do
-                    logCommandAction cdg lvl prevVertex startMsg Nothing vertex
+                  Logging.logDebug @env $ \lvl -> do
+                    logCommandAction @env @r cdg lvl prevVertex startMsg Nothing vertex
 
                   runner cmd
                   Async.mapConcurrently_ (go (Just vertex)) outNodes
@@ -212,7 +205,6 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
           cmdTxt,
           "' is already running."
         ]
-{-# INLINEABLE runCommand #-}
 
 -- | Given a vertex v, 'PredecessorResult' represents the status of all of
 -- its predecessors. Note that this refers to the status of the
@@ -258,15 +250,14 @@ instance Monoid PredecessorResult where
 -- | Get result of all predecessor nodes. We only progress if all have finished
 -- and each result matches the expectation (e.g. CommandSuccess and EdgeSucces).
 getPredecessorsStatus ::
-  forall m.
+  forall es.
   ( HasCallStack,
-    MonadAtomic m,
-    MonadThrow m
+    Concurrent :> es
   ) =>
   CommandGraph ->
   TCommandStatusMap ->
   Vertex ->
-  m PredecessorResult
+  Eff es PredecessorResult
 getPredecessorsStatus cdg commandStatusMap v =
   -- Do all the processing in one transaction. STM inherits its type's monoid
   -- instance, so this satisfies:
@@ -304,17 +295,16 @@ getPredecessorsStatus cdg commandStatusMap v =
                 (CommandFailure, EdgeAnd) -> PredecessorFailure False p
                 (CommandFailure, EdgeOr) -> PredecessorSuccess
                 (CommandFailure, EdgeAny) -> PredecessorSuccess
-{-# INLINEABLE getPredecessorsStatus #-}
 
 logCommandAction ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadEvaluate m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Dependency graph
   CommandGraph ->
@@ -330,9 +320,9 @@ logCommandAction ::
   Maybe Vertex ->
   -- | Command vertex that will not be run.
   Vertex ->
-  m ()
+  Eff es ()
 logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
-  commonLogging <- asks getCommonLogging
+  commonLogging <- asks @env getCommonLogging
   thisCmd <- nodeToCommand vertex
   prevCmd <- for mPrevVertex nodeToCommand
   let cmdIndex = commonLogging ^. #commandIndex
@@ -360,7 +350,7 @@ logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
             mode = LogModeFinish
           }
 
-  withRegion Linear $ \r -> Logging.putRegionLog r log
+  withRegion @r Linear $ \r -> Logging.putRegionLog @env r log
   where
     nodeToCommand = fmap (view _2) . Graph.labVertex cdg
 
@@ -371,4 +361,3 @@ logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
         . unpack
         . prettyToText
         . Command.Types.fromVertex
-{-# INLINEABLE logCommandAction #-}

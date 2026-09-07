@@ -29,7 +29,6 @@ mergeNotifySystem mArgs mToml =
 -- | Parses 'NotifySystemOs'.
 parseNotifySystem :: (MonadFail m) => m Text -> m NotifySystem
 parseNotifySystem = (>>= Utils.inverseMapFail display "notify-system" notifySystemMeta)
-{-# INLINEABLE parseNotifySystem #-}
 
 -- | Available 'NotifySystem' strings.
 notifySystemMeta :: (IsString a) => Tuple2 Bool (List a)

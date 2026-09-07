@@ -45,14 +45,13 @@ import Shrun.Utils qualified as Utils
 -- queues.
 mergeConfig ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadIORef m,
-    MonadTerminal m
+    Prim :> es,
+    Terminal :> es
   ) =>
   Args notifyEnv ->
   Toml notifyEnv ->
   Seq OsPath ->
-  m (MergedConfig notifyEnv)
+  Eff es (MergedConfig notifyEnv)
 mergeConfig args toml tomlPaths = do
   cmdsText <- case args ^. #commands of
     [] -> throwText "Shrun requires at least one command."
@@ -101,14 +100,10 @@ mergeConfig args toml tomlPaths = do
 
     wEdgeArgs = args ^. #edges
     cliEdgeArgs = D.fromMaybe (wEdgeArgs >>= WD.toMaybe)
-{-# INLINEABLE mergeConfig #-}
 
 -- | Retrieves legend map.
 tomlToLegendMap ::
-  ( HasCallStack,
-    MonadThrow m
-  ) =>
+  (HasCallStack) =>
   Toml notifyEnv ->
-  m (Maybe LegendMap)
+  Eff es (Maybe LegendMap)
 tomlToLegendMap toml = for (toml ^. #legend) Legend.linesToMap
-{-# INLINEABLE tomlToLegendMap #-}

@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -11,7 +12,7 @@ module Shrun.Notify
 where
 
 import Data.Text qualified as T
-import Effects.Notify qualified as Notify
+import Effectful.Notify.Dynamic qualified as Notify
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommands,
@@ -22,7 +23,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging qualified as Logging
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
+import Shrun.Logging.RegionLogger (RegionLogger, withRegion)
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelError, LevelWarn),
@@ -44,19 +45,17 @@ fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
 -- | Sends a notification if they are With (linux only). Logs any failed
 -- sends.
 sendNotif ::
-  forall m env notifyEnv.
+  forall env r notifyEnv es.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
-    HasLogging env m,
+    HasLogging env r,
     HasNotifyConfig env notifyEnv,
-    MonadAtomic m,
-    MonadCatch m,
-    MonadNotify m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    Concurrent :> es,
+    Notify notifyEnv :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   -- | Notif summary
   NotifyMessage ->
@@ -64,7 +63,7 @@ sendNotif ::
   NotifyMessage ->
   -- | Notif urgency
   NotifyUrgency ->
-  m ()
+  Eff es ()
 sendNotif summary body urgency = do
   asks (getNotifyConfig @env @notifyEnv) >>= \case
     Nothing -> pure ()
@@ -79,11 +78,11 @@ sendNotif summary body urgency = do
         Left notifyEx ->
           -- Warn if this is a known exception.
           case warnEx notifyEx of
-            Just warn -> withRegion Linear (logWarn warn)
-            Nothing -> withRegion Linear (logEx notifyEx)
+            Just warn -> withRegion @r Linear (logWarn warn)
+            Nothing -> withRegion @r Linear (logEx notifyEx)
 
     logWarn msg r =
-      Logging.putRegionLog r
+      Logging.putRegionLog @env r
         $ MkLog
           { cmd = Nothing,
             msg,
@@ -93,8 +92,8 @@ sendNotif summary body urgency = do
 
     logEx ex r = do
       -- set exit code
-      setAnyErrorTrue
-      Logging.putRegionLog r
+      setAnyErrorTrue @env
+      Logging.putRegionLog @env r
         $ MkLog
           { cmd = Nothing,
             msg =

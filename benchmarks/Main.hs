@@ -3,10 +3,11 @@
 module Main (main) where
 
 import Bench.Prelude
-import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.PathWriter qualified as WDir
+import Effectful.FileSystem.PathReader.Dynamic qualified as RDir
+import Effectful.FileSystem.PathWriter.Dynamic qualified as WDir
 import Shrun.Prelude hiding (IO)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
+import System.IO qualified as IO
 import Test.Tasty.Bench
   ( Benchmark,
     bench,
@@ -87,7 +88,7 @@ bashLoop :: String -> String
 bashLoop bound = "for i in {1.." ++ bound ++ "}; do echo ${i}; done"
 
 setup :: IO OsPath
-setup = do
+setup = runEff $ runPathWriter $ runPathReader $ do
   testDir <-
     (\tmp -> tmp </> [osp|shrun|] </> [osp|bench|])
       <$> RDir.getTemporaryDirectory
@@ -97,9 +98,9 @@ setup = do
 teardown :: OsPath -> IO ()
 teardown testDir = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
-    cleanup = WDir.removePathForcibly testDir
+    cleanup = runEff $ runPathWriter $ WDir.removePathForcibly testDir
     doNothing =
-      putStrLn
+      IO.putStrLn
         $ "*** Not cleaning up tmp dir: '"
         <> decodeLenient testDir
         <> "'"

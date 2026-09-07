@@ -112,10 +112,10 @@ specs =
 
 examplesConfig :: TestTree
 examplesConfig = testProp1 desc "examplesConfig" $ do
-  logsRef <- liftIO $ newIORef' []
+  logsRef <- iorefIO $ newIORef []
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef' logsRef
+  logs <- iorefIO $ readIORef logsRef
   [] === logs
   where
     desc = "examples/config.toml is valid"

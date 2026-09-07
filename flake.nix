@@ -19,6 +19,17 @@
       inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    effectful-libs = {
+      url = "github:tbidne/effectful-libs";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+
+      inputs.algebra-simple.follows = "algebra-simple";
+      inputs.bounds.follows = "bounds";
+      inputs.exception-utils.follows = "exception-utils";
+      inputs.fs-utils.follows = "fs-utils";
+    };
     exception-utils = {
       url = "github:tbidne/exception-utils";
       inputs.flake-parts.follows = "flake-parts";
@@ -30,18 +41,6 @@
       inputs.flake-parts.follows = "flake-parts";
       inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    monad-effects = {
-      url = "github:tbidne/monad-effects";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.nix-hs-utils.follows = "nix-hs-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-
-      inputs.algebra-simple.follows = "algebra-simple";
-      inputs.bounds.follows = "bounds";
-      inputs.exception-utils.follows = "exception-utils";
-      inputs.fs-utils.follows = "fs-utils";
-      inputs.smart-math.follows = "smart-math";
     };
     relative-time = {
       url = "github:tbidne/relative-time";
@@ -89,13 +88,41 @@
               final: prev:
               {
                 Cabal-syntax_3_10_3_0 = hlib.doJailbreak prev.Cabal-syntax_3_10_3_0;
+                effectful = (
+                  final.callHackageDirect {
+                    pkg = "effectful";
+                    ver = "2.7.1.0";
+                    sha256 = "sha256-1jr7uWldG/qzNljv41c8ustRFNLnD9DuOFBmL3BYT6g=";
+                  } { }
+                );
+                effectful-core = (
+                  final.callHackageDirect {
+                    pkg = "effectful-core";
+                    ver = "2.7.1.2";
+                    sha256 = "sha256-OZhGk0UY3BMWF+oUAQnCvF3hnzscBCm0Cz+nz8p2XM8=";
+                  } { }
+                );
                 fourmolu = hlib.doJailbreak prev.fourmolu;
                 hspec-golden = hlib.doJailbreak prev.hspec-golden;
+                nonempty-containers = (
+                  final.callHackageDirect {
+                    pkg = "nonempty-containers";
+                    ver = "0.3.6.0";
+                    sha256 = "sha256-EwkzftJTDWw4EHUTZTch1ArgIzx5bez+oaImpMOpXYQ=";
+                  } { }
+                );
                 ormolu = hlib.doJailbreak prev.ormolu;
                 # TODO: Would be great to be able to remove this (when it's
                 # the default in nixpkgs) as overriding forces a rebuild of
                 # many packages, hence makes the dev shell slow.
                 optparse-applicative = prev.optparse-applicative_0_19_0_0;
+                strict-mutable-base = (
+                  final.callHackageDirect {
+                    pkg = "strict-mutable-base";
+                    ver = "2.0.0.0";
+                    sha256 = "sha256-3o2PMN8l56X7ULqyNNJrJQZ8xgqqOsxhjm0jfULQt+k=";
+                  } { }
+                );
                 stylish-haskell = hlib.doJailbreak prev.stylish-haskell;
               }
               // nix-hs-utils.mkLibs inputs final [
@@ -107,20 +134,17 @@
                 "si-bytes"
                 "smart-math"
               ]
-              // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
-                "effects-async"
-                "effects-env"
-                "effects-evaluate"
-                "effects-fs"
-                "effects-ioref"
-                "effects-optparse"
-                "effects-notify"
-                "effects-process"
-                "effects-stm"
-                "effects-terminal"
-                "effects-thread"
-                "effects-time"
-                "effects-unix"
+              // nix-hs-utils.mkRelLibs "${inputs.effectful-libs}/lib" final [
+                "concurrent-effectful"
+                "effectful-utils"
+                "environment-effectful"
+                "fs-effectful"
+                "notify-effectful"
+                "optparse-effectful"
+                "stm-effectful"
+                "terminal-effectful"
+                "time-effectful"
+                "unix-effectful"
               ];
           };
           hlib = pkgs.haskell.lib;

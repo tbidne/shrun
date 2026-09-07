@@ -28,7 +28,6 @@ instance Pretty FileMode where
 
 parseFileMode :: (MonadFail m) => m Text -> m FileMode
 parseFileMode = (>>= Utils.inversePrettyFail "file-mode" fileModeMeta)
-{-# INLINEABLE parseFileMode #-}
 
 instance Default FileMode where
   def = FileModeWrite

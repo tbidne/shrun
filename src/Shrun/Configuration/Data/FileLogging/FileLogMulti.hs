@@ -35,7 +35,6 @@ instance Pretty FileLogMulti where
 
 parseFileLogMulti :: (MonadFail m) => m Text -> m FileLogMulti
 parseFileLogMulti = (>>= Utils.inversePrettyFail "multi" fileLogMultiMeta)
-{-# INLINEABLE parseFileLogMulti #-}
 
 fileLogMultiMeta :: (IsString a) => Tuple2 Bool (List a)
 fileLogMultiMeta = (False, ["on", "auto", "off"])

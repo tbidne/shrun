@@ -52,6 +52,44 @@
         "type": "github"
       }
     },
+    "effectful-libs": {
+      "inputs": {
+        "algebra-simple": [
+          "algebra-simple"
+        ],
+        "bounds": [
+          "bounds"
+        ],
+        "exception-utils": [
+          "exception-utils"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "fs-utils": [
+          "fs-utils"
+        ],
+        "nix-hs-utils": [
+          "nix-hs-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789078633,
+        "narHash": "sha256-uwRqOmO+NsG3kyuAwI1KzpJ1Iw+KlgWAtdgYnVbpKV8=",
+        "owner": "tbidne",
+        "repo": "effectful-libs",
+        "rev": "8b7f71a267e09fc8cb6797162f937e75368bb0b8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "effectful-libs",
+        "type": "github"
+      }
+    },
     "exception-utils": {
       "inputs": {
         "flake-parts": [
@@ -119,47 +157,6 @@
       "original": {
         "owner": "tbidne",
         "repo": "fs-utils",
-        "type": "github"
-      }
-    },
-    "monad-effects": {
-      "inputs": {
-        "algebra-simple": [
-          "algebra-simple"
-        ],
-        "bounds": [
-          "bounds"
-        ],
-        "exception-utils": [
-          "exception-utils"
-        ],
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "fs-utils": [
-          "fs-utils"
-        ],
-        "nix-hs-utils": [
-          "nix-hs-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "smart-math": [
-          "smart-math"
-        ]
-      },
-      "locked": {
-        "lastModified": 1784494493,
-        "narHash": "sha256-L7NwwqVt8VNSI2GRsAwv4WTfUKuBr2NJodv/tJRCIdw=",
-        "owner": "tbidne",
-        "repo": "monad-effects",
-        "rev": "ebb962e4d3b41d352cb3f24fbe12488cad5f0bef",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tbidne",
-        "repo": "monad-effects",
         "type": "github"
       }
     },
@@ -245,10 +242,10 @@
       "inputs": {
         "algebra-simple": "algebra-simple",
         "bounds": "bounds",
+        "effectful-libs": "effectful-libs",
         "exception-utils": "exception-utils",
         "flake-parts": "flake-parts",
         "fs-utils": "fs-utils",
-        "monad-effects": "monad-effects",
         "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
         "relative-time": "relative-time",

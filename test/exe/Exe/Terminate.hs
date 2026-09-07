@@ -4,11 +4,11 @@
 
 module Exe.Terminate (tests) where
 
+import Control.Concurrent.Async qualified as Async
 import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
-import Effects.Concurrent.Async qualified as Async
-import Effects.FileSystem.PathReader qualified as PR
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
 import Shrun.Prelude
 import Test.Shrun.Logger qualified as Test.Logger
 import Test.Shrun.Process qualified as Test.Process
@@ -65,7 +65,7 @@ runTest testDir idx tp = testCase ("TEST " ++ show idx ++ ": " ++ desc) $ do
   bracket (testSetup testDir tp) (testTeardown testDir) $ \(cmd, shrunPid) -> do
     -- 1. Kill shrun, give it time to clean up.
     killPid testDir (tp ^. #signalType) shrunPid True
-    sleep testDelay
+    runEff $ runConcurrent $ sleep testDelay
     -- 2. Get the output, assert processes have been killed.
     output <- runPs testDir
 
@@ -306,7 +306,7 @@ runShrun testDir tp = do
         | "Received cancel after running for" `T.isInfixOf` pack msg -> Test.Logger.putLogLines testDir msg
         | "Timed out" `T.isInfixOf` pack msg -> Test.Logger.putLogLines testDir msg
         | otherwise -> do
-            cs <- PR.listDirectory testDir
+            cs <- runEff $ PR.runPathReader $ PR.listDirectory testDir
             Test.Logger.putLogLines testDir
               $ mconcat
                 [ show testDir,
@@ -388,7 +388,7 @@ testSetup testDir tp = do
   -- Thus we surround this logic w/ onException which kills the process by
   -- name.
   cmd <- runShrun testDir tp
-  sleep shrunDelay
+  runEff $ runConcurrent $ sleep shrunDelay
   let getPid = do
         output1 <- runPs testDir
         -- The ps output on CI seems to be between 2 (osx) and 4 (linux)

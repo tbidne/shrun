@@ -56,7 +56,6 @@ instance Pretty NotifyActionComplete where
 -- | Parses 'NotifyActionComplete'.
 parseNotifyAction :: (MonadFail m) => Text -> m NotifyActionComplete
 parseNotifyAction = Utils.inversePrettyFail "notify-action-complete" notifyActionMeta
-{-# INLINEABLE parseNotifyAction #-}
 
 -- | Available 'NotifyActionComplete' strings.
 notifyActionMeta :: (IsString a) => Tuple2 Bool (List a)

@@ -172,16 +172,15 @@ deriving stock instance Show (CoreConfigP ConfigPhaseMerged r)
 
 mergeCoreConfig ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadIORef m,
-    MonadTerminal m
+    Prim :> es,
+    Terminal :> es
   ) =>
   CommandGraph ->
   CoreConfigArgs r ->
   CoreConfigToml r ->
-  m (CoreConfigMerged r)
+  Eff es (CoreConfigMerged r)
 mergeCoreConfig cmdGraph args toml = do
-  detectRef <- newIORef' DetectNotRun
+  detectRef <- newIORef DetectNotRun
 
   consoleLogging <-
     mergeConsoleLogging
@@ -227,27 +226,24 @@ mergeCoreConfig cmdGraph args toml = do
         fileLogging,
         notifications
       }
-{-# INLINEABLE mergeCoreConfig #-}
 
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
 -- continuation.
 withCoreEnv ::
-  forall m r a.
+  forall r a es.
   ( HasCallStack,
-    MonadAtomic m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadMask m,
-    MonadNotify m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadTerminal m,
-    NotifyEnvF m ~ r
+    Concurrent :> es,
+    FileWriter :> es,
+    HandleWriter :> es,
+    Notify r :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    Terminal :> es
   ) =>
   CoreConfigMerged r ->
-  (CoreConfigEnv r -> m a) ->
-  m a
+  (CoreConfigEnv r -> Eff es a) ->
+  Eff es a
 withCoreEnv merged onCoreConfigEnv = do
   notifications <- traverse Notify.toEnv (merged ^. #notifications)
 
@@ -264,7 +260,6 @@ withCoreEnv merged onCoreConfigEnv = do
               notifications
             }
      in onCoreConfigEnv coreConfigEnv
-{-# INLINEABLE withCoreEnv #-}
 
 instance Default (CoreConfigP ConfigPhaseArgs r) where
   def =

@@ -63,6 +63,12 @@ module Functional.Prelude
     withFinishedPrefix,
     withKilledPrefix,
 
+    -- * IO
+    doesDirectoryExistIO,
+    doesFileExistIO,
+    removeFileIfExistsIO_,
+    withTimingIO,
+
     -- * Misc
     assertList,
     configPath,
@@ -78,11 +84,13 @@ where
 import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
-import Effects.Concurrent.Async qualified as Async
+import Effectful.Concurrent.Async qualified as Async
 import FileSystem.OsPath as X (combineFilePaths)
 import Functional.Prelude.FuncEnv
   ( ConfigIOEnv (MkConfigIOEnv, cwdDir, logs, xdgDir),
     FuncEnv (MkFuncEnv, coreEnv, logs, shrunNotes),
+    runNotifyFuncEnv,
+    runRegionLoggerFuncEnv,
     unConfigIO,
   )
 import Functional.ReadStrategyTest
@@ -96,6 +104,7 @@ import Functional.ReadStrategyTest qualified as ReadStrategyTest
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Prelude as X
+import System.IO qualified as IO
 import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Tasty as X
   ( TestTree,
@@ -217,12 +226,12 @@ baseRunner mConfigIOEnv mExProxy argList = do
 
     printLogs :: IORef (List Text) -> IO ()
     printLogs ls = do
-      logs <- readIORef' ls
+      logs <- readIORefIO ls
 
-      putStrLn "\n*** LOGS ***\n"
+      IO.putStrLn "\n*** LOGS ***\n"
 
-      for_ logs (putStrLn . unpack)
-      putStrLn ""
+      for_ logs (IO.putStrLn . unpack)
+      IO.putStrLn ""
 
 -- | Runs shrun potentially catching an expected exception.
 runExceptionE ::
@@ -246,9 +255,12 @@ runCancelled ::
 runCancelled secToSleep argList = do
   (action, configLogs, ls, shrunNotes) <- mkShrunAction Nothing argList
 
-  Async.withAsync action $ \async -> do
-    sleep secToSleep
-    Async.cancel async
+  runEff
+    $ runConcurrent
+    $ Async.withAsync (liftIO action)
+    $ \async -> do
+      sleep secToSleep
+      Async.cancel async
 
   (\(_, y, z) -> (y, z)) <$> readRefs configLogs ls shrunNotes
 
@@ -257,9 +269,9 @@ mkShrunAction ::
   List String ->
   IO (Tuple4 (IO ()) (IORef (List Text)) (IORef (List Text)) (IORef (List Note)))
 mkShrunAction mConfigIOEnv argList = do
-  configLogsRef <- newIORef' []
-  ls <- newIORef' []
-  shrunNotes <- newIORef' []
+  configLogsRef <- newIORefIO []
+  ls <- newIORefIO []
+  shrunNotes <- newIORefIO []
 
   configIOEnv <- case mConfigIOEnv of
     Nothing -> do
@@ -273,7 +285,8 @@ mkShrunAction mConfigIOEnv argList = do
 
   -- Always run the config stage via ConfigIO.
   let action = do
-        usingReaderT configIOEnv
+        runEff
+          . runReader configIOEnv
           . unConfigIO
           . withArgs argList
           . Env.withEnv
@@ -285,7 +298,11 @@ mkShrunAction mConfigIOEnv argList = do
                       shrunNotes
                     }
 
-            SR.runShellT SR.shrun funcEnv
+            runReader funcEnv
+              . runNotifyFuncEnv
+              . runPosixSignals
+              . runRegionLoggerFuncEnv
+              $ SR.shrun @FuncEnv @() @()
 
   pure (action, configLogsRef, ls, shrunNotes)
 
@@ -296,9 +313,9 @@ readRefs ::
   IO (List Text, List ResultText, List Note)
 readRefs configLogs ls ns =
   (,,)
-    <$> (L.reverse <$> readIORef' configLogs)
-    <*> (fmap MkResultText . L.reverse <$> readIORef' ls)
-    <*> readIORef' ns
+    <$> (L.reverse <$> readIORefIO configLogs)
+    <*> (fmap MkResultText . L.reverse <$> readIORefIO ls)
+    <*> readIORefIO ns
 
 debugPrefix :: (IsString s) => s
 debugPrefix = "[Debug]"
@@ -444,16 +461,17 @@ cfp :: FilePath -> FilePath -> FilePath
 cfp = combineFilePaths
 
 readLogFile :: OsPath -> IO (List ResultText)
-readLogFile path = fmap MkResultText . T.lines <$> readFileUtf8ThrowM path
+readLogFile =
+  fmap (fmap MkResultText . T.lines)
+    . runEff
+    . runFileReader
+    . readFileUtf8ThrowM
 
 appendScriptsHome :: (IsString a, Semigroup a) => a -> a
 appendScriptsHome p = scriptsHomeStr <> "/" <> p
 
 scriptsHomeStr :: (IsString a) => a
 scriptsHomeStr = "test/functional/scripts"
-
-usingReaderT :: env -> ReaderT env m a -> m a
-usingReaderT = flip runReaderT
 
 assertList :: (Eq a, Show a) => List a -> List a -> IO ()
 assertList = go
@@ -462,3 +480,29 @@ assertList = go
     go lhs@(_ : _) [] = assertFailure $ "LHS nonempty: " ++ show lhs
     go [] rhs@(_ : _) = assertFailure $ "RHS nonempty: " ++ show rhs
     go (x : xs) (y : ys) = (x @=? y) *> go xs ys
+
+doesFileExistIO :: OsPath -> IO Bool
+doesFileExistIO =
+  runEff
+    . runPathReader
+    . doesFileExist
+
+doesDirectoryExistIO :: OsPath -> IO Bool
+doesDirectoryExistIO =
+  runEff
+    . runPathReader
+    . doesDirectoryExist
+
+removeFileIfExistsIO_ :: OsPath -> IO ()
+removeFileIfExistsIO_ =
+  runEff
+    . runPathWriter
+    . runPathReader
+    . removeFileIfExists_
+
+withTimingIO :: IO a -> IO (TimeSpec, a)
+withTimingIO =
+  runEff
+    . runTime
+    . withTiming
+    . liftIO

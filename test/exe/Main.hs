@@ -2,13 +2,14 @@
 
 module Main (main) where
 
-import Effects.FileSystem.PathReader qualified as PR
-import Effects.FileSystem.PathWriter qualified as PW
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.PathWriter.Dynamic qualified as PW
 import Exe.Help qualified as Help
 import Exe.Terminate qualified as Terminate
 import Shrun.Prelude hiding (IO)
 import System.Environment.Guard (guardOrElse')
 import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
+import System.IO qualified as IO
 import Test.Shrun.Installer qualified as Test.Installer
 import Test.Tasty (defaultMain, testGroup)
 import Prelude (IO)
@@ -25,35 +26,44 @@ main = do
           [ Help.tests testDir,
             Terminate.tests testDir
           ]
-    dontRun = putStrLn "*** Executable tests disabled. Enable with TEST_EXE=1 ***"
+    dontRun = IO.putStrLn "*** Executable tests disabled. Enable with TEST_EXE=1 ***"
 
 setup :: (HasCallStack) => IO OsPath
 setup = do
-  tmpDir <- PR.getTemporaryDirectory
-  let testDir = tmpDir </> [ospPathSep|shrun/test/exe|]
-      testDirStr = unsafeDecode testDir
+  testDir <- runner $ do
+    tmpDir <- PR.getTemporaryDirectory
+    let testDir = tmpDir </> [ospPathSep|shrun/test/exe|]
+        testDirStr = unsafeDecode testDir
 
-  dirExists <- PR.doesDirectoryExist testDir
-  if dirExists
-    then do
-      putStrLn
-        $ mconcat
-          [ "*** Test dir '",
-            testDirStr,
-            "' already exists, deleting non-exe contents. ***"
-          ]
-      -- If testDir exists, delete all contents (e.g. log files) _except_
-      -- executable.
-      contents <- PR.listDirectory testDir
-      for_ contents $ \p -> do
-        unless (p == [osp|shrun|]) $ do
-          PW.removePathForcibly p
-    else
-      PW.createDirectoryIfMissing True testDir
+    dirExists <- PR.doesDirectoryExist testDir
+    if dirExists
+      then do
+        putStrLn
+          $ mconcat
+            [ "*** Test dir '",
+              testDirStr,
+              "' already exists, deleting non-exe contents. ***"
+            ]
+        -- If testDir exists, delete all contents (e.g. log files) _except_
+        -- executable.
+        contents <- PR.listDirectory testDir
+        for_ contents $ \p -> do
+          unless (p == [osp|shrun|]) $ do
+            PW.removePathForcibly p
+      else
+        PW.createDirectoryIfMissing True testDir
+
+    pure testDir
 
   Test.Installer.installShrunOnce testDir
 
   pure testDir
+  where
+    runner =
+      runEff
+        . PW.runPathWriter
+        . PR.runPathReader
+        . runTerminal
 
 teardown :: (HasCallStack) => OsPath -> IO ()
 teardown testDir =
@@ -61,10 +71,10 @@ teardown testDir =
     "NO_CLEANUP"
     ExpectEnvSet
     doNothing
-    (PW.removePathForciblyIfExists_ testDir)
+    (runEff $ PW.runPathWriter $ PR.runPathReader $ PW.removePathForciblyIfExists_ testDir)
   where
     doNothing =
-      putStrLn
+      IO.putStrLn
         $ "*** Not cleaning up tmp dir: '"
         <> decodeLenient testDir
         <> "'"

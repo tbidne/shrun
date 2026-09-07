@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | Provides logging functionality. This is a high-level picture of how
 -- logging works:
 --
@@ -60,8 +62,8 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.Formatting qualified as Formatting
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
-import Shrun.Logging.MonadRegionLogger qualified as MRL
+import Shrun.Logging.RegionLogger (RegionLogger)
+import Shrun.Logging.RegionLogger qualified as MRL
 import Shrun.Logging.Types
   ( FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
@@ -76,99 +78,91 @@ import Shrun.Prelude
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
 putRegionLog ::
-  forall m env.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadReader env m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    Reader env :> es,
+    Time :> es
   ) =>
   -- | Region.
-  Region m ->
+  r ->
   -- | Log to send.
   Log ->
-  m ()
+  Eff es ()
 putRegionLog region lg = do
-  commonLogging <- asks getCommonLogging
-  mFileLogging <- asks getFileLogging
+  commonLogging <- asks @env getCommonLogging
+  mFileLogging <- asks @env getFileLogging
 
   let cmdIndex = view #commandIndex commonLogging
       keyHide = commonLogging ^. #keyHide
 
-  (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
+  (consoleLogging, queue, _) <- asks @env (getConsoleLogging @_ @r)
 
-  formatted <- Formatting.formatConsoleLog cmdIndex keyHide consoleLogging lg
+  formatted <- Formatting.formatConsoleLog @env cmdIndex keyHide consoleLogging lg
   let regionLog = LogRegion (lg ^. #mode) region formatted
 
   regionLogToConsoleQueue queue regionLog
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileLog cmdIndex keyHide fl lg
+    fileLog <- Formatting.formatFileLog @env cmdIndex keyHide fl lg
     logToFileQueue fl fileLog
-{-# INLINEABLE putRegionLog #-}
 
 -- | Unconditionally writes a log to the console queue. Conditionally
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
 putRegionMultiLineLog ::
-  forall m env.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadReader env m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    Reader env :> es,
+    Time :> es
   ) =>
   -- | Region.
-  Region m ->
+  r ->
   -- | Log to send.
   NonEmpty Log ->
-  m ()
+  Eff es ()
 putRegionMultiLineLog region logs = do
-  commonLogging <- asks getCommonLogging
-  mFileLogging <- asks getFileLogging
+  commonLogging <- asks @env getCommonLogging
+  mFileLogging <- asks @env getFileLogging
 
   let cmdIndex = view #commandIndex commonLogging
       keyHide = commonLogging ^. #keyHide
 
-  (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
+  (consoleLogging, queue, _) <- asks @env (getConsoleLogging @_ @r)
 
-  formatted <- Formatting.formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs
+  formatted <- Formatting.formatConsoleMultiLineLogs @env cmdIndex keyHide consoleLogging logs
   let regionLog = LogRegion mode region formatted
 
   regionLogToConsoleQueue queue regionLog
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileMultiLineLogs cmdIndex keyHide fl logs
+    fileLog <- Formatting.formatFileMultiLineLogs @env cmdIndex keyHide fl logs
     logToFileQueue fl fileLog
   where
     mode = NE.head logs ^. #mode
-{-# INLINEABLE putRegionMultiLineLog #-}
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
-  ( HasCallStack,
-    MonadAtomic m
-  ) =>
+  (Concurrent :> es) =>
   -- | Region.
-  TBQueue (LogRegion (Region m)) ->
+  TBQueue (LogRegion r) ->
   -- | Log to send.
-  LogRegion (Region m) ->
-  m ()
+  LogRegion r ->
+  Eff es ()
 regionLogToConsoleQueue = writeTBQueueA'
-{-# INLINEABLE regionLogToConsoleQueue #-}
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
-  ( HasCallStack,
-    MonadAtomic m
-  ) =>
+  (Concurrent :> es) =>
   -- | FileLogging config.
   FileLoggingEnv ->
   -- | Log to send.
   FileLog ->
-  m ()
+  Eff es ()
 logToFileQueue fileLogging = writeTBQueueA' (fileLogging ^. #file % #queue)
-{-# INLINEABLE logToFileQueue #-}
 
 -- | Returns formatted log for unfinished commands (waiting and running).
 -- Does not actually cancel any commands itself; that is handled by
@@ -177,23 +171,23 @@ logToFileQueue fileLogging = writeTBQueueA' (fileLogging ^. #file % #queue)
 -- Returns "multi logs", as each command is rendered on a newline.
 -- Hence this should be used with the multi-line log options.
 mkUnfinishedCmdLogs ::
-  forall m env.
+  forall env es.
   ( HasCallStack,
     HasCommands env,
     HasCommonLogging env,
-    MonadAtomic m,
-    MonadReader env m
+    Concurrent :> es,
+    Reader env :> es
   ) =>
-  m (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
+  Eff es (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
 mkUnfinishedCmdLogs = do
-  commonLogging <- asks getCommonLogging
+  commonLogging <- asks @env getCommonLogging
 
   let cmdIndex = view #commandIndex commonLogging
       keyHide = view #keyHide commonLogging
 
   -- Statuses receive no updates at this point (command threads have finished
   -- or been killed), so this should be safe.
-  commandsStatus <- getReadCommandStatus <&> view #unCommandStatusMap
+  commandsStatus <- getReadCommandStatus @env <&> view #unCommandStatusMap
 
   let (waiting, running) = foldl' go (Set.empty, Set.empty) commandsStatus
       go acc@(ws, rs) (cmd, status) = case status of
@@ -230,124 +224,121 @@ mkUnfinishedCmdLogs = do
   where
     waitingPrefix = "Commands not started:"
     runningPrefix = "Attempting to cancel:"
-{-# INLINEABLE mkUnfinishedCmdLogs #-}
 
 -- | Logs to a file. This function is /not/ thread-safe! Hence care must be
 -- taken to avoid it being called by multiple threads.
 logFile ::
   ( CanWrite p,
     HasCallStack,
-    MonadHandleWriter m
+    HandleWriter :> es
   ) =>
   LockedHandle p ->
   FileLog ->
-  m ()
+  Eff es ()
 logFile lh = liftLocked (\h t -> hPutUtf8 h t *> hFlush h) lh . view #unFileLog
-{-# INLINEABLE logFile #-}
 
 -- | Like 'putRegionLog', except this logs directly to the console / file,
 -- rather than placing the log in a queue. This is for when log queues are
 -- shutdown (e.g. terminated). This should only be called from a single thread.
 putRegionLogDirect ::
-  forall env m.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadHandleWriter m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   Log ->
-  m ()
+  Eff es ()
 putRegionLogDirect log = do
-  commonLogging <- asks getCommonLogging
-  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
-  mFileLogging <- asks getFileLogging
+  commonLogging <- asks @env getCommonLogging
+  (consoleLogging, _, _) <- asks (getConsoleLogging @env @r)
+  mFileLogging <- asks @env getFileLogging
 
   let cmdIndex = view #commandIndex commonLogging
       keyHide = view #keyHide commonLogging
-  consoleLog <- Formatting.formatConsoleLog cmdIndex keyHide consoleLogging log
+  consoleLog <- Formatting.formatConsoleLog @env cmdIndex keyHide consoleLogging log
 
-  MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
+  MRL.withRegion @r Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileLog cmdIndex keyHide fl log
+    fileLog <- Formatting.formatFileLog @env cmdIndex keyHide fl log
     logFile (fl ^. #file % #handle) fileLog
-{-# INLINEABLE putRegionLogDirect #-}
 
 -- | Like 'putRegionMultiLineLog', except this logs directly to the
 -- console / file, rather than placing the log in a queue. This is for when
 -- log queues are shutdown (e.g. terminated). This should only be called from
 -- a single thread.
 putRegionMultiLineLogDirect ::
-  forall env m.
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadHandleWriter m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   NonEmpty Log ->
-  m ()
+  Eff es ()
 putRegionMultiLineLogDirect logs@(log :| _) = do
-  commonLogging <- asks getCommonLogging
-  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
-  mFileLogging <- asks getFileLogging
+  commonLogging <- asks @env getCommonLogging
+  (consoleLogging, _, _) <- asks (getConsoleLogging @env @r)
+  mFileLogging <- asks @env getFileLogging
 
   let cmdIndex = view #commandIndex commonLogging
       keyHide = view #keyHide commonLogging
-  consoleLog <- Formatting.formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs
+  consoleLog <- Formatting.formatConsoleMultiLineLogs @env cmdIndex keyHide consoleLogging logs
 
-  MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
+  MRL.withRegion @r Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
-    fileLog <- Formatting.formatFileMultiLineLogs cmdIndex keyHide fl logs
+    fileLog <- Formatting.formatFileMultiLineLogs @env cmdIndex keyHide fl logs
     logFile (fl ^. #file % #handle) fileLog
-{-# INLINEABLE putRegionMultiLineLogDirect #-}
 
 putDebugLogDirect ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadHandleWriter m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    HandleWriter :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   LogMessage ->
-  m ()
-putDebugLogDirect = putDebugLogHelper putRegionLogDirect
-{-# INLINEABLE putDebugLogDirect #-}
+  Eff es ()
+putDebugLogDirect = putDebugLogHelper @env (putRegionLogDirect @env @r)
 
 putDebugLog ::
+  forall env r es.
   ( HasCallStack,
     HasCommands env,
-    HasLogging env m,
-    MonadAtomic m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadTime m
+    HasLogging env r,
+    Concurrent :> es,
+    Reader env :> es,
+    RegionLogger r :> es,
+    Time :> es
   ) =>
   LogMessage ->
-  m ()
-putDebugLog = putDebugLogHelper (\log -> MRL.withRegion Linear $ \r -> putRegionLog r log)
-{-# INLINEABLE putDebugLog #-}
+  Eff es ()
+putDebugLog = putDebugLogHelper @env (\log -> MRL.withRegion @r Linear $ \r -> putRegionLog @env @r r log)
 
 putDebugLogHelper ::
+  forall env es.
   ( HasCommonLogging env,
-    MonadReader env m
+    Reader env :> es
   ) =>
-  (Log -> m ()) ->
+  (Log -> Eff es ()) ->
   LogMessage ->
-  m ()
+  Eff es ()
 putDebugLogHelper logFn msg = do
-  logDebug $ \lvl -> do
+  logDebug @env $ \lvl -> do
     let log =
           MkLog
             { cmd = Nothing,
@@ -356,16 +347,15 @@ putDebugLogHelper logFn msg = do
               mode = LogModeFinish
             }
     logFn log
-{-# INLINEABLE putDebugLogHelper #-}
 
 -- | Rungs the action when debug is on.
 logDebug ::
+  forall env es.
   ( HasCommonLogging env,
-    MonadReader env m
+    Reader env :> es
   ) =>
-  (LogLevel -> m ()) ->
-  m ()
+  (LogLevel -> Eff es ()) ->
+  Eff es ()
 logDebug logFn = do
-  debug <- asks (view (#debug % #unDebug) . getCommonLogging)
+  debug <- asks @env (view (#debug % #unDebug) . getCommonLogging)
   when debug (logFn LevelDebug)
-{-# INLINEABLE logDebug #-}

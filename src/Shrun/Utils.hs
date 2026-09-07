@@ -54,10 +54,10 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
-import Effects.FileSystem.Handle qualified as H
-import Effects.FileSystem.HandleReader qualified as HR
-import Effects.FileSystem.HandleWriter qualified as HW
-import Effects.Time (TimeSpec, diffTimeSpec)
+import Effectful.FileSystem.Handle qualified as H
+import Effectful.FileSystem.HandleReader.Static qualified as HR
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.Time.Dynamic (diffTimeSpec)
 import Optics.Core qualified as O
 import Shrun.Prelude
 import Text.Read (Read)
@@ -68,7 +68,7 @@ import Text.Read qualified as TR
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))
 -- >>> import Data.Text qualified as T
--- >>> import Effects.Time (TimeSpec (..))
+-- >>> import Effectful.Time.Dynamic (TimeSpec (..))
 -- >>> import Shrun.Prelude
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
@@ -271,7 +271,6 @@ parseByteText txt =
 -- | Runs the action when it is 'Left'.
 whenLeft :: (Applicative f) => Either a b -> (a -> f ()) -> f ()
 whenLeft e action = either action (const (pure ())) e
-{-# INLINEABLE whenLeft #-}
 
 -- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.
 whileM_ :: (Monad m) => m Bool -> m a -> m ()
@@ -281,7 +280,6 @@ whileM_ mb ma = go
       mb >>= \case
         True -> ma *> go
         False -> pure ()
-{-# INLINEABLE whileM_ #-}
 
 -- | Executes the monadic action until we receive a 'Just', returning the
 -- value.
@@ -292,7 +290,6 @@ untilJust m = go
       m >>= \case
         Nothing -> go
         Just x -> pure x
-{-# INLINEABLE untilJust #-}
 
 -- | Escape double quotes in strings.
 escapeDoubleQuotes :: Text -> Text
@@ -318,7 +315,6 @@ readStripUnderscores t = case TR.readEither s of
   where
     noUnderscores = T.replace "_" "" t
     s = T.unpack noUnderscores
-{-# INLINEABLE readStripUnderscores #-}
 
 -- | Provides a standard format for "unrecognized param" failures.
 fmtUnrecognizedError ::
@@ -362,17 +358,15 @@ mkMetaStr (includeOff, xs) =
 -- given function, even if an async exception is raised.
 atomicReadWrite ::
   ( HasCallStack,
-    MonadAtomic m,
-    MonadMask m
+    Concurrent :> es
   ) =>
   -- | Queue from which to read.
   TBQueue a ->
   -- | Function to apply.
-  (a -> m b) ->
-  m ()
+  (a -> Eff es b) ->
+  Eff es ()
 atomicReadWrite queue logAction =
   mask $ \restore -> restore (readTBQueueA' queue) >>= void . logAction
-{-# INLINEABLE atomicReadWrite #-}
 
 indexPos :: NESeq a -> NESeq (Positive Int, a)
 indexPos (x :<|| xs) = (one, x) :<|| ys
@@ -403,25 +397,22 @@ surroundJust l = _Just % l % _Just
 --
 --   For the main console, this is handled by 'drainStdin'.
 withHiddenInput ::
-  ( MonadMask m,
-    MonadHandleReader m,
-    MonadHandleWriter m
+  ( HandleReader :> es,
+    HandleWriter :> es
   ) =>
-  m a ->
-  m a
+  Eff es a ->
+  Eff es a
 withHiddenInput = hWithHidden H.stdin
-{-# INLINEABLE withHiddenInput #-}
 
 hWithHidden ::
   ( CanRead p,
     CanWrite p,
-    MonadMask m,
-    MonadHandleReader m,
-    MonadHandleWriter m
+    HandleReader :> es,
+    HandleWriter :> es
   ) =>
   Handle p ->
-  m a ->
-  m a
+  Eff es a ->
+  Eff es a
 hWithHidden h m = bracket hideInput unhideInput (const m)
   where
     -- Note that this may not work on windows, if we ever want that.
@@ -437,23 +428,19 @@ hWithHidden h m = bracket hideInput unhideInput (const m)
     unhideInput (buffMode, echoMode) = do
       HW.hSetBuffering h buffMode
       HW.hSetEcho h echoMode
-{-# INLINEABLE hWithHidden #-}
 
 hHide ::
-  (CanWrite p, MonadHandleWriter m) =>
+  (CanWrite p, HandleWriter :> es) =>
   Handle p ->
-  m ()
+  Eff es ()
 hHide h = do
   HW.hSetBuffering h HW.NoBuffering
   HW.hSetEcho h False
-{-# INLINEABLE hHide #-}
 
 -- | Drains stdin.
 drainStdin ::
-  ( MonadCatch m,
-    MonadHandleReader m
-  ) =>
-  m ()
+  (HandleReader :> es) =>
+  Eff es ()
 drainStdin =
   tryMySync_
     $ HR.hIsClosed H.stdin
@@ -463,7 +450,6 @@ drainStdin =
         HR.hIsReadable H.stdin >>= \case
           False -> pure ()
           True -> void $ HR.hGetNonBlocking H.stdin 1_000
-{-# INLINEABLE drainStdin #-}
 
 readIncCounter :: TVar Word16 -> STM Word16
 readIncCounter counter = do

@@ -17,7 +17,7 @@ module Shrun.Configuration.Data.Truncation
   )
 where
 
-import Effects.System.Terminal (getTerminalWidth)
+import Effectful.Terminal.Dynamic (getTerminalWidth)
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled
       ( Disabled,
@@ -55,7 +55,6 @@ parseTruncation getNat = do
   case convertIntegral n of
     Left err -> fail err
     Right x -> pure $ MkTruncation x
-{-# INLINEABLE parseTruncation #-}
 
 -- | Determines command log line truncation behavior. We need a separate
 -- type from 'Truncation' to add a third option, to detect the terminal size
@@ -78,7 +77,6 @@ parseLineTruncation getNat getTxt =
     <$> parseTruncation getNat
     -- NOTE: [Detect second parser]
     <|> parseDetected getTxt
-{-# INLINEABLE parseLineTruncation #-}
 
 -- Because this parser is used second, its error message is what will be
 -- displayed.
@@ -94,7 +92,6 @@ parseDetected getTxt =
           "line truncation"
           lineTruncMeta
           (unpack bad)
-{-# INLINEABLE parseDetected #-}
 
 lineTruncMeta :: (IsString a) => Tuple2 Bool (List a)
 lineTruncMeta = (True, ["NATURAL", "detect"])
@@ -116,9 +113,8 @@ data DetectResult
 -- | Merges line truncation.
 mergeLineTrunc ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadIORef m,
-    MonadTerminal m
+    Prim :> es,
+    Terminal :> es
   ) =>
   -- | If true, defaults to 'detect'.
   Bool ->
@@ -128,7 +124,7 @@ mergeLineTrunc ::
   Maybe (WithDisabled LineTruncation) ->
   -- | Toml config.
   Maybe (WithDisabled LineTruncation) ->
-  m (Maybe (Truncation TruncLine))
+  Eff es (Maybe (Truncation TruncLine))
 mergeLineTrunc defaultDetect detectRef args toml = case args <|> toml of
   Nothing ->
     if defaultDetect
@@ -140,19 +136,18 @@ mergeLineTrunc defaultDetect detectRef args toml = case args <|> toml of
 -- | Maps line trunc config to actual value.
 configToLineTrunc ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadIORef m,
-    MonadTerminal m
+    Prim :> es,
+    Terminal :> es
   ) =>
   IORef DetectResult ->
   Maybe LineTruncation ->
-  m (Maybe (Truncation TruncLine))
+  Eff es (Maybe (Truncation TruncLine))
 configToLineTrunc _ Nothing = pure Nothing
 configToLineTrunc detectRef (Just Detected) = do
   -- ref exists so that we only check this once, even if both console
   -- and file specify detect.
   width <-
-    readIORef' detectRef >>= \case
+    readIORef detectRef >>= \case
       DetectSucceeded w -> pure w
       DetectFailed -> pure defLen
       DetectNotRun -> do
@@ -167,14 +162,13 @@ configToLineTrunc detectRef (Just Detected) = do
                       displayExceptiont ex
                     ]
             putTextLn msg
-            writeIORef' detectRef DetectFailed
+            writeIORef detectRef DetectFailed
             pure defLen
           Right w -> do
             let w' = w ∸ 1
-            writeIORef' detectRef (DetectSucceeded w') $> w'
+            writeIORef detectRef (DetectSucceeded w') $> w'
 
   pure $ Just $ MkTruncation width
   where
     defLen = 80
 configToLineTrunc _ (Just (Undetected x)) = pure $ Just x
-{-# INLINEABLE configToLineTrunc #-}

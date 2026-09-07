@@ -26,11 +26,9 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Text qualified as T
-import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile), die)
-import Effects.FileSystem.PathReader qualified as PR
-import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
-import Effects.System.Posix.Files (PathType (PathTypeFile))
-import Effects.System.Posix.Files qualified as PosixFiles
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.Posix.Files.Static (PathType (PathTypeFile))
+import Effectful.Posix.Files.Static qualified as PosixFiles
 import FileSystem.PathType qualified as PT
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
@@ -320,15 +318,14 @@ instance Default FileLoggingArgs where
 -- | Merges args and toml configs.
 mergeFileLogging ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadIORef m,
-    MonadTerminal m
+    Prim :> es,
+    Terminal :> es
   ) =>
   CommandGraph ->
   IORef DetectResult ->
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
-  m (Maybe FileLoggingMerged)
+  Eff es (Maybe FileLoggingMerged)
 mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
   let toml = fromMaybe defaultToml mToml
 
@@ -387,7 +384,6 @@ mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
     -- make the fileLogging based on that.
     mPath :: Maybe FilePathDefault
     mPath = args ^. #file % #path <|?|> (mToml ^? Utils.surroundJust (#file % #path))
-{-# INLINEABLE mergeFileLogging #-}
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
@@ -419,20 +415,19 @@ type MLogging =
 -- | Given merged FileLogging config, constructs a FileLoggingEnv and calls
 -- the continuation.
 withFileLoggingEnv ::
-  forall m a.
+  forall a es.
   ( HasCallStack,
-    MonadAtomic m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadMask m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadTerminal m
+    Concurrent :> es,
+    FileWriter :> es,
+    HandleWriter :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    Terminal :> es
   ) =>
   Maybe FileLoggingMerged ->
-  (Maybe FileLoggingEnv -> m a) ->
-  m a
+  (Maybe FileLoggingEnv -> Eff es a) ->
+  Eff es a
 withFileLoggingEnv mFileLogging onFileLoggingEnv = do
   let mkEnv :: MLogging -> Maybe FileLoggingEnv
       mkEnv Nothing = Nothing
@@ -454,23 +449,21 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
             }
 
   withMLogging mFileLogging (onFileLoggingEnv . mkEnv)
-{-# INLINEABLE withFileLoggingEnv #-}
 
 withMLogging ::
-  forall m a.
+  forall a es.
   ( HasCallStack,
-    MonadAtomic m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadMask m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadPosixFiles m,
-    MonadTerminal m
+    Concurrent :> es,
+    FileWriter :> es,
+    HandleWriter :> es,
+    PathReader :> es,
+    PathWriter :> es,
+    PosixFiles :> es,
+    Terminal :> es
   ) =>
   Maybe FileLoggingMerged ->
-  (MLogging -> m a) ->
-  m a
+  (MLogging -> Eff es a) ->
+  Eff es a
 -- 1. No file logging
 withMLogging Nothing onLogging = onLogging Nothing
 -- 2. Use the default path.
@@ -507,17 +500,16 @@ withMLogging (Just fileLogging) onLogging = do
     $ removeFileIfExists_ uniqFp
 
   pure result
-{-# INLINEABLE withMLogging #-}
 
 handleLogFileSize ::
   ( HasCallStack,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+    PathReader :> es,
+    PathWriter :> es,
+    Terminal :> es
   ) =>
   FileSizeMode ->
   OsPath ->
-  m ()
+  Eff es ()
 handleLogFileSize fileSizeMode fp = do
   fileSize <- MkBytes @B . unsafeConvertIntegral <$> getFileSize fp
   case fileSizeMode of
@@ -552,24 +544,22 @@ handleLogFileSize fileSizeMode fp = do
 
     toDouble :: Integer -> Double
     toDouble = fromℤ
-{-# INLINEABLE handleLogFileSize #-}
 
 -- | Ensures the given path exists. If the path already exists and the file
 -- mode is FileModeRename, we rename the new path sequentially, to avoid
 -- a collision.
 createLogFile ::
   ( HasCallStack,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadPathReader m,
-    MonadPosixFiles m,
-    MonadThrow m
+    FileWriter :> es,
+    HandleWriter :> es,
+    PathReader :> es,
+    PosixFiles :> es
   ) =>
   -- | Mode in which to open the new log file.
   FileMode ->
   -- | Full path of the desired file.
   OsPath ->
-  m OsPath
+  Eff es OsPath
 createLogFile mode fp@(OsString posixPath) = do
   exists <- PR.doesPathExist fp
   -- 1. Requested log path exists.
@@ -601,24 +591,22 @@ createLogFile mode fp@(OsString posixPath) = do
     else writeBlankFile fp
   where
     writeBlankFile p = writeFileUtf8 p "" $> p
-{-# INLINEABLE createLogFile #-}
 
 uniqName ::
-  forall m.
+  forall es.
   ( HasCallStack,
-    MonadHandleWriter m,
-    MonadPathReader m,
-    MonadThrow m
+    HandleWriter :> es,
+    PathReader :> es
   ) =>
   OsPath ->
-  m OsPath
+  Eff es OsPath
 uniqName fp = go 1
   where
     (base, ext) = OsPath.splitExtension fp
 
     appendNum c = base <> [osp| (|] <> c <> [osp|)|] <> ext
 
-    go :: Word16 -> m OsPath
+    go :: Word16 -> Eff es OsPath
     go !counter
       | counter == maxBound = die $ "Failed renaming file: " <> show fp
       | otherwise = do
@@ -638,25 +626,24 @@ uniqName fp = go 1
 -- a number. This index is unique across all shrun commands, hence we will
 -- not have interference.
 createMultiLogFile ::
-  forall m.
+  forall es.
   ( HasCallStack,
-    MonadAtomic m,
-    MonadHandleWriter m,
-    MonadPathReader m,
-    MonadPosixFiles m,
-    MonadThrow m
+    Concurrent :> es,
+    HandleWriter :> es,
+    PathReader :> es,
+    PosixFiles :> es
   ) =>
   TVar Word16 ->
   FileMode ->
   OsPath ->
-  m OsPath
+  Eff es OsPath
 createMultiLogFile counterRef mode fp@(OsString posixPath) = go
   where
     (base, ext) = OsPath.splitExtension fp
 
     appendNum c = base <> [osp|_multi|] <> c <> ext
 
-    go :: m OsPath
+    go :: Eff es OsPath
     go = do
       counter <- atomically $ Utils.readIncCounter counterRef
       if counter == maxBound
@@ -680,11 +667,9 @@ createMultiLogFile counterRef mode fp@(OsString posixPath) = go
       FileModeRename -> const go
       -- Write or Append mode: Fine, return the path.
       _otherMode -> pure
-{-# INLINEABLE createMultiLogFile #-}
 
-getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgState :: (HasCallStack, PathReader :> es) => Eff es OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
-{-# INLINEABLE getShrunXdgState #-}
 
 defaultToml :: FileLoggingToml
 defaultToml =

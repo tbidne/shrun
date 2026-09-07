@@ -21,9 +21,13 @@ ghc-options:
     -Wno-deprecations
     -Wno-unticked-promoted-constructors
 extra-deps:
+  - effectful-2.7.1.0@sha256:35847b4359df36d3f2ca16ff888f6426ce35373d9d80aedbdd4c27b4a72d8a7f,8325
+  - effectful-core-2.7.1.2@sha256:9bea7fbf7ba34ae7664404b876f20acb5d87e1b3c4e19cca7a85d6981b1ff8e7,4890
   - env-guard-0.2.1@sha256:f50499a07c5eddc8309b9896363e9861a28091f4f96254f9b76bc34426e25c79,1134
   - gitrev-typed-0.1@sha256:905b696dec9c52486290cfef2d3156420de83f5b21bfb0821a37822f40ee1568,3783
+  - nonempty-containers-0.3.6.0@sha256:ddf8d076906aab7a43ab2f326aab001ffe5e66e53819d9649c6313a3b6b5dc09,2849
   - random-1.2.1.3@sha256:117541ba0a177397a3333f94870f789ef050dca31b0688a19824b2bc401b8823,6237
+  - strict-mutable-base-2.0.0.0@sha256:7cbceaa3af3bbc3d0d472b7cd71cb7083d332d42d4db280e5f029a766746d1bf,1877
   - git: https://github.com/tbidne/algebra-simple.git
     commit: 6c5b93bdbde9a5e1f92c9bb19d750227d079f114
   - git: https://github.com/tbidne/bounds.git
@@ -32,22 +36,19 @@ extra-deps:
     commit: a427d344663e8d9e64d56d576ebd53bf2240b9bd
   - git: https://github.com/tbidne/fs-utils.git
     commit: 35ca5fab0837e27179a89087b987ded3427c853c
-  - git: https://github.com/tbidne/monad-effects.git
-    commit: ebb962e4d3b41d352cb3f24fbe12488cad5f0bef
+  - git: https://github.com/tbidne/effectful-libs.git
+    commit: 8b7f71a267e09fc8cb6797162f937e75368bb0b8
     subdirs:
-      - lib/effects-async
-      - lib/effects-env
-      - lib/effects-evaluate
-      - lib/effects-fs
-      - lib/effects-ioref
-      - lib/effects-notify
-      - lib/effects-optparse
-      - lib/effects-process
-      - lib/effects-stm
-      - lib/effects-time
-      - lib/effects-terminal
-      - lib/effects-thread
-      - lib/effects-unix
+      - lib/concurrent-effectful
+      - lib/effectful-utils
+      - lib/environment-effectful
+      - lib/fs-effectful
+      - lib/notify-effectful
+      - lib/optparse-effectful
+      - lib/stm-effectful
+      - lib/time-effectful
+      - lib/terminal-effectful
+      - lib/unix-effectful
   - git: https://github.com/tbidne/relative-time.git
     commit: 73def4dbf4826dbc5446761ff7e66087603a937f
   - git: https://github.com/tbidne/si-bytes.git

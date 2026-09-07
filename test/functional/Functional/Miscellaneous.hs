@@ -6,7 +6,7 @@
 module Functional.Miscellaneous (specs) where
 
 import Data.Text qualified as T
-import Effects.FileSystem.PathReader (XdgDirectory (XdgConfig, XdgState))
+import Effectful.FileSystem.PathReader.Dynamic (XdgDirectory (XdgConfig, XdgState))
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier (ExpectedText)
@@ -563,7 +563,7 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
 
 testImplicitConfigLookup :: TestTree
 testImplicitConfigLookup = testCase desc $ do
-  logs <- newIORef' []
+  logs <- newIORefIO []
   let env =
         MkConfigIOEnv
           { cwdDir = Just [ospPathSep|test/functional/cwd|],
@@ -574,7 +574,7 @@ testImplicitConfigLookup = testCase desc $ do
               other -> error $ "Unexpected xdg: " ++ show other
           }
 
-  (ts, resultsConsole) <- withTiming $ runConfigIO env args
+  (ts, resultsConsole) <- withTimingIO $ runConfigIO env args
 
   V.verifyExpected resultsConsole expected
 
