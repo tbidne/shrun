@@ -26,6 +26,18 @@ package shrun
 
 source-repository-package
     type: git
+    location: https://github.com/tbidne/optparse-applicative.git
+    tag: 918c1c85f97266101452bd7983c64b6711a46584
+
+source-repository-package
+    type: git
+    location: https://github.com/UnkindPartition/tasty.git
+    tag: aca2a2ccb78537f636afef0912a76bde917e82ca
+    subdir:
+      core
+
+source-repository-package
+    type: git
     location: https://github.com/tbidne/algebra-simple.git
     tag: 6c5b93bdbde9a5e1f92c9bb19d750227d079f114
 

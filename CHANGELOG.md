@@ -92,6 +92,8 @@ for versions < 1.
 * `Timer` log now changed to more general `Status`, and status info added
   to final logs.
 
+* Use option groups in help brief description.
+
 ### Added
 * Option `--edges` (toml: legend `edges`) for declaring dependencies
   between commands e.g. `shrun cmd1 cmd2 --edges "1 & 2"` means `cmd2` will

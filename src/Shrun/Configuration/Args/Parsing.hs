@@ -26,7 +26,6 @@ import Options.Applicative
       ( ParserInfo,
         infoFailureCode,
         infoFooter,
-        infoFullDesc,
         infoHeader,
         infoParser,
         infoPolicy,
@@ -37,7 +36,11 @@ import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
-import Options.Applicative.Types (ArgPolicy (Intersperse), ParserPrefs)
+import Options.Applicative.Types
+  ( ArgPolicy (Intersperse),
+    BriefDescOpt (BriefDescOptGroups),
+    ParserPrefs,
+  )
 import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.Parsing.Core qualified as Core
 import Shrun.Configuration.Args.Parsing.Graph qualified as Graph
@@ -73,7 +76,6 @@ parserInfoArgs :: List String -> ParserInfo (Args m)
 parserInfoArgs prevKeys =
   ParserInfo
     { infoParser = argsParser prevKeys,
-      infoFullDesc = True,
       infoProgDesc = desc,
       infoHeader = Chunk headerTxt,
       infoFooter = Chunk footerTxt,
@@ -180,7 +182,8 @@ parserPrefs :: ParserPrefs
 parserPrefs =
   OA.prefs
     $ mconcat
-      [ OA.helpIndent 6
+      [ OA.helpIndent 6,
+        OA.briefDescOpt (BriefDescOptGroups Nothing)
       ]
 
 argsParser :: List String -> Parser (Args m)
