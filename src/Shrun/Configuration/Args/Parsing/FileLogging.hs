@@ -85,7 +85,8 @@ fileLogParser =
         OA.completeWith ["default"],
         OA.completer EOC.compgenCwdDirsCompleter,
         OA.short 'f',
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt =
       mconcat
@@ -106,7 +107,8 @@ fileLogCommandNameTruncParser =
   where
     opts =
       [ OA.long "file-log-command-name-trunc",
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt = "Like --console-log-command-name-trunc, but for --file-logs."
 
@@ -130,7 +132,8 @@ lineTruncParser =
     opts =
       [ OA.long "file-log-line-trunc",
         OA.completeWith ["detect"],
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt = "Like --console-log-line-trunc, but for --file-log. Defaults to 'off'."
 
@@ -143,7 +146,8 @@ multiParser =
           [ OA.long "file-log-multi",
             OA.completeWith ["on", "auto", "off"],
             Utils.mkHelp helpTxt,
-            OA.metavar (ShrunUtils.mkMetaStr FileLogMulti.fileLogMultiMeta)
+            OA.metavar (ShrunUtils.mkMetaStr FileLogMulti.fileLogMultiMeta),
+            OA.hidden
           ]
       )
   where
@@ -168,7 +172,8 @@ fileLogStripControlParser = mainParser
               [ OA.long "file-log-strip-control",
                 OA.completeWith ["all", "smart", "off"],
                 Utils.mkHelpNoLine helpTxt,
-                OA.metavar (ShrunUtils.mkMetaStr StripControl.stripControlMeta)
+                OA.metavar (ShrunUtils.mkMetaStr StripControl.stripControlMeta),
+                OA.hidden
               ]
           )
     helpTxt =
@@ -188,7 +193,8 @@ fileLogModeParser = mainParser
               [ OA.long "file-log-mode",
                 OA.completeWith ["append", "rename", "write"],
                 Utils.mkHelp helpTxt,
-                OA.metavar (ShrunUtils.mkMetaStr FileMode.fileModeMeta)
+                OA.metavar (ShrunUtils.mkMetaStr FileMode.fileModeMeta),
+                OA.hidden
               ]
           )
     helpTxt =
@@ -209,7 +215,8 @@ fileLogSizeModeParser = mainParser
               [ OA.long "file-log-size-mode",
                 OA.completeWith ["warn", "delete"],
                 Utils.mkHelp helpTxt,
-                OA.metavar (ShrunUtils.mkMetaStr FileSizeMode.fileSizeModeMeta)
+                OA.metavar (ShrunUtils.mkMetaStr FileSizeMode.fileSizeModeMeta),
+                OA.hidden
               ]
           )
     helpTxt =

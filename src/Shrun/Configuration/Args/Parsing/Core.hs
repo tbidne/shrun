@@ -75,7 +75,8 @@ timeoutParser =
     opts =
       [ OA.long "timeout",
         OA.short 't',
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt =
       mconcat
@@ -94,7 +95,8 @@ initParser =
     opts =
       [ OA.long "init",
         OA.short 'i',
-        Utils.mkHelp helpTxt
+        Utils.mkHelp helpTxt,
+        OA.hidden
       ]
     helpTxt =
       mconcat
@@ -115,7 +117,8 @@ legendKeysCacheParser =
         [ OA.long "legend-keys-cache",
           OA.completeWith ["add", "clear", "write", "off"],
           OA.metavar (ShrunUtils.mkMetaStr LKS.lksMeta),
-          helpTxt
+          helpTxt,
+          OA.hidden
         ]
 
     helpTxt =

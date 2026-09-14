@@ -65,7 +65,8 @@ bufferLengthParser = mainParser
           ( mconcat
               [ OA.long "command-log-buffer-length",
                 Utils.mkHelp helpTxt,
-                OA.metavar "NATURAL"
+                OA.metavar "NATURAL",
+                OA.hidden
               ]
           )
     helpTxt =
@@ -85,7 +86,8 @@ bufferTimeoutParser = mainParser
           ( mconcat
               [ OA.long "command-log-buffer-timeout",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(NATURAL | TIME_STR)"
+                OA.metavar "(NATURAL | TIME_STR)",
+                OA.hidden
               ]
           )
     helpTxt =
@@ -105,7 +107,8 @@ pollIntervalParser = mainParser
           ( mconcat
               [ OA.long "command-log-poll-interval",
                 Utils.mkHelp helpTxt,
-                OA.metavar "NATURAL"
+                OA.metavar "NATURAL",
+                OA.hidden
               ]
           )
     helpTxt =
@@ -139,7 +142,8 @@ readSizeParser = mainParser
           ( mconcat
               [ OA.long "command-log-read-size",
                 Utils.mkHelp helpTxt,
-                OA.metavar "BYTES"
+                OA.metavar "BYTES",
+                OA.hidden
               ]
           )
 
@@ -161,7 +165,8 @@ readStrategyParser = mainParser
           [ OA.long "command-log-read-strategy",
             OA.completeWith ["block", "block-line-buffer"],
             OA.metavar (SUtils.mkMetaStr ReadStrategy.readStrategyMeta),
-            helpTxt
+            helpTxt,
+            OA.hidden
           ]
     helpTxt =
       Utils.itemizeNoLine

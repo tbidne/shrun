@@ -57,7 +57,8 @@ notifyActionCompleteParser =
     opts =
       [ OA.long "notify-action-complete",
         OA.completeWith ["final", "command", "all"],
-        helpTxt
+        helpTxt,
+        OA.hidden
       ]
 
     helpTxt =
@@ -89,7 +90,8 @@ notifyErrUrgencyParser = mainParser
           [ OA.long "notify-error-urgency",
             OA.completeWith ["low", "normal", "critical"],
             Utils.mkHelp helpTxt,
-            OA.metavar (ShrunUtils.mkMetaStr Notify.notifyErrUrgencyMeta)
+            OA.metavar (ShrunUtils.mkMetaStr Notify.notifyErrUrgencyMeta),
+            OA.hidden
           ]
     helpTxt = "Urgency level for error notifications. Defaults to critical."
 
@@ -103,7 +105,8 @@ notifySystemParser = mainParser
           [ OA.long "notify-system",
             OA.completeWith ["dbus", "notify-send", "apple-script"],
             Utils.mkHelp helpTxt,
-            OA.metavar (ShrunUtils.mkMetaStr System.notifySystemMeta)
+            OA.metavar (ShrunUtils.mkMetaStr System.notifySystemMeta),
+            OA.hidden
           ]
     helpTxt =
       mconcat
@@ -120,7 +123,8 @@ notifyTimeoutParser = mainParser
         $ mconcat
           [ OA.long "notify-timeout",
             Utils.mkHelpNoLine helpTxt,
-            OA.metavar (ShrunUtils.mkMetaStr Timeout.notifyTimeoutMeta)
+            OA.metavar (ShrunUtils.mkMetaStr Timeout.notifyTimeoutMeta),
+            OA.hidden
           ]
     helpTxt =
       mconcat
