@@ -27,6 +27,7 @@ module Shrun.Configuration.Data.Graph
     outVertices,
     vertices,
     isSequential,
+    isConcurrent,
 
     -- *** Context
     context,
@@ -348,6 +349,10 @@ isSequential cg = case rs of
       [v'] -> go v'
       -- 1.3. Found > 1 successors, false.
       (_ : _ : _) -> False
+
+-- | Opposite of 'isSequential'.
+isConcurrent :: CommandGraph -> Bool
+isConcurrent = not . isSequential
 
 -- | Retrieves all labeled vertices.
 labVertices :: CommandGraph -> List (LVertex CommandP1)

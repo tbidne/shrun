@@ -50,7 +50,7 @@ readBlockLineBufferNotAllowed fileLogOn fileLogMultiOn cmdGraph =
     && fileLogOn
     && not fileLogMultiOn
   where
-    isConcurrent = not (Graph.isSequential cmdGraph)
+    isConcurrent = Graph.isConcurrent cmdGraph
 
 -- | Parses 'ReadStrategy'.
 parseReadStrategy :: (MonadFail m) => m Text -> m ReadStrategy

@@ -341,7 +341,7 @@ mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
   let multi = MkFileLogMultiSwitch $ case args ^. #multi <.> toml ^. #multi of
         FileLogMultiOn -> True
         FileLogMultiOff -> False
-        FileLogMultiAuto -> not (Graph.isSequential cmdGraph)
+        FileLogMultiAuto -> Graph.isConcurrent cmdGraph
 
   pure
     $ MkFileLoggingP

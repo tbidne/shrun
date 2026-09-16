@@ -233,15 +233,19 @@ testSequentialGraphCases :: TestTree
 testSequentialGraphCases = testCase "isSequential cases" $ do
   g1 <- runSuccessEdgeLabels es1 cmds1
   assertBool ("Expected true: " ++ show g1) $ CDG.isSequential g1
+  assertBool ("Expected true: " ++ show g1) $ not (CDG.isConcurrent g1)
 
   g2 <- runSuccessEdgeLabels es2 cmds2
   assertBool ("Expected true: " ++ show g2) $ CDG.isSequential g2
+  assertBool ("Expected true: " ++ show g2) $ not (CDG.isConcurrent g2)
 
   g3 <- runSuccessEdgeLabels es3 cmds3
   assertBool ("Expected false: " ++ show g3) $ not (CDG.isSequential g3)
+  assertBool ("Expected false: " ++ show g3) $ CDG.isConcurrent g3
 
   g4 <- runSuccessEdgeLabels es4 cmds4
   assertBool ("Expected false: " ++ show g4) $ not (CDG.isSequential g4)
+  assertBool ("Expected false: " ++ show g4) $ CDG.isConcurrent g4
   where
     es1 = []
     cmds1 = unsafeListToNESeq $ mkCmds [1]
@@ -268,6 +272,7 @@ testSequentialGraphProp = testProp desc "testSequentialGraphProp" $ do
   annotateShow g
 
   assert $ CDG.isSequential g
+  assert $ not $ CDG.isConcurrent g
   where
     desc = "isSequential seqGraph === true"
 
