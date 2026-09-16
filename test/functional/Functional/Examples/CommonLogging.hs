@@ -9,11 +9,31 @@ tests :: TestTree
 tests =
   testGroup
     "CommonLogging"
-    [ debugOn,
+    [ commandIndexOn,
+      debugOn,
       debugOff,
       keyHideOn,
       keyHideOff
     ]
+
+commandIndexOn :: TestTree
+commandIndexOn = testCase "Runs command-index example" $ do
+  results <- run args
+  V.verifyExpected results expected
+  where
+    args =
+      withBaseArgs
+        [ "--common-log-command-index",
+          "on",
+          "sleep 2",
+          "sleep 2"
+        ]
+    expected =
+      [ withCommandPrefix "1. sleep 2" "Starting..",
+        withCommandPrefix "2. sleep 2" "Starting..",
+        withSuccessPrefix "1. sleep 2",
+        withSuccessPrefix "2. sleep 2"
+      ]
 
 debugOn :: TestTree
 debugOn = testCase "Runs debug example with --common-log-debug" $ do

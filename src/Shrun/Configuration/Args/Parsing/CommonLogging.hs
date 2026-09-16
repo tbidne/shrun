@@ -31,7 +31,7 @@ commandIndexParser = Utils.switchParser MkCommandIndexSwitch "common-log-command
   where
     helpTxt =
       mconcat
-        [ "If enabled, displays the index for this command. Defaults to 'off."
+        [ "If enabled, displays the index for this command. Defaults to 'off'."
         ]
 
 debugParser :: Parser (Maybe Debug)

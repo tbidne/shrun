@@ -169,7 +169,7 @@ expected =
     "",
     "Common Logging options:",
     "  --common-log-command-index (on | off)",
-    "         If enabled, displays the index for this command. Defaults to 'off.",
+    "         If enabled, displays the index for this command. Defaults to 'off'.",
     "",
     "  --common-log-debug (on | off)",
     "         Enables additional debug logging.",

@@ -48,6 +48,7 @@ specs testArgs =
         testDefaultNoCmdLogDryRun,
         testExampleDryRun,
         testFileLogDryRun,
+        testMiscDryRun,
         testExampleExpandAliases
       ]
 
@@ -787,6 +788,53 @@ testFileLogDryRun = testCase desc $ do
         "    path: shrun.log",
         "    size-mode: warn 50 mb",
         "    strip-control: all",
+        "  notify: off",
+        "command-graph:",
+        "  graph:",
+        "    1: ->[]",
+        "  roots: 1",
+        "commands:",
+        "  1. cmd"
+      ]
+
+-- Any other values we want to test that are untested elsewhere.
+testMiscDryRun :: TestTree
+testMiscDryRun = testCase desc $ do
+  configLogs <- runExitConfigLogs args
+
+  assertList expected (configLogs >>= T.lines)
+  where
+    desc = "Prints misc config with --dry-run"
+    args =
+      withNoConfig
+        [ "--common-log-command-index",
+          "on",
+          "--dry-run",
+          "cmd"
+        ]
+    expected =
+      [ "config-paths: off",
+        "config:",
+        "  init: off",
+        "  legend-keys-cache: off",
+        "  timeout: off",
+        "  common-logging:",
+        "    command-index: on",
+        "    debug: off",
+        "    key-hide: off",
+        "  command-logging:",
+        "    buffer-length: 1000",
+        "    buffer-timeout: 30",
+        "    poll-interval: 10000",
+        "    read-size: 16 kb",
+        "    read-strategy: block-line-buffer",
+        "  console-logging:",
+        "    command-logging: on",
+        "    command-name-trunc: off",
+        "    line-trunc: 149",
+        "    strip-control: smart",
+        "    timer-format: prose_compact",
+        "  file-logging: off",
         "  notify: off",
         "command-graph:",
         "  graph:",

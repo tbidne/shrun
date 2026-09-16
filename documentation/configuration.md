@@ -291,9 +291,9 @@ This is general logging config.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --common-log-command-index on "sleep 2"</span>
-<span style="color:">[Debug][1. sleep 2] Command: 'ShellCommand "sleep 2"'</span>
-<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --common-log-command-index on "sleep 2" "sleep 2"</span>
+<span style="color: #69ff94">[Success][2. sleep 2] 2 seconds</span>
+<span style="color: #69ff94">[Success][1. sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
