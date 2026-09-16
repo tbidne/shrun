@@ -206,28 +206,12 @@ legend = [
 <span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
-<pre>
-<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-<span style="color:">cfg1_key_1</span>
-<span style="color:">cfg1_key_2</span>
-<span style="color:">cfg2_key_1</span>
-<span style="color:">cfg2_key_2</span>
-<span style="color:">short</span></code>
-</pre>
-
 #### `write`: Overwrites keys with `config2.toml`:
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache write "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
 <span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-<span style="color:">cfg2_key_1</span>
-<span style="color:">cfg2_key_2</span>
-<span style="color:">short</span></code>
 </pre>
 
 #### `off`: Does nothing:
@@ -238,12 +222,6 @@ legend = [
 <span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
-<pre>
-<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-<span style="color:">cfg2_key_1</span>
-<span style="color:">cfg2_key_2</span>
-<span style="color:">short</span></code>
-</pre>
 
 #### `clear`: Removes all keys:
 
@@ -251,11 +229,6 @@ legend = [
 <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache clear "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
 <span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-<span style="color:">cat: legend-keys.txt: No such file or directory</span></code>
 </pre>
 
 ### Timeout
