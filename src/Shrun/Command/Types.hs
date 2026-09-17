@@ -19,6 +19,7 @@ module Shrun.Command.Types
     Internal.addNN,
     Internal.range,
     Internal.joinRange,
+    Internal.indexNESeq,
 
     -- * Order
     CommandOrd (..),

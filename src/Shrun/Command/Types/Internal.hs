@@ -12,6 +12,7 @@ module Shrun.Command.Types.Internal
     addNN,
     range,
     joinRange,
+    indexNESeq,
 
     -- * Vertex
     Vertex,
@@ -23,6 +24,7 @@ where
 
 import Numeric.Data.Positive.Internal (Positive (UnsafePositive))
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Numeric index for each command, for handling command graph dependencies.
 -- Conversion to/from 'Vertex' should use 'indexToVertex' and
@@ -79,6 +81,10 @@ fromPositive = MkCommandIndex
 
 unsafeFromInt :: (HasCallStack) => Int -> CommandIndex
 unsafeFromInt = fromPositive . unsafePositive
+
+-- | Indexes an NESeq.
+indexNESeq :: NESeq a -> NESeq (CommandIndex, a)
+indexNESeq = fmap (first MkCommandIndex) . Utils.indexPos
 
 -- | Type for Command graph vertex, for usage with fgl.
 type Vertex = Int

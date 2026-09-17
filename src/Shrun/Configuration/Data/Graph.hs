@@ -33,6 +33,9 @@ module Shrun.Configuration.Data.Graph
     context,
     ctxLabVertex,
     ctxOutVertices,
+
+    -- ** Misc
+    mkSequentialEdgesWith,
   )
 where
 
@@ -529,23 +532,42 @@ traverseVertex cdg = go (HSet.empty, [])
 
 type CycleAcc = (HashSet Node, [Node])
 
+-- | Returns a sequence of edges between each command.
 mkSequentialEdges :: EdgeSequential -> NESeq CommandP1 -> Seq GEdge
 mkSequentialEdges eseq =
+  mkSequentialEdgesWith toIdx fromIdx eseq
+    . NESeq.sortOn MkCommandOrd
+  where
+    fromIdx = toV
+    toIdx (MkCommandP idx _ _) = idx
+
+-- | Returns a sequence of edges between each element in the NESeq.
+mkSequentialEdgesWith ::
+  -- | Map from argument to its CommandIndex.
+  (a -> CommandIndex) ->
+  -- | Map from CommandIndex to return type e.g. identity or another integral
+  -- type.
+  (CommandIndex -> b) ->
+  -- | Edge type.
+  EdgeSequential ->
+  -- | Sequence.
+  NESeq a ->
+  Seq (Tuple3 b b EdgeLabel)
+mkSequentialEdgesWith toIdx fromIdx eseq =
   dropLast
     . fmap toEdge
-    . Seq.sortOn MkCommandOrd
     . NESeq.toSeq
   where
-    toEdge (MkCommandP idx _ _) =
-      ( toV idx,
-        toV $ Command.Types.succ idx,
-        label
-      )
-
     label = case eseq of
       EdgeSequentialAnd -> EdgeAnd
       EdgeSequentialOr -> EdgeOr
       EdgeSequentialAny -> EdgeAny
+
+    toEdge x =
+      ( fromIdx $ toIdx x,
+        fromIdx $ Command.Types.succ $ toIdx x,
+        label
+      )
 
     dropLast Empty = Empty
     dropLast (_ :<| Empty) = Empty

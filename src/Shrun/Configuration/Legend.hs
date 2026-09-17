@@ -32,8 +32,7 @@ import Shrun.Command.Types qualified as CT
 import Shrun.Configuration.Data.Graph
   ( Edge,
     EdgeArgs (EdgeArgsList, EdgeArgsSequential),
-    EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
-    EdgeSequential (EdgeSequentialAnd, EdgeSequentialAny, EdgeSequentialOr),
+    EdgeSequential,
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
@@ -162,7 +161,7 @@ translateMap mp initKey = do
   --    hardcode returning the CLI commands + edges, the rest will use
   --    Map.lookup. This requires adding some kind of flag to the accumulator
   --    e.g. a boolean that determines which lookup to use.
-  let commands = indexSeq $ NESeq.singleton initKey
+  let commands = CT.indexNESeq $ NESeq.singleton initKey
   (cmds, edges, _) <- go Nothing Set.empty (LTBuilder.fromText "") one commands
   pure (cmds, Graph.sortEdges edges)
   where
@@ -226,7 +225,7 @@ translateMap mp initKey = do
                     else Just line
                 -- Add indexes to the found values. These are the _original_
                 -- indexes i.e. what mEdges references.
-                valsIx = indexSeq vals
+                valsIx = CT.indexNESeq vals
 
             -- Run 'go' on the found vals, collecting the expanded commands
             -- (subCmds), all edges (subEdges), and map from subCommands. We
@@ -276,7 +275,9 @@ translateMap mp initKey = do
             case lines of
               Empty -> pure allData
               l :<| ls -> do
-                let newIdx = startIdx .+. CT.unsafeFromInt (length subCmds)
+                -- newIdx is one more than the current endIdx, as it is what
+                -- the next batch of commands starts at.
+                let newIdx = endIdx .+. one
                 (allData <>) <$> go prevKey foundKeys path newIdx (l :<|| ls)
           where
             foundKeys' = Set.insert line foundKeys
@@ -294,10 +295,6 @@ translateMap mp initKey = do
                 else path <> LTBuilder.fromText line <> " -> "
             neToSet = Set.fromList . toList
 {-# INLINEABLE translateMap #-}
-
--- | Adds indexes to the NESeq.
-indexSeq :: NESeq a -> NESeq (Tuple2 CommandIndex a)
-indexSeq xs = NESeq.zip (CT.unsafeFromInt <$> unsafeListToNESeq [1 .. length xs]) xs
 
 -- | Repairs the paramter @edges@, based on the param @indexMap@. The
 -- fundamental problems is that some edge @src -> dest@ may no longer be
@@ -385,21 +382,11 @@ repairEdges key (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
 mkSequentialEdges :: EdgeSequential -> NESeq Text -> Edges
 mkSequentialEdges eseq =
   MkEdges
-    . dropLast
-    . fmap toEdge
-    . NESeq.toSeq
-    . indexSeq
+    . Graph.mkSequentialEdgesWith toIdx fromIdx eseq
+    . CT.indexNESeq
   where
-    toEdge (idx, _) = (idx, CT.succ idx, lbl)
-
-    lbl = case eseq of
-      EdgeSequentialAnd -> EdgeAnd
-      EdgeSequentialOr -> EdgeOr
-      EdgeSequentialAny -> EdgeAny
-
-    dropLast Empty = Empty
-    dropLast (_ :<| Empty) = Empty
-    dropLast (x :<| ys) = x :<| dropLast ys
+    fromIdx = id
+    toIdx = fst
 
 -- | Acc is our basic accumulator. In addition to the commands and edges that
 -- we want to accumulate, we also have a map that relates a names old index

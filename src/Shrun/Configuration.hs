@@ -5,7 +5,7 @@ module Shrun.Configuration
 where
 
 import Data.Sequence.NonEmpty qualified as NESeq
-import Shrun.Command.Types (CommandP (MkCommandP), fromPositive)
+import Shrun.Command.Types (CommandP (MkCommandP), indexNESeq)
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Core (mergeCoreConfig)
 import Shrun.Configuration.Data.Graph (EdgeArgs (EdgeArgsList))
@@ -29,7 +29,6 @@ import Shrun.Configuration.Legend (LegendMap)
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
-import Shrun.Utils qualified as Utils
 
 -- | Merges Args and Toml together, filling in necessary defaults and
 -- doing some light processing.
@@ -58,7 +57,7 @@ mergeConfig args toml tomlPaths = do
     [] -> throwText "Shrun requires at least one command."
     (c : cs) -> pure $ NESeq.fromList (c :| cs)
 
-  let cmdsTextIndexed = Utils.indexPos cmdsText
+  let cmdsTextIndexed = indexNESeq cmdsText
 
   mLegendMap <- tomlToLegendMap toml
   (commands, ea) <- case mLegendMap of
@@ -97,7 +96,7 @@ mergeConfig args toml tomlPaths = do
         tomlPaths
       }
   where
-    mkCmd (i, t) = MkCommandP (fromPositive i) Nothing t
+    mkCmd (i, t) = MkCommandP i Nothing t
 
     wEdgeArgs = args ^. #edges
     cliEdgeArgs = D.fromMaybe (wEdgeArgs >>= WD.toMaybe)
