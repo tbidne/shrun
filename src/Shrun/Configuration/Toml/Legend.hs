@@ -8,6 +8,7 @@ module Shrun.Configuration.Toml.Legend
     mkKeyVal,
     unsafeKeyVal,
     prettyLegendMap,
+    difference,
   )
 where
 
@@ -24,6 +25,9 @@ import Shrun.Prelude
 
 -- | Alias for our legend map.
 type LegendMap = HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs))
+
+difference :: LegendMap -> LegendMap -> LegendMap
+difference = HMap.difference
 
 prettyLegendMap :: HashMap Text (NESeq Text, Maybe EdgeArgs) -> Doc ann
 prettyLegendMap =

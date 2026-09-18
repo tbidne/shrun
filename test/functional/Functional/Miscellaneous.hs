@@ -857,7 +857,11 @@ testExampleExpandAliases = testCase desc $ do
         ]
 
     expected =
-      [ "- key:   a",
+      [ "***********",
+        "* Globals *",
+        "***********",
+        "",
+        "- key:   a",
         "  vals:  c",
         " ",
         "- key:   all",
@@ -909,7 +913,12 @@ testExampleExpandAliases = testCase desc $ do
         " ",
         "- key:   stats",
         "  vals:  echo \"running stats...\"; sleep 3",
-        " "
+        " ",
+        "**********",
+        "* Locals *",
+        "**********",
+        "",
+        "<no aliases>"
       ]
 
 readStrategyDefaultCmd :: String

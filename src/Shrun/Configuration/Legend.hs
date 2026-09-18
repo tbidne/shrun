@@ -13,6 +13,7 @@ module Shrun.Configuration.Legend
     CyclicKeyError (..),
 
     -- * Misc
+    Toml.Legend.difference,
     Toml.Legend.prettyLegendMap,
   )
 where
