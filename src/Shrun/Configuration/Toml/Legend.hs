@@ -9,15 +9,24 @@ module Shrun.Configuration.Toml.Legend
     unsafeKeyVal,
     prettyLegendMap,
     difference,
+    displayJsonOut,
   )
 where
 
+import Data.Aeson qualified as Asn
+import Data.Aeson.Encode.Pretty (Config (confCompare))
+import Data.Aeson.Encode.Pretty qualified as AsnPretty
+import Data.Aeson.Key qualified as Key
+import Data.Aeson.KeyMap qualified as KMap
+import Data.ByteString.Lazy qualified as BSL
 import Data.HashMap.Strict qualified as HMap
 import Data.List qualified as L
 import Data.Maybe (catMaybes)
+import Data.Ord (Ordering (GT, LT), compare)
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
+import GHC.Exts (IsList (fromList))
 import Prettyprinter qualified as Pretty
 import Shrun.Configuration.Args.Parsing.Graph (parseEdges)
 import Shrun.Configuration.Data.Graph (EdgeArgs)
@@ -28,6 +37,60 @@ type LegendMap = HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs))
 
 difference :: LegendMap -> LegendMap -> LegendMap
 difference = HMap.difference
+
+displayJsonOut :: Maybe LegendMap -> Maybe LegendMap -> ByteString
+displayJsonOut globals locals =
+  BSL.toStrict
+    . AsnPretty.encodePretty' jsonCfg
+    $ allJson
+  where
+    globalsJson = toAeson $ fromMaybe mempty globals
+    localsJson = toAeson $ fromMaybe mempty locals
+
+    allJson =
+      Asn.Object
+        . KMap.insert (Key.fromText "globals") globalsJson
+        . KMap.insert (Key.fromText "locals") localsJson
+        $ KMap.empty
+
+    -- We want 'edges' to be last key.
+    jsonCfg =
+      jsonDefCfg
+        { confCompare = \cases
+            _ "edges" -> LT
+            "edges" _ -> GT
+            k1 k2 -> k1 `compare` k2
+        }
+
+toAeson :: LegendMap -> Asn.Value
+toAeson =
+  Asn.Array
+    . fromList
+    . fmap toObj
+    -- Sort by keys.
+    . L.sortOn (\(k, _, _) -> k)
+    . HMap.foldlWithKey' go []
+  where
+    toObj (key, vals, edges) =
+      Asn.Object
+        . KMap.insert (Key.fromText "key") (Asn.String key)
+        . KMap.insert (Key.fromText "val") (Asn.String vals)
+        . insEdges
+        $ KMap.empty
+      where
+        insEdges = case edges of
+          Nothing -> id
+          Just es ->
+            KMap.insert (Key.fromText "edges") (Asn.String es)
+
+    go acc key val = toDisp key val : acc
+
+    toDisp :: Text -> Tuple2 (NESeq Text) (Maybe EdgeArgs) -> Tuple3 Text Text (Maybe Text)
+    toDisp key (vals, edges) =
+      ( key,
+        T.intercalate ", " $ toList vals,
+        prettyToText <$> edges
+      )
 
 prettyLegendMap :: HashMap Text (NESeq Text, Maybe EdgeArgs) -> Doc ann
 prettyLegendMap =

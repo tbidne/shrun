@@ -44,6 +44,7 @@ module Shrun.Prelude
     neseqToSeq,
     unsafeListToNE,
     unsafeListToNESeq,
+    jsonDefCfg,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
@@ -139,6 +140,7 @@ import Control.Monad.Reader as X
   )
 import Control.Monad.Trans as X (MonadTrans (lift))
 import Data.Aeson as X (FromJSON (parseJSON), ToJSON (toJSON))
+import Data.Aeson.Encode.Pretty qualified as AsnPretty
 import Data.Bifunctor as X (Bifunctor (bimap, first, second))
 import Data.Bits (Bits, toIntegralSized)
 import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
@@ -319,6 +321,7 @@ import Effects.System.Terminal as X
   ( MonadTerminal,
     Window (Window),
     getTerminalSize,
+    putBinary,
     putStr,
     putStrLn,
     putText,
@@ -773,3 +776,10 @@ withLockedFileOrDie p h k =
                 "'. Is another process writing to it?"
               ]
       throwText msg
+
+jsonDefCfg :: AsnPretty.Config
+jsonDefCfg =
+  AsnPretty.defConfig
+    { AsnPretty.confIndent = AsnPretty.Spaces 2,
+      AsnPretty.confTrailingNewline = True
+    }

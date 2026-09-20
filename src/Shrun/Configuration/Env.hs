@@ -16,10 +16,6 @@ module Shrun.Configuration.Env
 where
 
 import Data.Aeson qualified as Asn
-import Data.Aeson.Encode.Pretty
-  ( Config (confIndent, confTrailingNewline),
-    Indent (Spaces),
-  )
 import Data.Aeson.Encode.Pretty qualified as AsnPretty
 import Data.ByteString.Lazy qualified as BSL
 import Data.HashMap.Strict qualified as HashMap
@@ -27,7 +23,6 @@ import Data.List qualified as L
 import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
-import Data.Text qualified as T
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
 import Shrun (runShellT, shrun)
@@ -183,18 +178,7 @@ getMergedConfig = do
             Just localLegend -> (`Legend.difference` localLegend)
       pure $ removeLocals <$> mLegend
 
-    -- Print out both sets.
-    for_ @List [(gheader, mGlobalLegend), (lheader, mLocalLegend)] $ \(lbl, mMap) -> do
-      let msg = case mMap of
-            Nothing -> "<no aliases>"
-            Just lm -> Legend.prettyLegendMap lm
-
-      putTextLn
-        $ mconcat
-          [ lbl,
-            "\n",
-            docToText msg
-          ]
+    putBinary $ Legend.displayJsonOut mGlobalLegend mLocalLegend
 
     throwM ExitSuccess
 
@@ -205,20 +189,6 @@ getMergedConfig = do
   pure merged
   where
     containsDisabled = L.elem Disabled
-
-    lheader = mkHeader "Locals"
-    gheader = mkHeader "Globals"
-
-    mkHeader lbl =
-      T.intercalate
-        "\n"
-        [ stars,
-          "* " <> lbl <> " *",
-          stars <> "\n"
-        ]
-      where
-        lblLen = T.length lbl
-        stars = T.replicate (lblLen + 4) "*"
 {-# INLINEABLE getMergedConfig #-}
 
 data TomlPath
@@ -510,18 +480,12 @@ saveLegendKeys xdgState cwd cacheAction keyCache finalToml cwdToml =
     localKeySet = maybe Set.empty (Set.fromList . toKeyList) (cwdToml ^. #legend)
 
     writeKeys newKeys = do
-      let keysBs = BSL.toStrict $ AsnPretty.encodePretty' jsonCfg newKeys
+      let keysBs = BSL.toStrict $ AsnPretty.encodePretty' jsonDefCfg newKeys
       -- Ensure directory exists.
       PW.createDirectoryIfMissing True xdgState
       writeBinaryFile keysPath keysBs
 
     keysPath = mkLegendKeysPath xdgState
-
-    jsonCfg =
-      AsnPretty.defConfig
-        { confIndent = Spaces 2,
-          confTrailingNewline = True
-        }
 {-# INLINEABLE saveLegendKeys #-}
 
 getCurrentKeys :: OsPath -> KeyCache -> Set Text

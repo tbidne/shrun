@@ -19,6 +19,7 @@ import Effects.FileSystem.PathReader
   )
 import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
 import Effects.System.Posix.Signals qualified as Signals
+import FileSystem.UTF8 (unsafeDecodeUtf8)
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
@@ -131,6 +132,11 @@ instance MonadPosixSignals ConfigIO where
       hToM = Signals.mapHandler unConfigIO
 
 instance MonadTerminal ConfigIO where
+  putBinary =
+    putStr
+      . unpack
+      . unsafeDecodeUtf8
+
   putStr s = do
     logsRef <- asks (view #logs)
     modifyIORef' logsRef (pack s :)

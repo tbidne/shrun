@@ -14,6 +14,7 @@ module Shrun.Configuration.Legend
 
     -- * Misc
     Toml.Legend.difference,
+    Toml.Legend.displayJsonOut,
     Toml.Legend.prettyLegendMap,
   )
 where
