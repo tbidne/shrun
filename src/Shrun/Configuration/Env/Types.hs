@@ -94,16 +94,16 @@ class HasCommandLogging env where
 class HasCommonLogging env where
   getCommonLogging :: env -> CommonLoggingEnv
 
-class HasConsoleLogging env r where
+class HasConsoleLogging env rgn where
   getConsoleLogging ::
     env ->
     Tuple3
       -- Console logging config
       ConsoleLoggingEnv
       -- Console log region queue
-      (TBQueue (LogRegion r))
+      (TBQueue (LogRegion rgn))
       -- Console timer region
-      (IORef (Maybe r))
+      (IORef (Maybe rgn))
 
 class HasFileLogging env where
   getFileLogging :: env -> Maybe FileLoggingEnv
@@ -113,7 +113,7 @@ class HasAnyError env where
   getAnyError :: env -> TVar Bool
 
 -- | The main 'Env' type used by Shrun.
-data Env nenv logRegion = MkEnv
+data Env nenv rgn = MkEnv
   { -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
     anyError :: TVar Bool,
@@ -135,41 +135,41 @@ data Env nenv logRegion = MkEnv
     -- | Core config.
     config :: CoreConfigP ConfigPhaseEnv nenv,
     -- | Console log queue.
-    consoleLogQueue :: ~(TBQueue (LogRegion logRegion)),
+    consoleLogQueue :: ~(TBQueue (LogRegion rgn)),
     -- Flag for if shrun has timed out, for conditionally running cleanup.
     hasTimedOut :: TVar Bool,
     -- | Timer region. It's an IORef only because it is not initialized on
     -- startup. Once it is set it is no longer mutated.
-    timerRegion :: IORef (Maybe logRegion)
+    timerRegion :: IORef (Maybe rgn)
   }
 
 makeFieldLabelsNoPrefix ''Env
 
-instance HasTimeout (Env m r) where
+instance HasTimeout (Env m rgn) where
   getTimeout = view (#config % #timeout)
 
   getHasTimedOut = view #hasTimedOut
 
-instance HasInit (Env m r) where
+instance HasInit (Env m rgn) where
   getInit = view (#config % #init)
 
-instance HasCommandLogging (Env m r) where
+instance HasCommandLogging (Env m rgn) where
   getCommandLogging = view (#config % #commandLogging)
 
-instance HasCommonLogging (Env m r) where
+instance HasCommonLogging (Env m rgn) where
   getCommonLogging = view (#config % #commonLogging)
 
-instance HasConsoleLogging (Env m r) r where
+instance HasConsoleLogging (Env m rgn) rgn where
   getConsoleLogging env =
     ( env ^. #config % #consoleLogging,
       env ^. #consoleLogQueue,
       env ^. #timerRegion
     )
 
-instance HasFileLogging (Env m r) where
+instance HasFileLogging (Env m rgn) where
   getFileLogging = view (#config % #fileLogging)
 
-instance HasCommands (Env m r) where
+instance HasCommands (Env m rgn) where
   getCleanup = view #commandCleanup
 
   getCommandDepGraph = view #commandGraph
@@ -196,7 +196,7 @@ updateCommandStatus command result = do
     idx = command ^. #index
 {-# INLINEABLE updateCommandStatus #-}
 
-instance HasAnyError (Env m r) where
+instance HasAnyError (Env m rgn) where
   getAnyError = view #anyError
 
 -- | Set anyError to 'True'.
@@ -211,11 +211,11 @@ setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA' ref True
 {-# INLINEABLE setAnyErrorTrue #-}
 
 -- | Class for retrieving the notify config.
-class HasNotifyConfig env r where
+class HasNotifyConfig env rgn where
   -- | Retrieves the notify config.
-  getNotifyConfig :: env -> Maybe (NotificationEnv r)
+  getNotifyConfig :: env -> Maybe (NotificationEnv rgn)
 
-instance HasNotifyConfig (Env nenv r) nenv where
+instance HasNotifyConfig (Env nenv rgn) nenv where
   getNotifyConfig = view (#config % #notifications)
 
 -- | Run the action when the debug flag is active.
@@ -236,7 +236,7 @@ getReadCommandStatus = asks getCommandStatusMap >>= readCommandStatus
 
 -- | Sets timedout to true.
 setTimedOut :: (HasTimeout env, MonadAtomic m, MonadReader env m) => m ()
-setTimedOut = asks getHasTimedOut >>= \r -> writeTVarA' r True
+setTimedOut = asks getHasTimedOut >>= \rgn -> writeTVarA' rgn True
 
 -- | Run the action when shrun has timed out.
 whenTimedOut :: (HasTimeout env, MonadAtomic m, MonadReader env m) => m () -> m ()

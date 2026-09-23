@@ -270,7 +270,7 @@ putCommandFinalLog ::
   m ()
 putCommandFinalLog consoleQueue mkConsoleLog mkFileLog = do
   consoleLog <- mkConsoleLog
-  withRegion Linear $ \r -> writeTBQueueA' consoleQueue (LogRegion mode r consoleLog)
+  withRegion Linear $ \rgn -> writeTBQueueA' consoleQueue (LogRegion mode rgn consoleLog)
 
   mFileLogging <- asks getFileLogging
   for_ mFileLogging $ \fl -> do
@@ -399,7 +399,7 @@ printFinalResult ::
   TimeSpec ->
   Either e b ->
   m ()
-printFinalResult totalTime result = withRegion Linear $ \r -> do
+printFinalResult totalTime result = withRegion Linear $ \rgn -> do
   Utils.whenLeft result $ \ex -> do
     let errMsg =
           mconcat
@@ -415,15 +415,15 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
               mode
             }
 
-    Logging.putRegionLog r fatalLog
+    Logging.putRegionLog rgn fatalLog
 
     -- update anyError
     setAnyErrorTrue
 
   -- print out any unfinished commands
   (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
-  for_ mWaitingLog (Logging.putRegionMultiLineLog r)
-  for_ mRunningLog (Logging.putRegionMultiLineLog r)
+  for_ mWaitingLog (Logging.putRegionMultiLineLog rgn)
+  for_ mRunningLog (Logging.putRegionMultiLineLog rgn)
 
   totalTimeTxt <- formatTimeSpec totalTime
   let finalLog =
@@ -451,7 +451,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
       Just NotifyActionCompleteFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
       _ -> pure ()
 
-  Logging.putRegionLog r finalLog
+  Logging.putRegionLog rgn finalLog
   where
     mode = LogModeFinish
 {-# INLINEABLE printFinalResult #-}
@@ -476,16 +476,16 @@ counter = do
   -- individual command. This way the running timer console region is below all
   -- the commands' in the console.
   microsleep 100_000
-  withRegion Linear $ \r -> do
+  withRegion Linear $ \rgn -> do
     (_, _, regionVar) <- asks (getConsoleLogging @_ @(Region m))
-    writeIORef' regionVar (Just r)
+    writeIORef' regionVar (Just rgn)
 
     timeout <- asks getTimeout
     timer <- newIORef' 0
-    Utils.whileM_ (keepRunning r timer timeout) $ do
+    Utils.whileM_ (keepRunning rgn timer timeout) $ do
       sleep 1
       elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
-      logCounter r elapsed
+      logCounter rgn elapsed
 
     setTimedOut
 {-# INLINEABLE counter #-}
@@ -623,7 +623,7 @@ printConsoleLog ::
   LogRegion (Region m) ->
   m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
-printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
+printConsoleLog (LogRegion m rgn consoleLog) = logRegion m rgn (consoleLog ^. #unConsoleLog)
 {-# INLINEABLE printConsoleLog #-}
 
 pollQueueToFile ::

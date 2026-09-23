@@ -270,7 +270,7 @@ putRegionLogDirect log = do
       keyHide = view #keyHide commonLogging
   consoleLog <- Formatting.formatConsoleLog cmdIndex keyHide consoleLogging log
 
-  MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
+  MRL.withRegion Linear $ \rgn -> MRL.logRegion (log ^. #mode) rgn (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
     fileLog <- Formatting.formatFileLog cmdIndex keyHide fl log
@@ -303,7 +303,7 @@ putRegionMultiLineLogDirect logs@(log :| _) = do
       keyHide = view #keyHide commonLogging
   consoleLog <- Formatting.formatConsoleMultiLineLogs cmdIndex keyHide consoleLogging logs
 
-  MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
+  MRL.withRegion Linear $ \rgn -> MRL.logRegion (log ^. #mode) rgn (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
     fileLog <- Formatting.formatFileMultiLineLogs cmdIndex keyHide fl logs
@@ -336,7 +336,7 @@ putDebugLog ::
   ) =>
   LogMessage ->
   m ()
-putDebugLog = putDebugLogHelper (\log -> MRL.withRegion Linear $ \r -> putRegionLog r log)
+putDebugLog = putDebugLogHelper (\log -> MRL.withRegion Linear $ \rgn -> putRegionLog rgn log)
 {-# INLINEABLE putDebugLog #-}
 
 putDebugLogHelper ::

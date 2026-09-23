@@ -95,7 +95,7 @@ data CoreConfigP p nenv = MkCoreConfigP
 
 makeFieldLabelsNoPrefix ''CoreConfigP
 
-instance Semigroup (CoreConfigToml r) where
+instance Semigroup (CoreConfigToml rgn) where
   l <> r =
     MkCoreConfigP
       { init = l ^. #init <|> r ^. #init,
@@ -108,7 +108,7 @@ instance Semigroup (CoreConfigToml r) where
         notifications = l ^. #notifications <> r ^. #notifications
       }
 
-instance Monoid (CoreConfigToml r) where
+instance Monoid (CoreConfigToml rgn) where
   mempty =
     MkCoreConfigP
       { init = Nothing,
@@ -121,7 +121,7 @@ instance Monoid (CoreConfigToml r) where
         notifications = Nothing
       }
 
-instance Pretty (CoreConfigMerged r) where
+instance Pretty (CoreConfigMerged rgn) where
   pretty c =
     vcat
       . toList @Seq
@@ -158,17 +158,17 @@ type CoreConfigMerged = CoreConfigP ConfigPhaseMerged
 
 type CoreConfigEnv = CoreConfigP ConfigPhaseEnv
 
-deriving stock instance Eq (CoreConfigP ConfigPhaseArgs r)
+deriving stock instance Eq (CoreConfigP ConfigPhaseArgs rgn)
 
-deriving stock instance Show (CoreConfigP ConfigPhaseArgs r)
+deriving stock instance Show (CoreConfigP ConfigPhaseArgs rgn)
 
-deriving stock instance Eq (CoreConfigP ConfigPhaseToml r)
+deriving stock instance Eq (CoreConfigP ConfigPhaseToml rgn)
 
-deriving stock instance Show (CoreConfigP ConfigPhaseToml r)
+deriving stock instance Show (CoreConfigP ConfigPhaseToml rgn)
 
-deriving stock instance Eq (CoreConfigP ConfigPhaseMerged r)
+deriving stock instance Eq (CoreConfigP ConfigPhaseMerged rgn)
 
-deriving stock instance Show (CoreConfigP ConfigPhaseMerged r)
+deriving stock instance Show (CoreConfigP ConfigPhaseMerged rgn)
 
 mergeCoreConfig ::
   ( HasCallStack,
@@ -177,9 +177,9 @@ mergeCoreConfig ::
     MonadTerminal m
   ) =>
   CommandGraph ->
-  CoreConfigArgs r ->
-  CoreConfigToml r ->
-  m (CoreConfigMerged r)
+  CoreConfigArgs rgn ->
+  CoreConfigToml rgn ->
+  m (CoreConfigMerged rgn)
 mergeCoreConfig cmdGraph args toml = do
   detectRef <- newIORef' DetectNotRun
 
@@ -232,7 +232,7 @@ mergeCoreConfig cmdGraph args toml = do
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
 -- continuation.
 withCoreEnv ::
-  forall m r a.
+  forall m rgn a.
   ( HasCallStack,
     MonadAtomic m,
     MonadFileWriter m,
@@ -243,10 +243,10 @@ withCoreEnv ::
     MonadPathWriter m,
     MonadPosixFiles m,
     MonadTerminal m,
-    NotifyEnvF m ~ r
+    NotifyEnvF m ~ rgn
   ) =>
-  CoreConfigMerged r ->
-  (CoreConfigEnv r -> m a) ->
+  CoreConfigMerged rgn ->
+  (CoreConfigEnv rgn -> m a) ->
   m a
 withCoreEnv merged onCoreConfigEnv = do
   notifications <- traverse Notify.toEnv (merged ^. #notifications)
@@ -266,7 +266,7 @@ withCoreEnv merged onCoreConfigEnv = do
      in onCoreConfigEnv coreConfigEnv
 {-# INLINEABLE withCoreEnv #-}
 
-instance Default (CoreConfigP ConfigPhaseArgs r) where
+instance Default (CoreConfigP ConfigPhaseArgs rgn) where
   def =
     MkCoreConfigP
       { init = Nothing,

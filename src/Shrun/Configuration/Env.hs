@@ -75,9 +75,9 @@ import Shrun.ShellT (ShellT)
 
 -- | 'withEnv' with 'shrun'.
 makeEnvAndShrun ::
-  forall m nenv r.
+  forall m nenv rgn.
   ( HasCallStack,
-    HasConsoleLogging (Env nenv r) (Region (ShellT (Env nenv r) m)),
+    HasConsoleLogging (Env nenv rgn) (Region (ShellT (Env nenv rgn) m)),
     MonadAsync m,
     MonadAtomic m,
     MonadEvaluate m,
@@ -102,13 +102,13 @@ makeEnvAndShrun ::
     NotifyEnvF m ~ nenv
   ) =>
   m ()
-makeEnvAndShrun = withEnv @m @nenv @r (runShellT shrun)
+makeEnvAndShrun = withEnv @m @nenv @rgn (runShellT shrun)
 {-# INLINEABLE makeEnvAndShrun #-}
 
 -- | Creates an 'Env' from CLI args and TOML config to run with a monadic
 -- action.
 withEnv ::
-  forall m nenv r a.
+  forall m nenv rgn a.
   ( HasCallStack,
     MonadAtomic m,
     MonadFileReader m,
@@ -124,7 +124,7 @@ withEnv ::
     MonadTerminal m,
     NotifyEnvF m ~ nenv
   ) =>
-  (Env nenv r -> m a) ->
+  (Env nenv rgn -> m a) ->
   m a
 withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
 {-# INLINEABLE withEnv #-}
@@ -141,7 +141,7 @@ getMergedConfig ::
     MonadPathWriter m,
     MonadTerminal m
   ) =>
-  m (MergedConfig r)
+  m (MergedConfig rgn)
 getMergedConfig = do
   xdgState <- getShrunXdgState
 
@@ -344,7 +344,7 @@ fromMergedConfig ::
     NotifyEnvF m ~ nenv
   ) =>
   MergedConfig nenv ->
-  (Env nenv r -> m a) ->
+  (Env nenv rgn -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
   when (cfg ^. #dryRun) $ do

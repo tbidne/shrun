@@ -360,7 +360,7 @@ logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
             mode = LogModeFinish
           }
 
-  withRegion Linear $ \r -> Logging.putRegionLog r log
+  withRegion Linear $ \rgn -> Logging.putRegionLog rgn log
   where
     nodeToCommand = fmap (view _2) . Graph.labVertex cdg
 

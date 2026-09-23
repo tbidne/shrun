@@ -671,4 +671,4 @@ logDebugCmd cmd procConfig logFn = do
               lvl,
               mode = Types.LogModeFinish
             }
-    withRegion Linear $ \r -> logFn r lg
+    withRegion Linear $ \rgn -> logFn rgn lg
