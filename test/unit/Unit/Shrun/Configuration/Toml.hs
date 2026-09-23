@@ -100,7 +100,7 @@ import Shrun.Configuration.Data.Truncation
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Toml (Toml (MkToml, coreConfig, legend))
-import Shrun.Configuration.Toml.Legend (KeyVal, unsafeKeyVal)
+import Shrun.Configuration.Toml.KeyVal (KeyVal, unsafeKeyVal)
 import Unit.Prelude
 
 tests :: TestTree

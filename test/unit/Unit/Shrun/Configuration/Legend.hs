@@ -26,19 +26,18 @@ import Shrun.Configuration.Data.Graph
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
-  )
-import Shrun.Configuration.Legend qualified as Legend
-import Shrun.Configuration.Toml.Legend
-  ( KeyVal,
+    KeyVal,
     Legend (MkLegend),
     LegendF,
     LegendPhase (LegendPhaseMap),
     unsafeKeyVal,
   )
+import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Utils (indexPos)
 import Unit.Prelude
 
-type LegendMap = LegendF LegendPhaseMap ()
+-- Alias for our underlying map type.
+type LegendMapTest = LegendF LegendPhaseMap ()
 
 -- | Entry point for Shrun.Legend.Internal property tests.
 tests :: TestTree
@@ -64,7 +63,7 @@ linesToMapSuccessProps =
         annotate "Unique keys in original list should match legend"
         verifySize commands legend
 
-verifySize :: Seq KeyVal -> LegendMap -> PropertyT IO ()
+verifySize :: Seq KeyVal -> LegendMapTest -> PropertyT IO ()
 verifySize commands legend = do
   annotateShow commands
   let numUniqueKeys = length $ (Set.fromList . toList) (fmap (view #key) commands)
@@ -158,7 +157,7 @@ commandsIndexedOrder origCmds finalCmds = do
         isKey = Just orig == final ^. #key
     assert $ isCmd || isKey
 
-genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, NESeq Text)
+genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMapTest, NESeq Text)
 genLegendCommands = (,) <$> genLegend <*> genCommands
 
 -- In order to avoid cycles -- e.g. a -> b -> a -- we disallow all recursive
@@ -167,7 +166,7 @@ genLegendCommands = (,) <$> genLegend <*> genCommands
 -- (non-cyclic) recursive references in our application. That said,
 -- this stronger "no references" rule is significantly simpler to enforce
 -- here.
-genLegend :: (GenBase m ~ Identity, MonadGen m) => m LegendMap
+genLegend :: (GenBase m ~ Identity, MonadGen m) => m LegendMapTest
 genLegend = do
   keyVals <- Gen.list range genKeyVal
   let keyVals' = fmap (\kv -> (kv ^. #key, (kv ^. #val, kv ^. #edges))) keyVals
@@ -262,19 +261,19 @@ cycleCmdFail = testCase "Should fail on cycle" $ do
   result <- translateCommandsEx cyclicLegend ("a" :<|| [])
   MkCyclicKeyError "a -> b -> c -> a" @=? result
 
-translateCommandsSuccess :: LegendMap -> NESeq Text -> IO (NESeq CommandP1)
+translateCommandsSuccess :: LegendMapTest -> NESeq Text -> IO (NESeq CommandP1)
 translateCommandsSuccess map cmds =
   tryMySync (Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
     Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
     Right (x, _) -> pure x
 
-translateCommandsSuccessEdges :: LegendMap -> NESeq Text -> EdgeArgs -> IO (Tuple2 (NESeq CommandP1) Edges)
+translateCommandsSuccessEdges :: LegendMapTest -> NESeq Text -> EdgeArgs -> IO (Tuple2 (NESeq CommandP1) Edges)
 translateCommandsSuccessEdges map cmds edges =
   tryMySync (Legend.translateCommands (MkLegend map) cmds (Just edges)) >>= \case
     Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
     Right (x, es) -> pure (x, es)
 
-translateCommandsEx :: forall e. (Exception e) => LegendMap -> NESeq Text -> IO e
+translateCommandsEx :: forall e. (Exception e) => LegendMapTest -> NESeq Text -> IO e
 translateCommandsEx map cmds =
   try @_ @e (Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
     Left ex -> pure ex
@@ -457,7 +456,7 @@ assertEdges xs ys = assertList showEdge (Exts.toList xs) (Exts.toList ys)
     showEdge (i, j, l) = show (unIdx i, unIdx j, l)
     unIdx = view (#unCommandIndex % #unPositive)
 
-legendMap :: LegendMap
+legendMap :: LegendMapTest
 legendMap =
   Map.fromList
     $ over' _2 (,Nothing)
@@ -468,7 +467,7 @@ legendMap =
           ("all", "oneAndTwo" :<|| ["cmd3"])
         ]
 
-cyclicLegend :: LegendMap
+cyclicLegend :: LegendMapTest
 cyclicLegend =
   Map.fromList
     $ over' _2 (,Nothing)

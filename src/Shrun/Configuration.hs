@@ -25,11 +25,12 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default qualified as D
-import Shrun.Configuration.Legend qualified as Legend
-import Shrun.Configuration.Toml.Legend
+import Shrun.Configuration.Legend
   ( Legend (MkLegend),
     LegendPhase (LegendPhaseMap, LegendPhaseToml),
+    TomlGlobal,
   )
+import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Prelude
 
 -- | Merges Args and Toml together, filling in necessary defaults and
@@ -51,7 +52,7 @@ mergeConfig ::
     MonadTerminal m
   ) =>
   Args nenv ->
-  Legend LegendPhaseToml s nenv ->
+  TomlGlobal nenv ->
   Seq OsPath ->
   m (MergedConfig nenv)
 mergeConfig args tomlLegend@(MkLegend toml) tomlPaths = do

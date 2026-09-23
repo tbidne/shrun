@@ -65,10 +65,10 @@ import Shrun.Configuration.Env.Types
       ),
     HasConsoleLogging,
   )
+import Shrun.Configuration.Legend (Legend (MkLegend), TomlGlobal, TomlLocal)
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Configuration.Toml qualified as Toml
-import Shrun.Configuration.Toml.Legend (Legend (MkLegend), TomlGlobal, TomlLocal)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
@@ -164,13 +164,13 @@ getMergedConfig = do
       then pure configPaths
       else (\ps -> (With <$> ps) <> configPaths) <$> findImplicitConfigs cwd
 
-  (tomlPaths, finalToml, cwdToml) <- mergeTomls tomls
+  (tomlPaths, globalToml, localToml) <- mergeTomls tomls
 
   when (args ^. #expandAliases) $ do
-    mLocalLegend <- Configuration.tomlToLegendMap cwdToml
+    mLocalLegend <- Configuration.tomlToLegendMap localToml
 
     mGlobalLegend <- do
-      mLegend <- Configuration.tomlToLegendMap finalToml
+      mLegend <- Configuration.tomlToLegendMap globalToml
 
       -- If localLegend exists then we want to remove its keys from the
       -- globals.
@@ -183,9 +183,15 @@ getMergedConfig = do
 
     throwM ExitSuccess
 
-  merged <- Configuration.mergeConfig args finalToml tomlPaths
+  merged <- Configuration.mergeConfig args globalToml tomlPaths
 
-  saveLegendKeys xdgState cwd (merged ^. #coreConfig % #legendKeysCache) keyCache finalToml cwdToml
+  saveLegendKeys
+    xdgState
+    cwd
+    (merged ^. #coreConfig % #legendKeysCache)
+    keyCache
+    globalToml
+    localToml
 
   pure merged
   where
@@ -276,7 +282,7 @@ mergeTomls ::
 mergeTomls tomlPaths = do
   pathsWithTomls <- traverse (\t -> (t,) <$> readConfig (unTomlPath t)) toRead
 
-  let (paths, finalToml) =
+  let (paths, globalToml) =
         bimap
           -- Reverse toml paths so they are in the original order. No need to reverse
           -- actual Toml files because mergeTomls expects the inverse order.
@@ -285,14 +291,14 @@ mergeTomls tomlPaths = do
           . Seq.unzip
           $ pathsWithTomls
 
-      cwdToml =
+      localToml =
         MkLegend
           . Toml.mergeTomls
           . fmap snd
           . Seq.filter (isTomlCwd . fst)
           $ pathsWithTomls
 
-  pure (paths, finalToml, cwdToml)
+  pure (paths, globalToml, localToml)
   where
     toRead = dropAfterDisabled $ Seq.reverse tomlPaths
 

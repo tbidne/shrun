@@ -57,10 +57,10 @@ mkKeyVal es k vals = UnsafeKeyVal es k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
 unsafeKeyVal :: (HasCallStack) => Maybe EdgeArgs -> Text -> List Text -> KeyVal
-unsafeKeyVal _ "" _ = error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty key"
+unsafeKeyVal _ "" _ = error "[Shrun.Configuration.Toml.KeyVal.unsafeKeyVal]: empty key"
 unsafeKeyVal es k vals = case mkKeyVal es k vals of
   Just kv -> kv
-  Nothing -> error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty val"
+  Nothing -> error "[Shrun.Configuration.Toml.KeyVal.unsafeKeyVal]: empty val"
 
 decodeEdges :: Decoder (Maybe EdgeArgs)
 decodeEdges = getFieldOptWith d "edges"

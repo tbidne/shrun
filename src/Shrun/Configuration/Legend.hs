@@ -3,9 +3,25 @@
 
 -- | Provides types for the legend functionality.
 module Shrun.Configuration.Legend
-  ( -- * Parsing
-    linesToMap,
+  ( -- * Types
+    Legend (..),
+
+    -- ** Indices
+    LegendPhase (..),
+    LegendScope (..),
+
+    -- ** Aliases
+    TomlGlobal,
+    TomlLocal,
     LegendMap,
+    LegendMapGlobal,
+    LegendMapLocal,
+
+    -- ** Type families
+    LegendF,
+
+    -- * Parsing
+    linesToMap,
     DuplicateKeyError (..),
 
     -- * Translation
@@ -13,9 +29,14 @@ module Shrun.Configuration.Legend
     CyclicKeyError (..),
 
     -- * Misc
-    Toml.Legend.difference,
-    Toml.Legend.displayJsonOut,
-    Toml.Legend.prettyLegendMap,
+    Types.difference,
+    Types.displayJsonOut,
+    Types.prettyLegendMap,
+
+    -- * KeyVal
+    KeyVal (MkKeyVal),
+    mkKeyVal,
+    unsafeKeyVal,
   )
 where
 
@@ -38,12 +59,23 @@ import Shrun.Configuration.Data.Graph
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
-import Shrun.Configuration.Toml.Legend
-  ( KeyVal (MkKeyVal),
-    Legend (MkLegend),
+import Shrun.Configuration.Legend.Types
+  ( Legend (MkLegend),
+    LegendF,
     LegendMap,
+    LegendMapGlobal,
+    LegendMapLocal,
+    LegendPhase (LegendPhaseMap, LegendPhaseToml),
+    LegendScope (LegendScopeGlobal, LegendScopeLocal),
+    TomlGlobal,
+    TomlLocal,
   )
-import Shrun.Configuration.Toml.Legend qualified as Toml.Legend
+import Shrun.Configuration.Legend.Types qualified as Types
+import Shrun.Configuration.Toml.KeyVal
+  ( KeyVal (MkKeyVal),
+    mkKeyVal,
+    unsafeKeyVal,
+  )
 import Shrun.Prelude
 
 -- $setup
@@ -117,11 +149,11 @@ instance Exception CyclicKeyError where
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands ::
-  forall m s nenv.
+  forall m nenv.
   ( HasCallStack,
     MonadThrow m
   ) =>
-  LegendMap s nenv ->
+  LegendMapGlobal nenv ->
   NESeq Text ->
   Maybe EdgeArgs ->
   m (Tuple2 (NESeq CommandP1) Edges)

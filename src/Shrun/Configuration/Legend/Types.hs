@@ -2,12 +2,13 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types for the legend.
-module Shrun.Configuration.Toml.Legend
+module Shrun.Configuration.Legend.Types
   ( -- * Map
     Legend (..),
 
     -- ** Indices
     LegendPhase (..),
+    LegendScope (..),
 
     -- ** Aliases
     TomlGlobal,
@@ -23,11 +24,6 @@ module Shrun.Configuration.Toml.Legend
     prettyLegendMap,
     difference,
     displayJsonOut,
-
-    -- * KeyVal
-    KeyVal (MkKeyVal),
-    mkKeyVal,
-    unsafeKeyVal,
   )
 where
 
@@ -46,11 +42,6 @@ import GHC.Exts (IsList (fromList))
 import Prettyprinter qualified as Pretty
 import Shrun.Configuration.Data.Graph (EdgeArgs)
 import Shrun.Configuration.Toml (Toml)
-import Shrun.Configuration.Toml.KeyVal
-  ( KeyVal (MkKeyVal),
-    mkKeyVal,
-    unsafeKeyVal,
-  )
 import Shrun.Prelude
 
 -- | Legend's scope.
@@ -65,7 +56,7 @@ data LegendScope
 data LegendPhase
   = -- | The entire toml file i.e. the legend is a list of key/val/edges.
     LegendPhaseToml
-  | -- | The key/val/edges list after map translation.
+  | -- | The key/val/edges list after conversion to map.
     LegendPhaseMap
 
 -- | Maps legend phase to its type.
@@ -87,17 +78,9 @@ newtype Legend p s nenv = MkLegend
 
 makeFieldLabelsNoPrefix ''Legend
 
-instance
-  (Semigroup (LegendF p nenv)) =>
-  Semigroup (Legend p s nenv)
-  where
-  MkLegend l <> MkLegend r = MkLegend (l <> r)
+deriving newtype instance (Semigroup (LegendF p nenv)) => Semigroup (Legend p s nenv)
 
-instance
-  (Monoid (LegendF p nenv)) =>
-  Monoid (Legend p s nenv)
-  where
-  mempty = MkLegend mempty
+deriving newtype instance (Monoid (LegendF p nenv)) => Monoid (Legend p s nenv)
 
 type TomlGlobal nenv = Legend LegendPhaseToml LegendScopeGlobal nenv
 

@@ -127,9 +127,9 @@ library
     Shrun.Configuration.Env
     Shrun.Configuration.Env.Types
     Shrun.Configuration.Legend
+    Shrun.Configuration.Legend.Types
     Shrun.Configuration.Toml
     Shrun.Configuration.Toml.KeyVal
-    Shrun.Configuration.Toml.Legend
     Shrun.Data.Result
     Shrun.Data.Text
     Shrun.IO
