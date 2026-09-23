@@ -330,7 +330,7 @@ mergeFileLogging ::
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
 mergeFileLogging cmdGraph detectRef args mToml = for mPath $ \path -> do
-  let toml = fromMaybe defaultToml mToml
+  let toml = fromMaybe mempty mToml
 
   lineTrunc <-
     mergeLineTrunc False detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
@@ -685,19 +685,3 @@ createMultiLogFile counterRef mode fp@(OsString posixPath) = go
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
 {-# INLINEABLE getShrunXdgState #-}
-
-defaultToml :: FileLoggingToml
-defaultToml =
-  MkFileLoggingP
-    { file =
-        MkFileLogInitP
-          { path = Nothing,
-            sizeMode = Nothing
-          },
-      commandNameTrunc = Nothing,
-      deleteOnSuccess = Nothing,
-      lineTrunc = Nothing,
-      mode = Nothing,
-      multi = Nothing,
-      stripControl = Nothing
-    }

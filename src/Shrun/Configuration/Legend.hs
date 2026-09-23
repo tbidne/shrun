@@ -31,7 +31,6 @@ module Shrun.Configuration.Legend
     -- * Misc
     Types.difference,
     Types.displayJsonOut,
-    Types.prettyLegendMap,
 
     -- * KeyVal
     KeyVal (MkKeyVal),

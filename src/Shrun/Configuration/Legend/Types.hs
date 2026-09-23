@@ -21,7 +21,6 @@ module Shrun.Configuration.Legend.Types
     LegendF,
 
     -- * Functions
-    prettyLegendMap,
     difference,
     displayJsonOut,
   )
@@ -35,11 +34,9 @@ import Data.Aeson.KeyMap qualified as KMap
 import Data.ByteString.Lazy qualified as BSL
 import Data.HashMap.Strict qualified as HMap
 import Data.List qualified as L
-import Data.Maybe (catMaybes)
 import Data.Ord (Ordering (GT, LT), compare)
 import Data.Text qualified as T
 import GHC.Exts (IsList (fromList))
-import Prettyprinter qualified as Pretty
 import Shrun.Configuration.Data.Graph (EdgeArgs)
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
@@ -151,30 +148,3 @@ toAeson =
         T.intercalate ", " $ toList vals,
         prettyToText <$> edges
       )
-
-prettyLegendMap :: HashMap Text (NESeq Text, Maybe EdgeArgs) -> Doc ann
-prettyLegendMap =
-  vcat
-    . fmap pItem
-    . L.sortOn fst
-    . HMap.toList
-  where
-    pItem :: (Text, (NESeq Text, Maybe EdgeArgs)) -> Doc ann
-    pItem (k, (vals, mEdges)) =
-      let pkey = Just $ "- key:   " <> pretty k
-          pvals =
-            Just
-              $ hcat
-                [ "  vals:  ",
-                  pretty (T.intercalate ", " $ toList vals)
-                ]
-          pedges = case mEdges of
-            Nothing -> Nothing
-            Just es -> Just $ "  edges:" <+> pretty es
-       in vcat
-            $ catMaybes
-              [ pkey,
-                pvals,
-                pedges,
-                Just Pretty.softline
-              ]
