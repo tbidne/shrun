@@ -31,7 +31,7 @@ import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
 type ShellT :: Type -> (Type -> Type) -> Type -> Type
-newtype ShellT env m a = MkShellT (ReaderT env m a)
+newtype ShellT env m a = MkShellT (env -> m a)
   deriving
     ( Functor,
       Applicative,
@@ -59,65 +59,64 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadThrow
     )
     via (ReaderT env m)
-
-unShellT :: ShellT env m a -> ReaderT env m a
-unShellT (MkShellT rdr) = rdr
+  deriving (MonadTrans) via (ReaderT env)
 
 -- | Runs a 'ShellT' with the given @env@.
 runShellT :: forall m env a. ShellT env m a -> env -> m a
-runShellT (MkShellT rdr) = runReaderT rdr
+runShellT (MkShellT rdr) = rdr
 {-# INLINEABLE runShellT #-}
 
 -- Concrete Env here so we can vary our logging logic with other envs
 -- (i.e. in tests).
 
--- Can't use @deriving via m@ due to a bug: GHC version 9.2.5: No skolem info:@.
--- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
-
-deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env nenv r) m)
+deriving via
+  (ReaderT (Env nenv r) m)
+  instance
+    (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env nenv r) m)
 
 -- REVIEW: Would be nice if we could derive this...
 
 instance (MonadPosixSignals m) => MonadPosixSignals (ShellT env m) where
-  raiseSignal = MkShellT . raiseSignal
+  raiseSignal = lift . raiseSignal
   {-# INLINEABLE raiseSignal #-}
 
-  signalProcess s = MkShellT . signalProcess s
+  signalProcess s = lift . signalProcess s
   {-# INLINEABLE signalProcess #-}
 
-  signalProcessGroup s = MkShellT . signalProcessGroup s
+  signalProcessGroup s = lift . signalProcessGroup s
   {-# INLINEABLE signalProcessGroup #-}
 
-  installHandler s h m = MkShellT $ do
-    hFromM <$> installHandler s (hToM h) m
+  installHandler s h m =
+    ask >>= \env ->
+      lift $ hFromM <$> installHandler s (hToM env h) m
     where
-      hFromM = Signals.mapHandler MkShellT
-      hToM = Signals.mapHandler unShellT
+      hFromM = Signals.mapHandler lift
+      hToM env = Signals.mapHandler (`runShellT` env)
   {-# INLINEABLE installHandler #-}
 
-  getSignalMask = MkShellT getSignalMask
+  getSignalMask = lift getSignalMask
   {-# INLINEABLE getSignalMask #-}
 
-  setSignalMask = MkShellT . setSignalMask
+  setSignalMask = lift . setSignalMask
   {-# INLINEABLE setSignalMask #-}
 
-  blockSignals = MkShellT . blockSignals
+  blockSignals = lift . blockSignals
   {-# INLINEABLE blockSignals #-}
 
-  unblockSignals = MkShellT . unblockSignals
+  unblockSignals = lift . unblockSignals
   {-# INLINEABLE unblockSignals #-}
 
-  scheduleAlarm = MkShellT . scheduleAlarm
+  scheduleAlarm = lift . scheduleAlarm
   {-# INLINEABLE scheduleAlarm #-}
 
-  getPendingSignals = MkShellT getPendingSignals
+  getPendingSignals = lift getPendingSignals
   {-# INLINEABLE getPendingSignals #-}
 
-  awaitSignal = MkShellT . awaitSignal
+  awaitSignal = lift . awaitSignal
   {-# INLINEABLE awaitSignal #-}
 
-  setStoppedChildFlag = MkShellT . setStoppedChildFlag
+  setStoppedChildFlag = lift . setStoppedChildFlag
   {-# INLINEABLE setStoppedChildFlag #-}
 
-  queryStoppedChildFlag = MkShellT queryStoppedChildFlag
+  queryStoppedChildFlag = lift queryStoppedChildFlag
   {-# INLINEABLE queryStoppedChildFlag #-}

@@ -135,7 +135,7 @@ import Control.Monad.Fail as X (MonadFail (fail))
 import Control.Monad.IO.Class as X (MonadIO (liftIO))
 import Control.Monad.Reader as X
   ( MonadReader (ask, local),
-    ReaderT (runReaderT),
+    ReaderT (ReaderT, runReaderT),
     asks,
   )
 import Control.Monad.Trans as X (MonadTrans (lift))
