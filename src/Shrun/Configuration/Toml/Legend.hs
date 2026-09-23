@@ -3,13 +3,31 @@
 
 -- | Provides types for the legend.
 module Shrun.Configuration.Toml.Legend
-  ( LegendMap,
-    KeyVal (MkKeyVal),
-    mkKeyVal,
-    unsafeKeyVal,
+  ( -- * Map
+    Legend (..),
+
+    -- ** Indices
+    LegendPhase (..),
+
+    -- ** Aliases
+    TomlGlobal,
+    TomlLocal,
+    LegendMap,
+    LegendMapGlobal,
+    LegendMapLocal,
+
+    -- ** Type families
+    LegendF,
+
+    -- * Functions
     prettyLegendMap,
     difference,
     displayJsonOut,
+
+    -- * KeyVal
+    KeyVal (MkKeyVal),
+    mkKeyVal,
+    unsafeKeyVal,
   )
 where
 
@@ -23,22 +41,80 @@ import Data.HashMap.Strict qualified as HMap
 import Data.List qualified as L
 import Data.Maybe (catMaybes)
 import Data.Ord (Ordering (GT, LT), compare)
-import Data.Sequence qualified as Seq
-import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import GHC.Exts (IsList (fromList))
 import Prettyprinter qualified as Pretty
-import Shrun.Configuration.Args.Parsing.Graph (parseEdges)
 import Shrun.Configuration.Data.Graph (EdgeArgs)
+import Shrun.Configuration.Toml (Toml)
+import Shrun.Configuration.Toml.KeyVal
+  ( KeyVal (MkKeyVal),
+    mkKeyVal,
+    unsafeKeyVal,
+  )
 import Shrun.Prelude
 
--- | Alias for our legend map.
-type LegendMap = HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs))
+-- | Legend's scope.
+data LegendScope
+  = -- | Global scope refers to legends from "global configs" i.e. everything
+    -- but cwd legends (e.g. xdg/config.toml, explicit -c args).
+    LegendScopeGlobal
+  | -- | "Local configs" i.e. ./.shrun.toml and ./shrun.toml.
+    LegendScopeLocal
 
-difference :: LegendMap -> LegendMap -> LegendMap
-difference = HMap.difference
+-- | Legend's phase.
+data LegendPhase
+  = -- | The entire toml file i.e. the legend is a list of key/val/edges.
+    LegendPhaseToml
+  | -- | The key/val/edges list after map translation.
+    LegendPhaseMap
 
-displayJsonOut :: Maybe LegendMap -> Maybe LegendMap -> ByteString
+-- | Maps legend phase to its type.
+type LegendF :: LegendPhase -> Type -> Type
+type family LegendF p nenv where
+  LegendF LegendPhaseToml nenv = Toml nenv
+  LegendF LegendPhaseMap _ = HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs))
+
+-- | The command legend used by the application. Has indexes for:
+--
+-- - Scope: Need to distinguish global/local for expanding aliases and saving
+--          key cache.
+--
+-- - Phase: Data evolution.
+type Legend :: LegendPhase -> LegendScope -> Type -> Type
+newtype Legend p s nenv = MkLegend
+  { unLegend :: LegendF p nenv
+  }
+
+makeFieldLabelsNoPrefix ''Legend
+
+instance
+  (Semigroup (LegendF p nenv)) =>
+  Semigroup (Legend p s nenv)
+  where
+  MkLegend l <> MkLegend r = MkLegend (l <> r)
+
+instance
+  (Monoid (LegendF p nenv)) =>
+  Monoid (Legend p s nenv)
+  where
+  mempty = MkLegend mempty
+
+type TomlGlobal nenv = Legend LegendPhaseToml LegendScopeGlobal nenv
+
+type TomlLocal nenv = Legend LegendPhaseToml LegendScopeLocal nenv
+
+type LegendMap s nenv = Legend LegendPhaseMap s nenv
+
+type LegendMapGlobal nenv = LegendMap LegendScopeGlobal nenv
+
+type LegendMapLocal nenv = LegendMap LegendScopeLocal nenv
+
+-- | Subtracts local keys from global keys.
+difference :: LegendMapGlobal nenv -> LegendMapLocal nenv -> LegendMapGlobal nenv
+difference (MkLegend g) (MkLegend l) = MkLegend $ g `HMap.difference` l
+
+-- | Displays global and local keys as json.
+displayJsonOut :: Maybe (LegendMapGlobal nenv) -> Maybe (LegendMapLocal nenv) -> ByteString
 displayJsonOut globals locals =
   BSL.toStrict
     . AsnPretty.encodePretty' jsonCfg
@@ -62,7 +138,7 @@ displayJsonOut globals locals =
             k1 k2 -> k1 `compare` k2
         }
 
-toAeson :: LegendMap -> Asn.Value
+toAeson :: LegendMap s nenv -> Asn.Value
 toAeson =
   Asn.Array
     . fromList
@@ -70,6 +146,7 @@ toAeson =
     -- Sort by keys.
     . L.sortOn (\(k, _, _) -> k)
     . HMap.foldlWithKey' go []
+    . view #unLegend
   where
     toObj (key, vals, edges) =
       Asn.Object
@@ -118,83 +195,3 @@ prettyLegendMap =
                 pedges,
                 Just Pretty.softline
               ]
-
--- | Holds a map key/val pair. The maintained invariants are:
---
--- * @key@ is non-empty.
--- * @val@ is non-empty.
--- * all @v_i@ in @val@ are non-empty.
-data KeyVal = UnsafeKeyVal
-  { edges :: Maybe EdgeArgs,
-    key :: Text,
-    val :: NESeq Text
-  }
-  deriving stock (Eq, Show)
-
--- | Unidirectional pattern synonym for 'KeyVal'.
-pattern MkKeyVal :: Maybe EdgeArgs -> Text -> NESeq Text -> KeyVal
-pattern MkKeyVal es k v <- UnsafeKeyVal es k v
-
-{-# COMPLETE MkKeyVal #-}
-
-makeFieldLabelsNoPrefix ''KeyVal
-
-instance DecodeTOML KeyVal where
-  tomlDecoder =
-    UnsafeKeyVal
-      <$> decodeEdges
-      <*> decodeKey
-      <*> decodeVal
-
--- | Smart constructor for 'KeyVal'. Given @UnsafeKeyVal key vals@, all
--- conditions must be satisfied for success:
---
--- * @key@ is non-empty.
--- * @vals@ is non-empty.
--- * all @v_i@ in @vals@ are non-empty.
-mkKeyVal :: Maybe EdgeArgs -> Text -> List Text -> Maybe KeyVal
-mkKeyVal _ "" _ = Nothing
-mkKeyVal _ _ [] = Nothing
-mkKeyVal es k vals = UnsafeKeyVal es k <$> NESeq.nonEmptySeq (Seq.fromList vals)
-
-{- HLINT ignore unsafeKeyVal "Redundant bracket" -}
-
--- | Variant of 'UnsafeKeyVal' that throws an error on failures.
-unsafeKeyVal :: (HasCallStack) => Maybe EdgeArgs -> Text -> List Text -> KeyVal
-unsafeKeyVal _ "" _ = error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty key"
-unsafeKeyVal es k vals = case mkKeyVal es k vals of
-  Just kv -> kv
-  Nothing -> error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty val"
-
-decodeEdges :: Decoder (Maybe EdgeArgs)
-decodeEdges = getFieldOptWith d "edges"
-  where
-    d = do
-      txt <- tomlDecoder
-      case parseEdges txt of
-        Left err -> fail err
-        Right x -> pure x
-
-decodeKey :: Decoder Text
-decodeKey = getFieldWith decodeNonEmptyText "key"
-
-decodeVal :: Decoder (NESeq Text)
-decodeVal = getFieldWith (decodeArray <|> fmap NESeq.singleton decodeNonEmptyText) "val"
-
-decodeArray :: Decoder (NESeq Text)
-decodeArray =
-  tomlDecoder
-    >>= ( traverse testNE >>> \case
-            Just xs -> pure $ NESeq.fromList xs
-            Nothing -> fail "Unexpected empty val"
-        )
-
-decodeNonEmptyText :: Decoder Text
-decodeNonEmptyText =
-  tomlDecoder >>= \case
-    "" -> fail "Unexpected empty text"
-    other -> pure other
-
-testNE :: Text -> Maybe Text
-testNE "" = Nothing
-testNE t = Just t

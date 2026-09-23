@@ -26,12 +26,19 @@ import Shrun.Configuration.Data.Graph
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
-    LegendMap,
   )
 import Shrun.Configuration.Legend qualified as Legend
-import Shrun.Configuration.Toml.Legend (KeyVal, unsafeKeyVal)
+import Shrun.Configuration.Toml.Legend
+  ( KeyVal,
+    Legend (MkLegend),
+    LegendF,
+    LegendPhase (LegendPhaseMap),
+    unsafeKeyVal,
+  )
 import Shrun.Utils (indexPos)
 import Unit.Prelude
+
+type LegendMap = LegendF LegendPhaseMap ()
 
 -- | Entry point for Shrun.Legend.Internal property tests.
 tests :: TestTree
@@ -53,7 +60,7 @@ linesToMapSuccessProps =
       Left err -> do
         footnoteShow err
         failure
-      Right legend -> do
+      Right (MkLegend legend) -> do
         annotate "Unique keys in original list should match legend"
         verifySize commands legend
 
@@ -108,7 +115,7 @@ translateProps =
     $ do
       (legend, origCmds) <- forAll genLegendCommands
       let legendKeySet = Set.fromList $ Map.keys legend
-          maybeFinalCmds = Legend.translateCommands legend origCmds Nothing
+          maybeFinalCmds = Legend.translateCommands (MkLegend legend) origCmds Nothing
 
       case maybeFinalCmds of
         Left err -> do
@@ -257,19 +264,19 @@ cycleCmdFail = testCase "Should fail on cycle" $ do
 
 translateCommandsSuccess :: LegendMap -> NESeq Text -> IO (NESeq CommandP1)
 translateCommandsSuccess map cmds =
-  tryMySync (Legend.translateCommands map cmds Nothing) >>= \case
+  tryMySync (Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
     Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
     Right (x, _) -> pure x
 
 translateCommandsSuccessEdges :: LegendMap -> NESeq Text -> EdgeArgs -> IO (Tuple2 (NESeq CommandP1) Edges)
 translateCommandsSuccessEdges map cmds edges =
-  tryMySync (Legend.translateCommands map cmds (Just edges)) >>= \case
+  tryMySync (Legend.translateCommands (MkLegend map) cmds (Just edges)) >>= \case
     Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
     Right (x, es) -> pure (x, es)
 
 translateCommandsEx :: forall e. (Exception e) => LegendMap -> NESeq Text -> IO e
 translateCommandsEx map cmds =
-  try @_ @e (Legend.translateCommands map cmds Nothing) >>= \case
+  try @_ @e (Legend.translateCommands (MkLegend map) cmds Nothing) >>= \case
     Left ex -> pure ex
     Right x -> assertFailure $ "Unexpected success: " ++ show x
 
@@ -480,7 +487,7 @@ linesToMapSpecs =
 
 parseMapAndSkip :: TestTree
 parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
-  result <-
+  MkLegend result <-
     Legend.linesToMap
       [ unsafeKeyVal Nothing "a" ["b", "k"],
         unsafeKeyVal Nothing "b" ["c"]
@@ -497,7 +504,7 @@ duplicateKeysThrowErr :: TestTree
 duplicateKeysThrowErr = testCase "Duplicate keys should throw error" $ do
   try (Legend.linesToMap result) >>= \case
     Left (MkDuplicateKeyError s) -> "a" @=? s
-    Right x -> assertFailure $ "Unexpected success: " ++ show x
+    Right (MkLegend x) -> assertFailure $ "Unexpected success: " ++ show x
   where
     result =
       [ unsafeKeyVal Nothing "a" ["b"],

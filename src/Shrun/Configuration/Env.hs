@@ -68,6 +68,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Configuration.Toml qualified as Toml
+import Shrun.Configuration.Toml.Legend (Legend (MkLegend), TomlGlobal, TomlLocal)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
@@ -271,7 +272,7 @@ mergeTomls ::
     MonadThrow m
   ) =>
   Seq (WithDisabled TomlPath) ->
-  m (Tuple3 (Seq OsPath) (Toml notifyEnv) (Toml notifyEnv))
+  m (Tuple3 (Seq OsPath) (TomlGlobal notifyEnv) (TomlLocal notifyEnv))
 mergeTomls tomlPaths = do
   pathsWithTomls <- traverse (\t -> (t,) <$> readConfig (unTomlPath t)) toRead
 
@@ -280,12 +281,13 @@ mergeTomls tomlPaths = do
           -- Reverse toml paths so they are in the original order. No need to reverse
           -- actual Toml files because mergeTomls expects the inverse order.
           (fmap unTomlPath . Seq.reverse)
-          Toml.mergeTomls
+          (MkLegend . Toml.mergeTomls)
           . Seq.unzip
           $ pathsWithTomls
 
       cwdToml =
-        Toml.mergeTomls
+        MkLegend
+          . Toml.mergeTomls
           . fmap snd
           . Seq.filter (isTomlCwd . fst)
           $ pathsWithTomls
@@ -452,11 +454,11 @@ saveLegendKeys ::
   -- | Key cache.
   KeyCache ->
   -- | Final toml from this run.
-  Toml notifyEnv ->
+  TomlGlobal notifyEnv ->
   -- | Current directory toml, for saving local keys.
-  Toml notifyEnv ->
+  TomlLocal notifyEnv ->
   m ()
-saveLegendKeys xdgState cwd cacheAction keyCache finalToml cwdToml =
+saveLegendKeys xdgState cwd cacheAction keyCache tomlGlobal tomlLocal =
   case cacheAction of
     -- 1. Do nothing.
     LegendKeysOff -> pure ()
@@ -473,6 +475,9 @@ saveLegendKeys xdgState cwd cacheAction keyCache finalToml cwdToml =
       let newKeyCache = LKC.addKeyCache globalKeySet (cwd, localKeySet) keyCache
       unless (keyCache == newKeyCache) $ writeKeys newKeyCache
   where
+    MkLegend finalToml = tomlGlobal
+    MkLegend cwdToml = tomlLocal
+
     toKeyList = toList . fmap (view #key)
     allKeySet = maybe Set.empty (Set.fromList . toKeyList) (finalToml ^. #legend)
 

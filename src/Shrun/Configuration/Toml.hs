@@ -24,7 +24,7 @@ import Shrun.Configuration.Data.Core
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Configuration.Toml.Legend (KeyVal)
+import Shrun.Configuration.Toml.KeyVal (KeyVal)
 import Shrun.Prelude
 
 -- | Holds toml config.

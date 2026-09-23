@@ -38,7 +38,11 @@ import Shrun.Configuration.Data.Graph
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
-import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
+import Shrun.Configuration.Toml.Legend
+  ( KeyVal (MkKeyVal),
+    Legend (MkLegend),
+    LegendMap,
+  )
 import Shrun.Configuration.Toml.Legend qualified as Toml.Legend
 import Shrun.Prelude
 
@@ -55,8 +59,8 @@ instance Exception DuplicateKeyError where
 
 -- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.
 -- Duplicate keys are not allowed.
-linesToMap :: (HasCallStack, MonadThrow m) => Seq KeyVal -> m LegendMap
-linesToMap = foldr f (pure Map.empty)
+linesToMap :: (HasCallStack, MonadThrow m) => Seq KeyVal -> m (LegendMap s nenv)
+linesToMap = fmap MkLegend . foldr f (pure Map.empty)
   where
     f (MkKeyVal es k v) = insertPair (k, (v, es))
     insertPair (key, cmd) mMap = do
@@ -90,7 +94,7 @@ instance Exception CyclicKeyError where
 -- ==== __Examples__
 -- >>> :set -XOverloadedLists
 -- >>> :{
---   let m = Map.fromList
+--   let m = MkLegend $ Map.fromList
 --         [ ("cmd1", ("one" :<|| [], Nothing)),
 --           ("cmd2", ("two" :<|| [], Nothing)),
 --           ("all", ("cmd1" :<|| ["cmd2","other"], Nothing))
@@ -104,7 +108,7 @@ instance Exception CyclicKeyError where
 -- will be returned.
 --
 -- >>> :{
---   let m = Map.fromList
+--   let m = MkLegend $ Map.fromList
 --         [ ("a", ("b" :<|| [], Nothing)),
 --           ("b", ("c" :<|| [], Nothing)),
 --           ("c", ("a" :<|| [], Nothing))
@@ -113,11 +117,11 @@ instance Exception CyclicKeyError where
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands ::
-  forall m.
+  forall m s nenv.
   ( HasCallStack,
     MonadThrow m
   ) =>
-  LegendMap ->
+  LegendMap s nenv ->
   NESeq Text ->
   Maybe EdgeArgs ->
   m (Tuple2 (NESeq CommandP1) Edges)
@@ -126,14 +130,14 @@ translateCommands legendMap commands =
 {-# INLINEABLE translateCommands #-}
 
 translateMap ::
-  forall m.
+  forall m s nenv.
   ( HasCallStack,
     MonadThrow m
   ) =>
-  LegendMap ->
+  LegendMap s nenv ->
   Text ->
   m (Tuple2 (NESeq CommandP1) Edges)
-translateMap mp initKey = do
+translateMap (MkLegend mp) initKey = do
   -- NOTE: [CLI and Legend Edges]
   --
   -- Previously, translateCommands took in the LegendMap and CLI commands
@@ -430,24 +434,24 @@ builderToPath path l v =
 -- edges correctly easier.
 addCliLegend ::
   (HasCallStack, MonadThrow m) =>
-  LegendMap ->
+  LegendMap s nenv ->
   NESeq Text ->
   Maybe EdgeArgs ->
-  m (Tuple2 LegendMap Text)
-addCliLegend legendMap commands mCliEdgeArgs = do
-  unmappedKey <- findUnmappedKey legendMap commands
-  pure (Map.insert unmappedKey (commands, mCliEdgeArgs) legendMap, unmappedKey)
+  m (Tuple2 (LegendMap s nenv) Text)
+addCliLegend tomlLegend@(MkLegend legendMap) commands mCliEdgeArgs = do
+  unmappedKey <- findUnmappedKey tomlLegend commands
+  pure (MkLegend $ Map.insert unmappedKey (commands, mCliEdgeArgs) legendMap, unmappedKey)
 {-# INLINEABLE addCliLegend #-}
 
 -- | Finds a key that does not exist in the map or as a command name
 -- (The latter is to avoid cycles).
 findUnmappedKey ::
-  forall m.
+  forall m s nenv.
   (HasCallStack, MonadThrow m) =>
-  LegendMap ->
+  LegendMap s nenv ->
   NESeq Text ->
   m Text
-findUnmappedKey legendMap commands = go 0
+findUnmappedKey (MkLegend legendMap) commands = go 0
   where
     commandSet = Set.fromList (toList commands)
     mx = maxBound
