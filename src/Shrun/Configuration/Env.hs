@@ -75,9 +75,9 @@ import Shrun.ShellT (ShellT)
 
 -- | 'withEnv' with 'shrun'.
 makeEnvAndShrun ::
-  forall m notifyEnv r.
+  forall m nenv r.
   ( HasCallStack,
-    HasConsoleLogging (Env notifyEnv r) (Region (ShellT (Env notifyEnv r) m)),
+    HasConsoleLogging (Env nenv r) (Region (ShellT (Env nenv r) m)),
     MonadAsync m,
     MonadAtomic m,
     MonadEvaluate m,
@@ -99,16 +99,16 @@ makeEnvAndShrun ::
     MonadTerminal m,
     MonadThread m,
     MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
   m ()
-makeEnvAndShrun = withEnv @m @notifyEnv @r (runShellT shrun)
+makeEnvAndShrun = withEnv @m @nenv @r (runShellT shrun)
 {-# INLINEABLE makeEnvAndShrun #-}
 
 -- | Creates an 'Env' from CLI args and TOML config to run with a monadic
 -- action.
 withEnv ::
-  forall m notifyEnv r a.
+  forall m nenv r a.
   ( HasCallStack,
     MonadAtomic m,
     MonadFileReader m,
@@ -122,9 +122,9 @@ withEnv ::
     MonadPathWriter m,
     MonadPosixFiles m,
     MonadTerminal m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
-  (Env notifyEnv r -> m a) ->
+  (Env nenv r -> m a) ->
   m a
 withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
 {-# INLINEABLE withEnv #-}
@@ -266,13 +266,13 @@ configExists = \case
 -- semigroups are left-biased, and we want @tk@ to override @ti@ whenever
 -- @i < k@. Hence we can leave the reverse order and foldr.
 mergeTomls ::
-  forall m notifyEnv.
+  forall m nenv.
   ( HasCallStack,
     MonadFileReader m,
     MonadThrow m
   ) =>
   Seq (WithDisabled TomlPath) ->
-  m (Tuple3 (Seq OsPath) (TomlGlobal notifyEnv) (TomlLocal notifyEnv))
+  m (Tuple3 (Seq OsPath) (TomlGlobal nenv) (TomlLocal nenv))
 mergeTomls tomlPaths = do
   pathsWithTomls <- traverse (\t -> (t,) <$> readConfig (unTomlPath t)) toRead
 
@@ -322,7 +322,7 @@ readConfig ::
     MonadThrow m
   ) =>
   OsPath ->
-  m (Toml notifyEnv)
+  m (Toml nenv)
 readConfig fp = do
   contents <- readFileUtf8ThrowM fp
   case decode contents of
@@ -341,10 +341,10 @@ fromMergedConfig ::
     MonadPathWriter m,
     MonadPosixFiles m,
     MonadTerminal m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
-  MergedConfig notifyEnv ->
-  (Env notifyEnv r -> m a) ->
+  MergedConfig nenv ->
+  (Env nenv r -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
   when (cfg ^. #dryRun) $ do
@@ -454,9 +454,9 @@ saveLegendKeys ::
   -- | Key cache.
   KeyCache ->
   -- | Final toml from this run.
-  TomlGlobal notifyEnv ->
+  TomlGlobal nenv ->
   -- | Current directory toml, for saving local keys.
-  TomlLocal notifyEnv ->
+  TomlLocal nenv ->
   m ()
 saveLegendKeys xdgState cwd cacheAction keyCache tomlGlobal tomlLocal =
   case cacheAction of

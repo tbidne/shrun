@@ -74,7 +74,7 @@ type family LegendKeysCacheF a where
 
 -- | Holds core configuration data.
 type CoreConfigP :: ConfigPhase -> Type -> Type
-data CoreConfigP p notifyEnv = MkCoreConfigP
+data CoreConfigP p nenv = MkCoreConfigP
   { -- | Shell logic to run before each command.
     init :: ConfigPhaseDisabledMaybeF p Text,
     -- | Whether to save legend keys.
@@ -90,7 +90,7 @@ data CoreConfigP p notifyEnv = MkCoreConfigP
     -- | File log config.
     fileLogging :: ArgsOnlyDetF p (FileLoggingP p),
     -- | Notify config.
-    notifications :: ArgsOnlyDetF p (NotifyP p notifyEnv)
+    notifications :: ArgsOnlyDetF p (NotifyP p nenv)
   }
 
 makeFieldLabelsNoPrefix ''CoreConfigP

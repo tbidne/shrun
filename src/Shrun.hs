@@ -96,13 +96,13 @@ import Shrun.Utils qualified as Utils
 
 -- | Entry point
 shrun ::
-  forall m env notifyEnv.
+  forall m env nenv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasInit env,
     HasLogging env m,
-    HasNotifyConfig env notifyEnv,
+    HasNotifyConfig env nenv,
     HasTimeout env,
     MonadAsync m,
     MonadAtomic m,
@@ -122,7 +122,7 @@ shrun ::
     MonadRegionLogger m,
     MonadThread m,
     MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
   -- | .
   m ()
@@ -185,13 +185,13 @@ shrun = do
 {-# INLINEABLE shrun #-}
 
 runCommand ::
-  forall m env notifyEnv.
+  forall m env nenv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasInit env,
     HasLogging env m,
-    HasNotifyConfig env notifyEnv,
+    HasNotifyConfig env nenv,
     MonadAtomic m,
     MonadHandleReader m,
     MonadHandleWriter m,
@@ -206,13 +206,13 @@ runCommand ::
     MonadRegionLogger m,
     MonadThread m,
     MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
   Double ->
   CommandP1 ->
   m ()
 runCommand globalStartTime cmd = do
-  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
+  mCfg <- asks (getNotifyConfig @_ @nenv)
   commonLogging <- asks getCommonLogging
   (consoleLogging, consoleQueue, _) <- asks (getConsoleLogging @env @(Region m))
 
@@ -281,10 +281,10 @@ putCommandFinalLog consoleQueue mkConsoleLog mkFileLog = do
 {-# INLINEABLE putCommandFinalLog #-}
 
 -- | All of the command result data needed for final log.
-type CommandResultData notifyEnv m =
+type CommandResultData nenv m =
   Tuple4
     -- Urgency level for notifs
-    (NotificationEnv notifyEnv -> NotifyUrgency)
+    (NotificationEnv nenv -> NotifyUrgency)
     -- Console log
     (m ConsoleLog)
     -- File log, if active
@@ -294,7 +294,7 @@ type CommandResultData notifyEnv m =
 
 -- | Gets log data from CommandResult.
 mkResultData ::
-  forall env m notifyEnv.
+  forall env m nenv.
   ( HasCallStack,
     HasCommands env,
     MonadAtomic m,
@@ -305,7 +305,7 @@ mkResultData ::
   ConsoleLoggingEnv ->
   CommandP1 ->
   CommandResult ->
-  CommandResultData notifyEnv m
+  CommandResultData nenv m
 mkResultData commonLogging consoleLogging cmd cmdResult =
   (urgency, consoleLog, mMkFileLog, notifyMsg)
   where
@@ -381,20 +381,20 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
     mode = LogModeFinish
 
 printFinalResult ::
-  forall m env notifyEnv e b.
+  forall m env nenv e b.
   ( Exception e,
     HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasLogging env m,
-    HasNotifyConfig env notifyEnv,
+    HasNotifyConfig env nenv,
     MonadAtomic m,
     MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
   TimeSpec ->
   Either e b ->
@@ -438,7 +438,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   anyError <- readTVarA' =<< asks getAnyError
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteFinal is set
-  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
+  mCfg <- asks (getNotifyConfig @_ @nenv)
 
   for_ mCfg $ \cfg -> do
     let urgency

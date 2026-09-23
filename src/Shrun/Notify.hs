@@ -44,19 +44,19 @@ fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
 -- | Sends a notification if they are With (linux only). Logs any failed
 -- sends.
 sendNotif ::
-  forall m env notifyEnv.
+  forall m env nenv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasLogging env m,
-    HasNotifyConfig env notifyEnv,
+    HasNotifyConfig env nenv,
     MonadAtomic m,
     MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
   -- | Notif summary
   NotifyMessage ->
@@ -66,15 +66,15 @@ sendNotif ::
   NotifyUrgency ->
   m ()
 sendNotif summary body urgency = do
-  asks (getNotifyConfig @env @notifyEnv) >>= \case
+  asks (getNotifyConfig @env @nenv) >>= \case
     Nothing -> pure ()
     Just notifyConfig ->
       notifyWithErrorLogging
         (notifyConfig ^. #system)
         (notifyConfig ^. #timeout)
   where
-    notifyWithErrorLogging notifyEnv timeout =
-      try @_ @Notify.NotifyException (Notify.notify notifyEnv (mkNote timeout)) >>= \case
+    notifyWithErrorLogging nenv timeout =
+      try @_ @Notify.NotifyException (Notify.notify nenv (mkNote timeout)) >>= \case
         Right () -> pure ()
         Left notifyEx ->
           -- Warn if this is a known exception.

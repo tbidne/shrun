@@ -349,8 +349,8 @@ toEnv notifyMerged = do
   system <- case notifySystemToOs systemMerged of
     Left ex -> throwM ex
     Right x -> pure x
-  notifyEnv <- initNotifyEnv system
-  pure $ mkNotify notifyMerged notifyEnv
+  nenv <- initNotifyEnv system
+  pure $ mkNotify notifyMerged nenv
   where
     systemMerged = notifyMerged ^. #system
 {-# INLINEABLE toEnv #-}

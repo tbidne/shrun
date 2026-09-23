@@ -13,9 +13,9 @@ import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Prelude
 
 -- | Merged Args + Toml
-data MergedConfig notifyEnv = MkMergedConfig
+data MergedConfig nenv = MkMergedConfig
   { -- | Core config.
-    coreConfig :: CoreConfigMerged notifyEnv,
+    coreConfig :: CoreConfigMerged nenv,
     -- | Command graph.
     commandGraph :: CommandGraph,
     -- | Commands.

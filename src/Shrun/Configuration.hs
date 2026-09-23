@@ -50,10 +50,10 @@ mergeConfig ::
     MonadIORef m,
     MonadTerminal m
   ) =>
-  Args notifyEnv ->
-  Legend LegendPhaseToml s notifyEnv ->
+  Args nenv ->
+  Legend LegendPhaseToml s nenv ->
   Seq OsPath ->
-  m (MergedConfig notifyEnv)
+  m (MergedConfig nenv)
 mergeConfig args tomlLegend@(MkLegend toml) tomlPaths = do
   cmdsText <- case args ^. #commands of
     [] -> throwText "Shrun requires at least one command."

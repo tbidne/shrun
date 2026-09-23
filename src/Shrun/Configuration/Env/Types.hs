@@ -113,7 +113,7 @@ class HasAnyError env where
   getAnyError :: env -> TVar Bool
 
 -- | The main 'Env' type used by Shrun.
-data Env notifyEnv logRegion = MkEnv
+data Env nenv logRegion = MkEnv
   { -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
     anyError :: TVar Bool,
@@ -133,7 +133,7 @@ data Env notifyEnv logRegion = MkEnv
     -- status from a single thread (each command has its own thread).
     commandStatusMap :: TCommandStatusMap,
     -- | Core config.
-    config :: CoreConfigP ConfigPhaseEnv notifyEnv,
+    config :: CoreConfigP ConfigPhaseEnv nenv,
     -- | Console log queue.
     consoleLogQueue :: ~(TBQueue (LogRegion logRegion)),
     -- Flag for if shrun has timed out, for conditionally running cleanup.
@@ -215,7 +215,7 @@ class HasNotifyConfig env r where
   -- | Retrieves the notify config.
   getNotifyConfig :: env -> Maybe (NotificationEnv r)
 
-instance HasNotifyConfig (Env notifyEnv r) notifyEnv where
+instance HasNotifyConfig (Env nenv r) nenv where
   getNotifyConfig = view (#config % #notifications)
 
 -- | Run the action when the debug flag is active.

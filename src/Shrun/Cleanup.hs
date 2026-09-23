@@ -36,12 +36,12 @@ import Shrun.Prelude
 -- | Cancels running commands and prints a final log message about going
 -- down. Intended to be used when shrun has been cancelled.
 teardown ::
-  forall m env notifyEnv.
+  forall m env nenv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasLogging env m,
-    HasNotifyConfig env notifyEnv,
+    HasNotifyConfig env nenv,
     MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
@@ -50,7 +50,7 @@ teardown ::
     MonadReader env m,
     MonadRegionLogger m,
     MonadTime m,
-    NotifyEnvF m ~ notifyEnv
+    NotifyEnvF m ~ nenv
   ) =>
   Double ->
   m ()
@@ -92,7 +92,7 @@ teardown startTime = do
   Logging.putRegionLogDirect finalLog
 
   -- 3. Send notification
-  mCfg <- asks (getNotifyConfig @_ @notifyEnv)
+  mCfg <- asks (getNotifyConfig @_ @nenv)
   for_ mCfg $ \cfg -> do
     let urgency = cfg ^. #errUrgency % #unNotifyErrUrgency
 

@@ -28,9 +28,9 @@ import Shrun.Configuration.Toml.KeyVal (KeyVal)
 import Shrun.Prelude
 
 -- | Holds toml config.
-data Toml notifyEnv = MkToml
+data Toml nenv = MkToml
   { -- | Core config.
-    coreConfig :: CoreConfigToml notifyEnv,
+    coreConfig :: CoreConfigToml nenv,
     -- | Legend.
     legend :: Maybe (Seq KeyVal)
   }
@@ -38,7 +38,7 @@ data Toml notifyEnv = MkToml
 
 makeFieldLabelsNoPrefix ''Toml
 
-instance DecodeTOML (Toml notifyEnv) where
+instance DecodeTOML (Toml nenv) where
   tomlDecoder = do
     timeout <- decodeTimeout
     init <- decodeInit
@@ -78,7 +78,7 @@ decodeLegend = getFieldOptWith tomlDecoder "legend"
 -- | Note that our Semigroup is /not/ commutative, hence the order matters.
 -- In particular, mconcat is safe because it is foldr, hence respects the
 -- input order.
-mergeTomls :: Seq (Toml notifyEnv) -> Toml notifyEnv
+mergeTomls :: Seq (Toml nenv) -> Toml nenv
 mergeTomls = mconcat . toList
 
 -- NOTE: [Toml Semigroup]
@@ -111,7 +111,7 @@ mergeTomls = mconcat . toList
 -- CommandLogging. Instances should exist only for *Args, as Merged does
 -- not need them either.
 
-instance Semigroup (Toml notifyEnv) where
+instance Semigroup (Toml nenv) where
   l <> r =
     MkToml
       { coreConfig = l ^. #coreConfig <> r ^. #coreConfig,
@@ -146,7 +146,7 @@ instance Semigroup (Toml notifyEnv) where
           key :: Text
           key = kv ^. #key
 
-instance Monoid (Toml notifyEnv) where
+instance Monoid (Toml nenv) where
   mempty =
     MkToml
       { coreConfig = mempty,
