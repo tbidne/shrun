@@ -2,6 +2,7 @@
 
 module Unit.Shrun.Configuration.Data.Graph (tests) where
 
+import Data.Char qualified as Ch
 import Data.List qualified as L
 import Data.Sequence qualified as Seq
 import Hedgehog.Gen qualified as G
@@ -231,33 +232,35 @@ testSeqAnd = testProp desc "testSeqAnd" $ do
 
 testSequentialGraphCases :: TestTree
 testSequentialGraphCases = testCase "isSequential cases" $ do
-  g1 <- runSuccessEdgeLabels es1 cmds1
-  assertBool ("Expected true: " ++ show g1) $ CDG.isSequential g1
-  assertBool ("Expected true: " ++ show g1) $ not (CDG.isConcurrent g1)
-
-  g2 <- runSuccessEdgeLabels es2 cmds2
-  assertBool ("Expected true: " ++ show g2) $ CDG.isSequential g2
-  assertBool ("Expected true: " ++ show g2) $ not (CDG.isConcurrent g2)
-
-  g3 <- runSuccessEdgeLabels es3 cmds3
-  assertBool ("Expected false: " ++ show g3) $ not (CDG.isSequential g3)
-  assertBool ("Expected false: " ++ show g3) $ CDG.isConcurrent g3
-
-  g4 <- runSuccessEdgeLabels es4 cmds4
-  assertBool ("Expected false: " ++ show g4) $ not (CDG.isSequential g4)
-  assertBool ("Expected false: " ++ show g4) $ CDG.isConcurrent g4
+  for_ testCases $ \(i, (expectSeq, (edges, cmds))) -> do
+    g <- runSuccessEdgeLabels edges cmds
+    go i expectSeq g
   where
-    es1 = []
-    cmds1 = unsafeListToNESeq $ mkCmds [1]
+    testCases = L.zip [1, 2 ..] (successTestCases ++ failureTestCases)
 
-    es2 = [(1, 2, EdgeAnd), (2, 3, EdgeOr), (3, 4, EdgeAny)]
-    cmds2 = unsafeListToNESeq $ mkCmds [1, 2, 3, 4]
+    successTestCases =
+      (True,)
+        <$> [ ([], unsafeListToNESeq $ mkCmds [1]),
+              ( [(1, 2, EdgeAnd), (2, 3, EdgeOr), (3, 4, EdgeAny)],
+                unsafeListToNESeq $ mkCmds [1, 2, 3, 4]
+              )
+            ]
 
-    es3 = []
-    cmds3 = unsafeListToNESeq $ mkCmds [1, 2]
+    failureTestCases =
+      (False,)
+        <$> [ ([], unsafeListToNESeq $ mkCmds [1, 2]),
+              ([(1, 2, EdgeAnd), (1, 3, EdgeOr)], unsafeListToNESeq $ mkCmds [1, 2, 3])
+            ]
 
-    es4 = [(1, 2, EdgeAnd), (1, 3, EdgeOr)]
-    cmds4 = unsafeListToNESeq $ mkCmds [1, 2, 3]
+    go :: Int -> Bool -> CommandGraph -> IO ()
+    go i expectSeq g = do
+      let p = if expectSeq then id else not
+
+      assertBool (mkMsg i expectSeq g) $ p (CDG.isSequential g)
+      assertBool (mkMsg i (not expectSeq) g) $ (not . p) $ CDG.isConcurrent g
+
+    mkMsg i b g = show i ++ ": Expected " ++ bToS b ++ ": " ++ show g
+    bToS = fmap Ch.toLower . show
 
 testSequentialGraphProp :: TestTree
 testSequentialGraphProp = testProp desc "testSequentialGraphProp" $ do
