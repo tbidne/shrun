@@ -114,11 +114,11 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
           Logging.logDebug $ \lvl -> do
             logCommandAction cdg lvl prevVertex debugMsg (Just depV) vertex
         PredecessorFailure failExpected depV -> do
-          if failExpected
-            then
-              logCommandAction cdg LevelWarn prevVertex failOkMsg (Just depV) vertex
-            else
-              logCommandAction cdg LevelError prevVertex errMsg (Just depV) vertex
+          let (lvl, msg) =
+                if failExpected
+                  then (LevelWarn, failOkMsg)
+                  else (LevelError, errMsg)
+          logCommandAction cdg lvl prevVertex msg (Just depV) vertex
         PredecessorSuccess -> do
           case Map.lookup vertex vtxSemMap of
             Nothing ->
@@ -134,7 +134,7 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
               --
               -- Suppose we have the following dep graph:
               --
-              --   1 -> 3, 2 -> 3
+              --   1 & 3, 2 & 3
               --
               -- and commmands 1 and 2 take the same amount of time. If both
               -- threads finish 'runner' and call 'mapConcurrently' at the

@@ -119,7 +119,6 @@ data Env nenv rgn = MkEnv
     anyError :: TVar Bool,
     -- | Functions to clean up running commands.
     commandCleanup :: Maybe CommandCleanup,
-    -- | Holds notification environment.
     -- | Commands
     commands :: NESeq CommandP1,
     -- | Command graph.
