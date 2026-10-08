@@ -23,6 +23,7 @@ cp docker_out/shrun bin/
 
 echo "*** Testing exe ***"
 ./bin/shrun --version
+./bin/shrun "sleep 1"
 
 echo "*** Computing sha256 ***"
 sha256sum ./bin/shrun > ./bin/shrun.sha256

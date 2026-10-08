@@ -22,6 +22,7 @@ export SHRUN_HOME=$(pwd); cabal install exe:shrun --installdir bin/ --project-fi
 
 echo "*** Testing exe ***"
 ./bin/shrun --version
+./bin/shrun "sleep 1"
 
 echo "*** Computing sha256 ***"
 sha256sum ./bin/shrun > ./bin/shrun.sha256
