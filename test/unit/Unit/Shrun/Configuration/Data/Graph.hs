@@ -241,7 +241,16 @@ testSequentialGraphCases = testCase "isSequential cases" $ do
     successTestCases =
       (True,)
         <$> [ ([], unsafeListToNESeq $ mkCmds [1]),
+              -- 1 & 2, 2 | 3, 3 ; 4
               ( [(1, 2, EdgeAnd), (2, 3, EdgeOr), (3, 4, EdgeAny)],
+                unsafeListToNESeq $ mkCmds [1, 2, 3, 4]
+              ),
+              -- 1 & 2, 1 | 3, 2 ; 3
+              ( [(1, 2, EdgeAnd), (1, 3, EdgeOr), (2, 3, EdgeAny)],
+                unsafeListToNESeq $ mkCmds [1, 2, 3]
+              ),
+              -- 1 & {2..4}, 2 & {3,4}, 3 & 4
+              ( [(1, 2, EdgeAnd), (1, 3, EdgeAnd), (1, 4, EdgeAnd), (2, 3, EdgeAnd), (2, 4, EdgeAnd), (3, 4, EdgeAnd)],
                 unsafeListToNESeq $ mkCmds [1, 2, 3, 4]
               )
             ]
@@ -249,7 +258,12 @@ testSequentialGraphCases = testCase "isSequential cases" $ do
     failureTestCases =
       (False,)
         <$> [ ([], unsafeListToNESeq $ mkCmds [1, 2]),
-              ([(1, 2, EdgeAnd), (1, 3, EdgeOr)], unsafeListToNESeq $ mkCmds [1, 2, 3])
+              -- 1 & {2,3}
+              ([(1, 2, EdgeAnd), (1, 3, EdgeOr)], unsafeListToNESeq $ mkCmds [1, 2, 3]),
+              -- 1 & {2..4}, 2 & {3,4}. Same as success w/o 3 & 4 edge.
+              ( [(1, 2, EdgeAnd), (1, 3, EdgeAnd), (1, 4, EdgeAnd), (2, 3, EdgeAnd), (2, 4, EdgeAnd)],
+                unsafeListToNESeq $ mkCmds [1, 2, 3, 4]
+              )
             ]
 
     go :: Int -> Bool -> CommandGraph -> IO ()

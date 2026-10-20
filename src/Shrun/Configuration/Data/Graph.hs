@@ -350,8 +350,17 @@ isSequential cg = case rs of
       [] -> True
       -- 1.2. Exactly one successor, recurse.
       [v'] -> go v'
-      -- 1.3. Found > 1 successors, false.
-      (_ : _ : _) -> False
+      -- 1.3. Found > 1 successors. This can only be sequential if one of
+      -- our successors is a 'root' for all others.
+      vs@(_ : _ : _) -> hasRoot cg vs && L.all go vs
+
+hasRoot :: CommandGraph -> List Vertex -> Bool
+hasRoot cdg vs = L.any (\v -> isRoot cdg v vs) vs
+
+isRoot :: CommandGraph -> Vertex -> List Vertex -> Bool
+isRoot cdg r = L.all (\v -> HSet.member v rs)
+  where
+    rs = reachableFromV cdg r
 
 -- | Opposite of 'isSequential'.
 isConcurrent :: CommandGraph -> Bool
@@ -496,11 +505,17 @@ verifyAllReachable cdg cmdSet = do
 -- Dominators seems to do what we want, but if not we can write this manually.
 reachableFromRoots :: CommandGraph -> HashSet Node
 reachableFromRoots cdg =
-  HSet.fromList
-    . fmap (view _1)
-    . (Dom.dom graph <=< toList)
+  HSet.unions
+    . fmap (reachableFromV cdg)
+    . toList
     $ cdg
     ^. #roots
+
+reachableFromV :: CommandGraph -> Vertex -> HashSet Node
+reachableFromV cdg =
+  HSet.fromList
+    . fmap (view _1)
+    . Dom.dom graph
   where
     graph = cdg ^. #graph
 
