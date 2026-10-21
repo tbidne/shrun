@@ -11,6 +11,10 @@ module Shrun.Configuration.Data.LegendKeysCache
     KeyCache (..),
     addKeyCache,
     mkKeyCache,
+
+    -- * Aliases
+    LegendKeysScopedGlobal,
+    LegendKeysScopedLocal,
   )
 where
 
@@ -19,6 +23,10 @@ import Data.Aeson qualified as Asn
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Scoped
+  ( ConfigScope (ConfigScopeGlobal, ConfigScopeLocal),
+    ConfigScoped (MkConfigScoped),
+  )
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
@@ -133,8 +141,14 @@ instance ToJSON LocalKeyCache where
         "keys" .= lkc.keys
       ]
 
-addKeyCache :: Set Text -> Tuple2 OsPath (Set Text) -> KeyCache -> KeyCache
-addKeyCache globalKeys (path, localKeys) kc =
+type LegendKeysScoped s = ConfigScoped s (Set Text)
+
+type LegendKeysScopedGlobal = LegendKeysScoped ConfigScopeGlobal
+
+type LegendKeysScopedLocal = LegendKeysScoped ConfigScopeLocal
+
+addKeyCache :: LegendKeysScopedGlobal -> Tuple2 OsPath LegendKeysScopedLocal -> KeyCache -> KeyCache
+addKeyCache (MkConfigScoped globalKeys) (path, MkConfigScoped localKeys) kc =
   MkKeyCache
     { global = Set.union kc.global globalKeys,
       local =
@@ -144,8 +158,8 @@ addKeyCache globalKeys (path, localKeys) kc =
           else Map.insertWith Set.union path localKeys kc.local
     }
 
-mkKeyCache :: Set Text -> Tuple2 OsPath (Set Text) -> KeyCache
-mkKeyCache globalKeys (path, localKeys) =
+mkKeyCache :: LegendKeysScopedGlobal -> Tuple2 OsPath LegendKeysScopedLocal -> KeyCache
+mkKeyCache (MkConfigScoped globalKeys) (path, MkConfigScoped localKeys) =
   MkKeyCache
     { global = globalKeys,
       local =

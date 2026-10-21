@@ -4,21 +4,10 @@
 -- | Provides types for the legend functionality.
 module Shrun.Configuration.Legend
   ( -- * Types
-    Legend (..),
-
-    -- ** Indices
-    LegendPhase (..),
-    LegendScope (..),
-
-    -- ** Aliases
-    TomlGlobal,
-    TomlLocal,
-    LegendMap,
-    LegendMapGlobal,
-    LegendMapLocal,
-
-    -- ** Type families
-    LegendF,
+    LegendScoped,
+    LegendScopedAll,
+    LegendScopedGlobal,
+    LegendScopedLocal,
 
     -- * Parsing
     linesToMap,
@@ -29,8 +18,8 @@ module Shrun.Configuration.Legend
     CyclicKeyError (..),
 
     -- * Misc
-    Types.difference,
-    Types.displayJsonOut,
+    difference,
+    displayJsonOut,
 
     -- * KeyVal
     KeyVal (MkKeyVal),
@@ -39,12 +28,23 @@ module Shrun.Configuration.Legend
   )
 where
 
+import Data.Aeson qualified as Asn
+import Data.Aeson.Encode.Pretty (Config (confCompare))
+import Data.Aeson.Encode.Pretty qualified as AsnPretty
+import Data.Aeson.Key qualified as Key
+import Data.Aeson.KeyMap qualified as KMap
+import Data.ByteString.Lazy qualified as BSL
+import Data.HashMap.Strict qualified as HMap
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
+import Data.List qualified as L
+import Data.Ord (Ord (compare), Ordering (GT, LT))
 import Data.Sequence.NonEmpty qualified as NESeq
+import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
+import GHC.Exts (IsList (fromList))
 import Shrun.Command.Types
   ( CommandIndex,
     CommandP (MkCommandP),
@@ -58,18 +58,10 @@ import Shrun.Configuration.Data.Graph
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
-import Shrun.Configuration.Legend.Types
-  ( Legend (MkLegend),
-    LegendF,
-    LegendMap,
-    LegendMapGlobal,
-    LegendMapLocal,
-    LegendPhase (LegendPhaseMap, LegendPhaseToml),
-    LegendScope (LegendScopeGlobal, LegendScopeLocal),
-    TomlGlobal,
-    TomlLocal,
+import Shrun.Configuration.Scoped
+  ( ConfigScope (ConfigScopeAll, ConfigScopeGlobal, ConfigScopeLocal),
+    ConfigScoped (MkConfigScoped),
   )
-import Shrun.Configuration.Legend.Types qualified as Types
 import Shrun.Configuration.Toml.KeyVal
   ( KeyVal (MkKeyVal),
     mkKeyVal,
@@ -90,8 +82,8 @@ instance Exception DuplicateKeyError where
 
 -- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.
 -- Duplicate keys are not allowed.
-linesToMap :: (HasCallStack, MonadThrow m) => Seq KeyVal -> m (LegendMap s nenv)
-linesToMap = fmap MkLegend . foldr f (pure Map.empty)
+linesToMap :: (HasCallStack, MonadThrow m) => Seq KeyVal -> m (LegendScoped s)
+linesToMap = fmap MkConfigScoped . foldr f (pure Map.empty)
   where
     f (MkKeyVal es k v) = insertPair (k, (v, es))
     insertPair (key, cmd) mMap = do
@@ -106,6 +98,14 @@ newtype CyclicKeyError = MkCyclicKeyError Text
 instance Exception CyclicKeyError where
   displayException (MkCyclicKeyError path) =
     "Encountered cyclic definitions when translating commands: " <> unpack path
+
+type LegendScoped s = ConfigScoped s (HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs)))
+
+type LegendScopedAll = LegendScoped ConfigScopeAll
+
+type LegendScopedGlobal = LegendScoped ConfigScopeGlobal
+
+type LegendScopedLocal = LegendScoped ConfigScopeLocal
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.
@@ -148,11 +148,11 @@ instance Exception CyclicKeyError where
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands ::
-  forall m nenv.
+  forall m.
   ( HasCallStack,
     MonadThrow m
   ) =>
-  LegendMapGlobal nenv ->
+  LegendScopedAll ->
   NESeq Text ->
   Maybe EdgeArgs ->
   m (Tuple2 (NESeq CommandP1) Edges)
@@ -161,14 +161,14 @@ translateCommands legendMap commands =
 {-# INLINEABLE translateCommands #-}
 
 translateMap ::
-  forall m s nenv.
+  forall m s.
   ( HasCallStack,
     MonadThrow m
   ) =>
-  LegendMap s nenv ->
+  LegendScoped s ->
   Text ->
   m (Tuple2 (NESeq CommandP1) Edges)
-translateMap (MkLegend mp) initKey = do
+translateMap (MkConfigScoped mp) initKey = do
   -- NOTE: [CLI and Legend Edges]
   --
   -- Previously, translateCommands took in the LegendMap and CLI commands
@@ -465,24 +465,24 @@ builderToPath path l v =
 -- edges correctly easier.
 addCliLegend ::
   (HasCallStack, MonadThrow m) =>
-  LegendMap s nenv ->
+  LegendScoped s ->
   NESeq Text ->
   Maybe EdgeArgs ->
-  m (Tuple2 (LegendMap s nenv) Text)
-addCliLegend tomlLegend@(MkLegend legendMap) commands mCliEdgeArgs = do
+  m (Tuple2 (LegendScoped s) Text)
+addCliLegend tomlLegend@(MkConfigScoped legendMap) commands mCliEdgeArgs = do
   unmappedKey <- findUnmappedKey tomlLegend commands
-  pure (MkLegend $ Map.insert unmappedKey (commands, mCliEdgeArgs) legendMap, unmappedKey)
+  pure (MkConfigScoped $ Map.insert unmappedKey (commands, mCliEdgeArgs) legendMap, unmappedKey)
 {-# INLINEABLE addCliLegend #-}
 
 -- | Finds a key that does not exist in the map or as a command name
 -- (The latter is to avoid cycles).
 findUnmappedKey ::
-  forall m s nenv.
+  forall m s.
   (HasCallStack, MonadThrow m) =>
-  LegendMap s nenv ->
+  LegendScoped s ->
   NESeq Text ->
   m Text
-findUnmappedKey (MkLegend legendMap) commands = go 0
+findUnmappedKey (MkConfigScoped legendMap) commands = go 0
   where
     commandSet = Set.fromList (toList commands)
     mx = maxBound
@@ -507,3 +507,62 @@ findUnmappedKey (MkLegend legendMap) commands = go 0
       where
         key = pfx <> showt i
 {-# INLINEABLE findUnmappedKey #-}
+
+difference :: LegendScopedAll -> LegendScopedLocal -> LegendScopedGlobal
+difference (MkConfigScoped a) (MkConfigScoped l) = MkConfigScoped $ a `HMap.difference` l
+
+-- | Displays global and local keys as json.
+displayJsonOut :: Maybe LegendScopedGlobal -> Maybe LegendScopedLocal -> ByteString
+displayJsonOut globals locals =
+  BSL.toStrict
+    . AsnPretty.encodePretty' jsonCfg
+    $ allJson
+  where
+    globalsJson = toAeson $ fromMaybe mempty globals
+    localsJson = toAeson $ fromMaybe mempty locals
+
+    allJson =
+      Asn.Object
+        . KMap.insert (Key.fromText "globals") globalsJson
+        . KMap.insert (Key.fromText "locals") localsJson
+        $ KMap.empty
+
+    -- We want 'edges' to be last key.
+    jsonCfg =
+      jsonDefCfg
+        { confCompare = \cases
+            _ "edges" -> LT
+            "edges" _ -> GT
+            k1 k2 -> k1 `compare` k2
+        }
+
+toAeson :: LegendScoped s -> Asn.Value
+toAeson =
+  Asn.Array
+    . fromList
+    . fmap toObj
+    -- Sort by keys.
+    . L.sortOn (\(k, _, _) -> k)
+    . HMap.foldlWithKey' go []
+    . view #unConfigScoped
+  where
+    toObj (key, vals, edges) =
+      Asn.Object
+        . KMap.insert (Key.fromText "key") (Asn.String key)
+        . KMap.insert (Key.fromText "val") (Asn.String vals)
+        . insEdges
+        $ KMap.empty
+      where
+        insEdges = case edges of
+          Nothing -> id
+          Just es ->
+            KMap.insert (Key.fromText "edges") (Asn.String es)
+
+    go acc key val = toDisp key val : acc
+
+    toDisp :: Text -> Tuple2 (NESeq Text) (Maybe EdgeArgs) -> Tuple3 Text Text (Maybe Text)
+    toDisp key (vals, edges) =
+      ( key,
+        T.intercalate ", " $ toList vals,
+        prettyToText <$> edges
+      )

@@ -26,11 +26,11 @@ import Shrun.Configuration.Data.WithDisabled
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default qualified as D
 import Shrun.Configuration.Legend
-  ( Legend (MkLegend),
-    LegendPhase (LegendPhaseMap, LegendPhaseToml),
-    TomlGlobal,
+  ( LegendScoped,
   )
 import Shrun.Configuration.Legend qualified as Legend
+import Shrun.Configuration.Scoped (ConfigScoped (MkConfigScoped))
+import Shrun.Configuration.Toml (TomlScoped, TomlScopedAll)
 import Shrun.Prelude
 
 -- | Merges Args and Toml together, filling in necessary defaults and
@@ -52,10 +52,10 @@ mergeConfig ::
     MonadTerminal m
   ) =>
   Args nenv ->
-  TomlGlobal nenv ->
+  TomlScopedAll nenv ->
   Seq OsPath ->
   m (MergedConfig nenv)
-mergeConfig args tomlLegend@(MkLegend toml) tomlPaths = do
+mergeConfig args tomlLegend@(MkConfigScoped toml) tomlPaths = do
   cmdsText <- case args ^. #commands of
     [] -> throwText "Shrun requires at least one command."
     (c : cs) -> pure $ NESeq.fromList (c :| cs)
@@ -110,7 +110,7 @@ tomlToLegendMap ::
   ( HasCallStack,
     MonadThrow m
   ) =>
-  Legend LegendPhaseToml s nenv ->
-  m (Maybe (Legend LegendPhaseMap s nenv))
-tomlToLegendMap (MkLegend toml) = for (toml ^. #legend) Legend.linesToMap
+  TomlScoped s nenv ->
+  m (Maybe (LegendScoped s))
+tomlToLegendMap (MkConfigScoped toml) = for (toml ^. #legend) Legend.linesToMap
 {-# INLINEABLE tomlToLegendMap #-}

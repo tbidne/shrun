@@ -2,8 +2,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Toml
-  ( Toml (..),
+  ( -- * Toml
+    Toml (..),
     mergeTomls,
+
+    -- * Legend aliases
+    TomlScoped,
+    TomlScopedAll,
+    TomlScopedLocal,
   )
 where
 
@@ -24,6 +30,10 @@ import Shrun.Configuration.Data.Core
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
+import Shrun.Configuration.Scoped
+  ( ConfigScope (ConfigScopeAll, ConfigScopeLocal),
+    ConfigScoped,
+  )
 import Shrun.Configuration.Toml.KeyVal (KeyVal)
 import Shrun.Prelude
 
@@ -152,3 +162,9 @@ instance Monoid (Toml nenv) where
       { coreConfig = mempty,
         legend = Nothing
       }
+
+type TomlScoped s nenv = ConfigScoped s (Toml nenv)
+
+type TomlScopedAll nenv = TomlScoped ConfigScopeAll nenv
+
+type TomlScopedLocal nenv = TomlScoped ConfigScopeLocal nenv

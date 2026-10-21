@@ -41,6 +41,8 @@ import Shrun.Configuration.Data.LegendKeysCache
         LegendKeysOff,
         LegendKeysWrite
       ),
+    LegendKeysScopedGlobal,
+    LegendKeysScopedLocal,
   )
 import Shrun.Configuration.Data.LegendKeysCache qualified as LKC
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
@@ -65,9 +67,10 @@ import Shrun.Configuration.Env.Types
       ),
     HasConsoleLogging,
   )
-import Shrun.Configuration.Legend (Legend (MkLegend), TomlGlobal, TomlLocal)
+import Shrun.Configuration.Legend (LegendScopedAll, LegendScopedGlobal)
 import Shrun.Configuration.Legend qualified as Legend
-import Shrun.Configuration.Toml (Toml)
+import Shrun.Configuration.Scoped (ConfigScoped (MkConfigScoped))
+import Shrun.Configuration.Toml (Toml, TomlScopedAll, TomlScopedLocal)
 import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Prelude
@@ -164,33 +167,34 @@ getMergedConfig = do
       then pure configPaths
       else (\ps -> (With <$> ps) <> configPaths) <$> findImplicitConfigs cwd
 
-  (tomlPaths, globalToml, localToml) <- mergeTomls tomls
+  (tomlPaths, allToml, localToml) <- mergeTomls tomls
 
   when (args ^. #expandAliases) $ do
     mLocalLegend <- Configuration.tomlToLegendMap localToml
 
     mGlobalLegend <- do
-      mLegend <- Configuration.tomlToLegendMap globalToml
+      mAllLegend <- Configuration.tomlToLegendMap allToml
 
       -- If localLegend exists then we want to remove its keys from the
       -- globals.
-      let removeLocals = case mLocalLegend of
-            Nothing -> id
+      let removeLocals :: LegendScopedAll -> LegendScopedGlobal
+          removeLocals = case mLocalLegend of
+            Nothing -> coerce
             Just localLegend -> (`Legend.difference` localLegend)
-      pure $ removeLocals <$> mLegend
+      pure $ removeLocals <$> mAllLegend
 
     putBinary $ Legend.displayJsonOut mGlobalLegend mLocalLegend
 
     throwM ExitSuccess
 
-  merged <- Configuration.mergeConfig args globalToml tomlPaths
+  merged <- Configuration.mergeConfig args allToml tomlPaths
 
   saveLegendKeys
     xdgState
     cwd
     (merged ^. #coreConfig % #legendKeysCache)
     keyCache
-    globalToml
+    allToml
     localToml
 
   pure merged
@@ -278,27 +282,27 @@ mergeTomls ::
     MonadThrow m
   ) =>
   Seq (WithDisabled TomlPath) ->
-  m (Tuple3 (Seq OsPath) (TomlGlobal nenv) (TomlLocal nenv))
+  m (Tuple3 (Seq OsPath) (TomlScopedAll nenv) (TomlScopedLocal nenv))
 mergeTomls tomlPaths = do
   pathsWithTomls <- traverse (\t -> (t,) <$> readConfig (unTomlPath t)) toRead
 
-  let (paths, globalToml) =
+  let (paths, allToml) =
         bimap
           -- Reverse toml paths so they are in the original order. No need to reverse
           -- actual Toml files because mergeTomls expects the inverse order.
           (fmap unTomlPath . Seq.reverse)
-          (MkLegend . Toml.mergeTomls)
+          (MkConfigScoped . Toml.mergeTomls)
           . Seq.unzip
           $ pathsWithTomls
 
       localToml =
-        MkLegend
+        MkConfigScoped
           . Toml.mergeTomls
           . fmap snd
           . Seq.filter (isTomlCwd . fst)
           $ pathsWithTomls
 
-  pure (paths, globalToml, localToml)
+  pure (paths, allToml, localToml)
   where
     toRead = dropAfterDisabled $ Seq.reverse tomlPaths
 
@@ -460,11 +464,11 @@ saveLegendKeys ::
   -- | Key cache.
   KeyCache ->
   -- | Final toml from this run.
-  TomlGlobal nenv ->
+  TomlScopedAll nenv ->
   -- | Current directory toml, for saving local keys.
-  TomlLocal nenv ->
+  TomlScopedLocal nenv ->
   m ()
-saveLegendKeys xdgState cwd cacheAction keyCache tomlGlobal tomlLocal =
+saveLegendKeys xdgState cwd cacheAction keyCache tomlAll tomlLocal =
   case cacheAction of
     -- 1. Do nothing.
     LegendKeysOff -> pure ()
@@ -481,14 +485,7 @@ saveLegendKeys xdgState cwd cacheAction keyCache tomlGlobal tomlLocal =
       let newKeyCache = LKC.addKeyCache globalKeySet (cwd, localKeySet) keyCache
       unless (keyCache == newKeyCache) $ writeKeys newKeyCache
   where
-    MkLegend finalToml = tomlGlobal
-    MkLegend cwdToml = tomlLocal
-
-    toKeyList = toList . fmap (view #key)
-    allKeySet = maybe Set.empty (Set.fromList . toKeyList) (finalToml ^. #legend)
-
-    globalKeySet = Set.difference allKeySet localKeySet
-    localKeySet = maybe Set.empty (Set.fromList . toKeyList) (cwdToml ^. #legend)
+    (globalKeySet, localKeySet) = tomlKeys tomlAll tomlLocal
 
     writeKeys newKeys = do
       let keysBs = BSL.toStrict $ AsnPretty.encodePretty' jsonDefCfg newKeys
@@ -498,6 +495,21 @@ saveLegendKeys xdgState cwd cacheAction keyCache tomlGlobal tomlLocal =
 
     keysPath = mkLegendKeysPath xdgState
 {-# INLINEABLE saveLegendKeys #-}
+
+tomlKeys ::
+  TomlScopedAll nenv ->
+  TomlScopedLocal nenv ->
+  Tuple2 LegendKeysScopedGlobal LegendKeysScopedLocal
+tomlKeys (MkConfigScoped allToml) (MkConfigScoped localToml) =
+  (MkConfigScoped globalKeySet, MkConfigScoped localKeySet)
+  where
+    toKeySet =
+      maybe Set.empty (Set.fromList . toList . fmap (view #key))
+        . view #legend
+
+    allKeySet = toKeySet allToml
+    localKeySet = toKeySet localToml
+    globalKeySet = Set.difference allKeySet localKeySet
 
 getCurrentKeys :: OsPath -> KeyCache -> Set Text
 getCurrentKeys p kc = Set.union (kc ^. #global) localKeys
