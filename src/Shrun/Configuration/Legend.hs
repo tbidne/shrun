@@ -125,7 +125,7 @@ type LegendScopedLocal = LegendScoped ConfigScopeLocal
 -- ==== __Examples__
 -- >>> :set -XOverloadedLists
 -- >>> :{
---   let m = MkLegend $ Map.fromList
+--   let m = MkConfigScoped $ Map.fromList
 --         [ ("cmd1", ("one" :<|| [], Nothing)),
 --           ("cmd2", ("two" :<|| [], Nothing)),
 --           ("all", ("cmd1" :<|| ["cmd2","other"], Nothing))
@@ -139,7 +139,7 @@ type LegendScopedLocal = LegendScoped ConfigScopeLocal
 -- will be returned.
 --
 -- >>> :{
---   let m = MkLegend $ Map.fromList
+--   let m = MkConfigScoped $ Map.fromList
 --         [ ("a", ("b" :<|| [], Nothing)),
 --           ("b", ("c" :<|| [], Nothing)),
 --           ("c", ("a" :<|| [], Nothing))
