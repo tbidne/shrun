@@ -69,7 +69,11 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Configuration.Legend (LegendScopedAll, LegendScopedGlobal)
 import Shrun.Configuration.Legend qualified as Legend
-import Shrun.Configuration.Scoped (ConfigScoped (MkConfigScoped))
+import Shrun.Configuration.Scoped
+  ( ConfigScope (ConfigScopeGlobal),
+    ConfigScoped (MkConfigScoped),
+  )
+import Shrun.Configuration.Scoped qualified as Scoped
 import Shrun.Configuration.Toml (Toml, TomlScopedAll, TomlScopedLocal)
 import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
@@ -500,16 +504,21 @@ tomlKeys ::
   TomlScopedAll nenv ->
   TomlScopedLocal nenv ->
   Tuple2 LegendKeysScopedGlobal LegendKeysScopedLocal
-tomlKeys (MkConfigScoped allToml) (MkConfigScoped localToml) =
-  (MkConfigScoped globalKeySet, MkConfigScoped localKeySet)
+tomlKeys allToml localToml = (globalKeySet, localKeySet)
   where
     toKeySet =
       maybe Set.empty (Set.fromList . toList . fmap (view #key))
         . view #legend
 
-    allKeySet = toKeySet allToml
-    localKeySet = toKeySet localToml
-    globalKeySet = Set.difference allKeySet localKeySet
+    allKeySet = toKeySet <$> allToml
+
+    localKeySet = toKeySet <$> localToml
+
+    globalKeySet =
+      liftA2
+        Set.difference
+        (Scoped.retag @_ @ConfigScopeGlobal allKeySet)
+        (Scoped.retag localKeySet)
 
 getCurrentKeys :: OsPath -> KeyCache -> Set Text
 getCurrentKeys p kc = Set.union (kc ^. #global) localKeys
